@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:auto_size_text/auto_size_text.dart';
+import 'dart:io' show Platform;
+
 
 void main() {
   runApp(const MyApp());
@@ -52,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Stack(children: [
         AnimatedPositioned(
           duration: Duration(seconds: 100),
-          left: _offset = (_offset == 0 ? -1000 : 0),
+          left: (Platform.isAndroid || Platform.isIOS) ? _offset = (_offset == 0 ? -800 : 0) : 0,
           height: MediaQuery.of(context).size.height,
           child: Image.asset('background.png', fit: BoxFit.cover),
         ),
@@ -65,22 +68,23 @@ class _MyHomePageState extends State<MyHomePage> {
               border: Border.all(color: Colors.white38, width: 6)),
 
               child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.5,
-                height: MediaQuery.of(context).size.width * 0.5,
+                width: 200,
+                height: 200,
 
                 child: ElevatedButton(
                   onPressed: _incrementCounter,
                   style: ButtonStyle(
                     shape: MaterialStateProperty.all(
-                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(100),)),
-                    minimumSize: MaterialStateProperty.all(MediaQuery.of(context).size * 0.4),
-                    maximumSize: MaterialStateProperty.all(MediaQuery.of(context).size * 0.6),
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(110),)),
+                    minimumSize: MaterialStateProperty.all(MediaQuery.of(context).size * 0.2),
+                    maximumSize: MaterialStateProperty.all(MediaQuery.of(context).size * 0.5),
                     backgroundColor: MaterialStateProperty.all(Colors.blueGrey),
                   ),
 
-                  child: Text(isOn ? 'ON' : "OFF",
+                  child: AutoSizeText(isOn ? 'ON' : "OFF",
                     style: const TextStyle(
-                    fontSize: 40, color: Colors.white)
+                      fontSize: 30, color: Colors.white),
+                      maxLines: 1
                   )
                 )
               )
