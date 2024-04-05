@@ -30,15 +30,20 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  qr_flutter: ^4.1.0
+  qr_code_scanner: ^1.0.1
 
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
+  auto_size_text: ^3.0.0
+  mobile_scanner: ^4.0.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

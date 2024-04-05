@@ -1,7 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'dart:io' show Platform;
-
 
 //TODO: find how to synchronize width of the background with the current window size.
 // Now it shows background with width which was on application launch
@@ -26,6 +27,42 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class QRViewExample extends StatefulWidget {
+  @override
+  _QRViewExampleState createState() => _QRViewExampleState();
+}
+
+class _QRViewExampleState extends State<QRViewExample> {
+  late Barcode result;
+  late QRViewController controller;
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: QRView(
+        key: GlobalKey(),
+        onQRViewCreated: _onQRViewCreated,
+      ),
+    );
+  }
+
+  void _onQRViewCreated(QRViewController controller) {
+    this.controller = controller;
+    controller.scannedDataStream.listen((scanData) {
+      setState(() {
+        result = scanData;
+        // You can handle the scanned QR code data here
+      });
+    });
+  }
+}
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
@@ -37,7 +74,14 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   bool isOn = false;
+  bool isScanning = false;
   double _offset = 0.0;
+
+  void scan() {
+    setState(() {
+      isScanning = !isScanning;
+    });
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -97,7 +141,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     padding: EdgeInsets.only(top: 100),
                     child: SizedBox(
                         height: 100,
-                        width: 400,
+                        width: 380,
                         child: TextField(
                           maxLines: null,
                           style: TextStyle(
@@ -106,14 +150,42 @@ class _MyHomePageState extends State<MyHomePage> {
                             height: 2.5,
                           ),
                           decoration: InputDecoration(
-                            border: OutlineInputBorder(),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10)), // Set border radius
+                              borderSide: BorderSide(
+                                color: Colors.blue, // Set border color
+                                width: 1.0, // Set border width
+                              ),
+                            ),
                             labelText: 'ENTER CONFIG',
                             labelStyle: TextStyle(color: Colors.blueGrey),
                             fillColor: Colors.white12,
                             filled: true,
                           ),
-                        )))
-              ]))
+                        ))),
+                Platform.isAndroid
+                    ? Container(
+                        child: isScanning
+                            ? Container(
+                                height: 200, width: 200, child: QRViewExample())
+                            : ElevatedButton(
+                                style: ButtonStyle(
+                                    minimumSize: MaterialStateProperty.all(
+                                        Size(200, 50)),
+                                    backgroundColor: MaterialStateProperty.all(
+                                        Colors.blueGrey),
+                                    shape: MaterialStateProperty.all(
+                                        RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ))),
+                                onPressed: scan,
+                                child: AutoSizeText("SCAN CONFIG QR",
+                                    style: const TextStyle(
+                                        fontSize: 10, color: Colors.white),
+                                    maxLines: 1),
+                              ))
+                    : Container()
+              ])),
         ]));
   }
 }
