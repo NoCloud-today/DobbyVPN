@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
@@ -28,6 +27,8 @@ class MyApp extends StatelessWidget {
 }
 
 class QRViewExample extends StatefulWidget {
+  const QRViewExample({super.key});
+
   @override
   _QRViewExampleState createState() => _QRViewExampleState();
 }
@@ -166,12 +167,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 Platform.isAndroid
                     ? Container(
                         child: isScanning
-                            ? Container(
+                            ? const SizedBox(
                                 height: 200, width: 200, child: QRViewExample())
                             : ElevatedButton(
                                 style: ButtonStyle(
                                     minimumSize: MaterialStateProperty.all(
-                                        Size(200, 50)),
+                                        const Size(200, 50)),
                                     backgroundColor: MaterialStateProperty.all(
                                         Colors.blueGrey),
                                     shape: MaterialStateProperty.all(
@@ -179,8 +180,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                       borderRadius: BorderRadius.circular(20),
                                     ))),
                                 onPressed: scan,
-                                child: AutoSizeText("SCAN CONFIG QR",
-                                    style: const TextStyle(
+                                child: const AutoSizeText("SCAN CONFIG QR",
+                                    style: TextStyle(
                                         fontSize: 10, color: Colors.white),
                                     maxLines: 1),
                               ))
