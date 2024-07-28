@@ -35,11 +35,6 @@ jobs:
           mv dobby_client linux_client/client
           zip -r linux_client.zip linux_client
 
-  release:
-    needs: [build]
-    runs-on: ubuntu-latest
-    
-    steps:
       - name: Linux release
         uses: svenstaro/upload-release-action@v2
         with:
