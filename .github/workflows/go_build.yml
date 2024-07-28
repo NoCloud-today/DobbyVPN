@@ -1,25 +1,51 @@
-# workflow name
-name: Generate release-artifacts
+name: Go
 
-# on events
 on:
   release:
     types: 
-        - created
+      - created
 
-# workflow tasks
 jobs:
-  generate:
-    name: Generate cross-platform builds
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ '1.22.5' ]
+
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v2
-      - name: Generate build files
-        uses: thatisuday/go-cross-build@v1
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-            platforms: 'linux/amd64, windows/amd64, android/amd64'
-            package: 'demo'
-            name: 'program'
-            compress: 'true'
-            dest: 'dist'
+          go-version: '1.22.x'
+      - name: Install dependencies
+        run: |
+          go get .
+          sudo apt-get install golang gcc libgl1-mesa-dev xorg-dev
+
+      - name: Get linux ck-client
+        run: |
+          wget https://github.com/cbeuw/Cloak/releases/download/v2.9.0/ck-client-linux-amd64-v2.9.0
+      - name: Linux build
+        run: go build -o dobby_client -v ./...
+      - name: Make linux zip
+        run: |
+          mkdir linux_client
+          mv ck-client-linux-amd64-v2.9.0 linux_client/ck-client
+          mv dobby_client linux_client/client
+          zip -r linux_client.zip linux_client
+
+  release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Linux release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: linux_client.zip
+          asset_name: linux_client.zip
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: "Linux release"
