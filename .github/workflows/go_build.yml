@@ -38,7 +38,8 @@ jobs:
       - name: Linux release
         uses: svenstaro/upload-release-action@v2
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          repo_name: NoCloud-today/DobbyVPN
+          repo_token: ${{ secrets.YOUR_PERSONAL_ACCESS_TOKEN }}
           file: linux_client.zip
           asset_name: linux_client.zip
           tag: ${{ github.ref }}
