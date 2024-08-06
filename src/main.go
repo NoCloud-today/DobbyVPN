@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"os/exec"
 
 	"fyne.io/fyne/v2/app"
@@ -16,8 +17,11 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("DobbyVPN")
 
-	statusLabel := widget.NewLabel("Not connected")
 	connected := false
+	statusLabel := widget.NewLabel("Not connected")
+	configInput := widget.NewEntry()
+	configInput.MultiLine = true
+	configInput.SetPlaceHolder("Input config...")
 	var connectBtn *widget.Button
 	connectBtn = widget.NewButton("Connect", func() {
 		if connected {
@@ -27,6 +31,14 @@ func main() {
 			connectBtn.SetText("Connect")
 			statusLabel.SetText("Not connected")
 		} else {
+			if configInput.Text != "" {
+				f, err := os.Create(config_path)
+				if err != nil {
+					panic(err)
+				}
+				f.WriteString(configInput.Text)
+				f.Close()
+			}
 			connectBtn.SetText("Connecting...")
 			start_cloak()
 			connected = true
@@ -34,9 +46,6 @@ func main() {
 			statusLabel.SetText("Connected")
 		}
 	})
-	configInput := widget.NewEntry()
-	configInput.MultiLine = true
-	configInput.SetPlaceHolder("Input config...")
 
 	w.SetContent(container.NewVBox(
 		connectBtn,
