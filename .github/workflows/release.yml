@@ -1,0 +1,166 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  cross_build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ '1.22.5' ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+      - name: Install dependencies
+        run: |
+          go get .
+          sudo apt-get install golang gcc libgl1-mesa-dev xorg-dev
+          sudo apt-get install gcc-multilib
+          sudo apt-get install gcc-mingw-w64
+      - name: Clone Cloak
+        run: git clone https://github.com/cbeuw/Cloak
+
+      - name: Build windows ck-client
+        run: |
+          cd Cloak
+          GOOS=windows GOARCH=386 CGO_ENABLED=1 CXX=i686-w64-mingw32-g++ CC=i686-w64-mingw32-gcc go build -o ../ck-client.exe ./cmd/ck-client
+          cd ..
+      - name: Windows build
+        run: |
+          GOOS=windows GOARCH=386 CGO_ENABLED=1 CXX=i686-w64-mingw32-g++ CC=i686-w64-mingw32-gcc go build -o dobby_client.exe
+      - name: Make windows zip
+        run: |
+          mkdir windows_client
+          mv ck-client.exe windows_client/ck-client.exe
+          mv dobby_client.exe windows_client/client.exe
+          zip -r windows_client.zip windows_client
+      - name: Upload Windows client
+        uses: actions/upload-artifact@master
+        with:
+          name: windows_client.zip
+          path: .
+
+      - name: Build linux ck-client
+        run: |
+          cd Cloak
+          go build -o ../ck-client ./cmd/ck-client
+          cd ..
+      - name: Linux build
+        run: go build -o dobby_client -v ./...
+      - name: Make linux zip
+        run: |
+          mkdir linux_client
+          mv ck-client linux_client/ck-client
+          mv dobby_client linux_client/client
+          zip -r linux_client.zip linux_client
+      - name: Upload Linux client
+        uses: actions/upload-artifact@master
+        with:
+          name: linux_client.zip
+          path: .
+
+  macos_build:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        go-version: [ '1.22.5' ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+      - name: Clone Cloak
+        run: git clone https://github.com/cbeuw/Cloak
+
+      - name: Build macos ck-client
+        run: |
+          cd Cloak
+          go build -o ../ck-client ./cmd/ck-client
+          cd ..
+      - name: MacOs build
+        run:
+          go build -o dobby_client ./...
+      - name: Make macos zip
+        run: |
+          mkdir macos_client
+          mv ck-client macos_client/ck-client
+          mv dobby_client macos_client/client
+          zip -r macos_client.zip macos_client
+      - name: Upload MacOs client
+        uses: actions/upload-artifact@master
+        with:
+          name: macos_client.zip
+          path: .
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [cross_build, macos_build]
+
+    steps:
+      - name: Download linux client
+        uses: actions/download-artifact@master
+        with:
+          name: linux_client.zip
+          path: .
+      - name: Download windows client
+        uses: actions/download-artifact@master
+        with:
+          name: windows_client.zip
+          path: .
+      - name: Download macos client
+        uses: actions/download-artifact@master
+        with:
+          name: macos_client.zip
+          path: .
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Linux Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./linux_client.zip
+          asset_name: linux_client.zip
+          asset_content_type: application/zip
+
+      - name: Upload Windows Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./windows_client.zip
+          asset_name: windows_client.zip
+          asset_content_type: application/zip
+
+      - name: Upload MacOs Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./macos_client.zip
+          asset_name: macos_client.zip
+          asset_content_type: application/zip
