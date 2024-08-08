@@ -33,7 +33,7 @@ jobs:
       - name: Build windows ck-client
         run: |
           cd Cloak
-          GOOS=windows GOARCH=386 CGO_ENABLED=1 CXX=i686-w64-mingw32-g++ CC=i686-w64-mingw32-gcc go build -o ../ck-client.exe ./cmd/ck-client ./...
+          GOOS=windows GOARCH=386 CGO_ENABLED=1 CXX=i686-w64-mingw32-g++ CC=i686-w64-mingw32-gcc go build -o ../ck-client.exe ./cmd/ck-client
           cd ..
       - name: Windows build
         run: |
