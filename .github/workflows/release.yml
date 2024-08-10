@@ -109,9 +109,6 @@ jobs:
     permissions: write-all
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -122,9 +119,6 @@ jobs:
           release_name: First release
           draft: false
           prerelease: false
-
-      - name: Check
-        run: ls
 
       - name: Download linux client
         uses: actions/download-artifact@master
