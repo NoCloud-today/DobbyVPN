@@ -40,7 +40,7 @@ jobs:
         run: |
           mkdir windows_client
           mv ck-client.exe windows_client/ck-client.exe
-          mv dobby_client.exe windows_client/client.exe
+          mv dobby_client.exe windows_client/client-${{ github.ref_name }}.exe
           zip -r windows_client.zip windows_client
       - name: Upload Windows client
         uses: actions/upload-artifact@master
@@ -59,7 +59,7 @@ jobs:
         run: |
           mkdir linux_client
           mv ck-client linux_client/ck-client
-          mv dobby_client linux_client/client
+          mv dobby_client linux_client/client-${{ github.ref_name }}
           zip -r linux_client.zip linux_client
       - name: Upload Linux client
         uses: actions/upload-artifact@master
@@ -95,7 +95,7 @@ jobs:
         run: |
           mkdir macos_client
           mv ck-client macos_client/ck-client
-          mv dobby_client macos_client/client
+          mv dobby_client macos_client/client-${{ github.ref_name }}
           zip -r macos_client.zip macos_client
       - name: Upload MacOs client
         uses: actions/upload-artifact@master
