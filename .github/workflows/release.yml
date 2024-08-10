@@ -2,8 +2,8 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+#    tags:
+#      - 'v*'
 
 jobs:
   cross_build:
@@ -115,8 +115,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          tag_name: v0.0.1
+          release_name: v0.0.1
           draft: false
           prerelease: false
 
