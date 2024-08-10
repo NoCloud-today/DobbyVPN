@@ -46,7 +46,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: windows_client.zip
-          path: .
+          path: windows_client.zip
 
       - name: Build linux ck-client
         run: |
@@ -65,7 +65,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: linux_client.zip
-          path: .
+          path: linux_client.zip
 
   macos_build:
     runs-on: macos-latest
@@ -101,7 +101,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: macos_client.zip
-          path: .
+          path: macos_client.zip
 
   release:
     runs-on: ubuntu-latest
@@ -118,7 +118,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: Linux
+          tag_name: Release
           release_name: First release
           draft: false
           prerelease: false
@@ -127,19 +127,19 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: linux_client.zip
-          path: .
+          path: linux_client.zip
           
       - name: Download windows client
         uses: actions/download-artifact@master
         with:
           name: windows_client.zip
-          path: .
+          path: windows_client.zip
           
       - name: Download macos client
         uses: actions/download-artifact@master
         with:
           name: macos_client.zip
-          path: .
+          path: macos_client.zip
 
       - name: Upload Linux Release Asset
         uses: actions/upload-release-asset@v1
