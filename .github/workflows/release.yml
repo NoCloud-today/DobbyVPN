@@ -46,7 +46,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: windows_client.zip
-          path: windows_client.zip
+          path: .
 
       - name: Build linux ck-client
         run: |
@@ -65,7 +65,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: linux_client.zip
-          path: linux_client.zip
+          path: .
 
   macos_build:
     runs-on: macos-latest
@@ -101,7 +101,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: macos_client.zip
-          path: macos_client.zip
+          path: .
 
   release:
     runs-on: ubuntu-latest
@@ -123,23 +123,26 @@ jobs:
           draft: false
           prerelease: false
 
+      - name: Check
+        run: ls
+
       - name: Download linux client
         uses: actions/download-artifact@master
         with:
           name: linux_client.zip
-          path: linux_client.zip
+          path: .
           
       - name: Download windows client
         uses: actions/download-artifact@master
         with:
           name: windows_client.zip
-          path: windows_client.zip
+          path: .
           
       - name: Download macos client
         uses: actions/download-artifact@master
         with:
           name: macos_client.zip
-          path: macos_client.zip
+          path: .
 
       - name: Upload Linux Release Asset
         uses: actions/upload-release-asset@v1
