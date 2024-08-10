@@ -118,8 +118,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v0.0.1#${{ env.RELEASE_VERSION }}
-          release_name: v0.0.1#${{ env.RELEASE_VERSION }}
+          tag_name: Release#${{ env.RELEASE_VERSION }}
+          release_name: First release#${{ env.RELEASE_VERSION }}
           draft: false
           prerelease: false
 
