@@ -128,11 +128,13 @@ jobs:
         with:
           name: linux_client.zip
           path: .
+          
       - name: Download windows client
         uses: actions/download-artifact@master
         with:
           name: windows_client.zip
           path: .
+          
       - name: Download macos client
         uses: actions/download-artifact@master
         with:
