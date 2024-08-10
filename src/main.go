@@ -58,7 +58,7 @@ func main() {
 
 
 func start_cloak() {
-	cmnd := exec.Command("./ck-client", "-l", "1984", "-s", "0.0.0.0", "-u", "-c", config_path)
+	cmnd := exec.Command("./ck-client", "-l", "1984", "-u", "-c", config_path)
 	cmnd.Start()
 }
 
