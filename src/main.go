@@ -17,6 +17,7 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("DobbyVPN")
 
+	var cmd *exec.Cmd
 	connected := false
 	statusLabel := widget.NewLabel("Not connected")
 	configInput := widget.NewEntry()
@@ -26,7 +27,7 @@ func main() {
 	connectBtn = widget.NewButton("Connect", func() {
 		if connected {
 			connectBtn.SetText("Disconnecting...")
-			stop_cloak()
+			cmd.Process.Kill()
 			connected = false
 			connectBtn.SetText("Connect")
 			statusLabel.SetText("Not connected")
@@ -40,7 +41,7 @@ func main() {
 				f.Close()
 			}
 			connectBtn.SetText("Connecting...")
-			start_cloak()
+			cmd = start_cloak()
 			connected = true
 			connectBtn.SetText("Disconnect")
 			statusLabel.SetText("Connected")
@@ -57,13 +58,8 @@ func main() {
 }
 
 
-func start_cloak() {
-	cmnd := exec.Command("./ck-client", "-u", "-c", config_path)
+func start_cloak() (cmnd *exec.Cmd) {
+	cmnd = exec.Command("./ck-client", "-u", "-c", config_path)
 	cmnd.Start()
-}
-
-
-func stop_cloak() {
-	cmnd := exec.Command("taskkill", "/im", "ck-client.exe", "/f")
-	cmnd.Start()
+	return
 }
