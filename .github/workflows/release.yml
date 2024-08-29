@@ -47,7 +47,7 @@ jobs:
         run: |
           mkdir windows_client
           mv Cloak/ck-client/ck-client.exe windows_client/ck-client.exe
-          zip -r windows_client.zip windows_client
+          tar.exe -a -c -f windows_client.zip windows_client
       - name: Upload Windows client
         uses: actions/upload-artifact@master
         with:
