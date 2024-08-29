@@ -137,13 +137,13 @@ jobs:
           fyne package -os darwin
           cd ../..
       - name: MacOs build
-        run:
-          go build -o dobby_client ./...
+        run: |
+          cd Cloak
+          cd ..
       - name: Make macos zip
         run: |
           mkdir macos_client
           mv Cloak/ck-client/ck-client.app macos_client/ck-client
-          mv dobby_client macos_client/client-${{ github.ref_name }}
           zip -r macos_client.zip macos_client
       - name: Upload MacOs client
         uses: actions/upload-artifact@master
