@@ -89,6 +89,7 @@ jobs:
         run: |
           cd Cloak/ck-client
           fyne package -os linux
+          ls
           cd ../..
       - name: Linux build
         run: |
