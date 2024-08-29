@@ -111,6 +111,7 @@ func main() {
 	connectButton := widget.NewButton("Connect", func() {
 		connectionLock.Lock()
 		defer connectionLock.Unlock()
+		
 
 		//if connected {
 		//	showMessage("Error", "Already connected", w)

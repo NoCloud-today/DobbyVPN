@@ -21,7 +21,9 @@ jobs:
           go-version: '1.22.x'
       - name: Install dependencies
         run: |
+          cd src
           go get ./...
+          cd ..
           sudo apt-get install golang gcc libgl1-mesa-dev xorg-dev
           sudo apt-get install gcc-multilib
           sudo apt-get install gcc-mingw-w64
