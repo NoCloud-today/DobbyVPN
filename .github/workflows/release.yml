@@ -35,6 +35,7 @@ jobs:
           cp -r ck-client Cloak
           cd Cloak/ck-client
           go mod tidy
+          go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
 
       - name: Build windows ck-client
