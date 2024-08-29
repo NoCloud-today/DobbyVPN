@@ -89,7 +89,6 @@ jobs:
         run: |
           cd Cloak/ck-client
           fyne package -os linux
-          ls
           cd ../..
       - name: Linux build
         run: |
@@ -98,7 +97,7 @@ jobs:
       - name: Make linux zip
         run: |
           mkdir linux_client
-          mv Cloak/ck-client/ck-client.tar.gz linux_client/ck-client
+          mv Cloak/ck-client/ck-client.tar.xz linux_client/ck-client
           zip -r linux_client.zip linux_client
       - name: Upload Linux client
         uses: actions/upload-artifact@master
@@ -129,6 +128,7 @@ jobs:
           cp -r ck-client Cloak
           cd Cloak/ck-client
           go mod tidy
+          go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
 
       - name: Build macos ck-client
