@@ -1,6 +1,9 @@
 package main
 
 import (
+        "fmt"
+	"io"
+	"log"
 	"context"
 	"encoding/binary"
 	"encoding/json"
@@ -18,10 +21,18 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/cbeuw/Cloak/internal/common"
-
 	"github.com/cbeuw/Cloak/internal/client"
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
 )
+
+var logging = &struct {
+	Debug, Info, Warn, Err *log.Logger
+}{
+	Debug: log.New(io.Discard, "[DEBUG] ", log.LstdFlags),
+	Info:  log.New(os.Stdout, "[INFO] ", log.LstdFlags),
+	Warn:  log.New(os.Stderr, "[WARN] ", log.LstdFlags),
+	Err:   log.New(os.Stderr, "[ERROR] ", log.LstdFlags),
+}
 
 const configFileName = "config.json"
 
@@ -55,9 +66,31 @@ func (s *Server) Stop() {
 	s.wg.Wait()
 }
 
+const keyFileName = "shadowsocks_key.txt"
+
+func loadKey() string {
+    if _, err := os.Stat(keyFileName); os.IsNotExist(err) {  
+        return ""
+    }
+    data, err := ioutil.ReadFile(keyFileName)
+    if err != nil {
+        fmt.Println("Error reading key file:", err)
+        return ""
+    }
+    return string(data)
+}
+
+func saveKey(key string) error {
+    return ioutil.WriteFile(keyFileName, []byte(key), 0644)
+}
+
+var cancelFunc context.CancelFunc
+
 func main() {
 	a := app.New()
 	w := a.NewWindow("Cloak Client")
+
+        tabs := container.NewAppTabs()
 
 	var UID string
 	var connected bool
@@ -278,7 +311,7 @@ func main() {
 		showMessage("Disconnected", "You have been disconnected.", w)
 	})
 
-	form := container.NewVBox(
+	ckClientContent := container.NewVBox(
 		widget.NewLabel("Enter JSON-config:"),
 		configEntry,
 		widget.NewLabel("Local Host:"),
@@ -291,7 +324,81 @@ func main() {
 		statusLabel,
 	)
 
-	w.SetContent(form)
-	w.Resize(fyne.NewSize(800, 600))
+	ckClientTab := container.NewTabItem("ck-client", ckClientContent)
+        tabs.Append(ckClientTab)
+
+        outlineKeyEntry := widget.NewEntry()
+        outlineKeyEntry.SetPlaceHolder("Enter Shadowsocks Key")
+
+        savedKey := loadKey()
+        outlineKeyEntry.SetText(savedKey)
+
+        outlineKeyEntry.OnChanged = func(key string) {
+            if err := saveKey(key); err != nil {
+                fmt.Println("Error saving key:", err)
+            } else {
+                fmt.Println("Key saved successfully")
+            }
+        }
+
+        outlineStatusLabel := widget.NewLabel("Not connected")
+
+        outlineConnectButton := widget.NewButton("Connect", func() {
+            key := outlineKeyEntry.Text
+            if key == "" {
+                showMessage("Error", "Please enter a valid Shadowsocks key", w)
+                return
+            }
+ 
+            keyPtr := &key
+
+            app := App{
+		TransportConfig: keyPtr,
+		RoutingConfig: &RoutingConfig{
+			TunDeviceName:        "outline233",
+			TunDeviceIP:          "10.233.233.1",
+			TunDeviceMTU:         1500, // todo: read this from netlink
+			TunGatewayCIDR:       "10.233.233.2/32",
+			RoutingTableID:       233,
+			RoutingTablePriority: 23333,
+			DNSServerIP:          "9.9.9.9",
+		},
+	    }
+
+            ctx1, cancel := context.WithCancel(context.Background())
+            cancelFunc = cancel
+
+            go func() {
+	        if err := app.Run(ctx1); err != nil {
+		        logging.Err.Printf("%v\n", err)
+	        }
+            }()
+
+            outlineStatusLabel.SetText("Connected")
+            showMessage("Connected", "You are now connected via Outline.", w)
+        })
+
+        outlineDisconnectButton := widget.NewButton("Disconnect", func() {
+            if cancelFunc != nil {
+                cancelFunc()
+                cancelFunc = nil
+            }
+
+            outlineStatusLabel.SetText("Not connected")
+            showMessage("Disconnected", "You have been disconnected from Outline.", w)
+        })
+
+        outlineClientContent := container.NewVBox(
+            widget.NewLabel("Shadowsocks Key:"),
+            outlineKeyEntry,
+            outlineConnectButton,
+            outlineDisconnectButton,
+            outlineStatusLabel,
+        )
+        outlineClientTab := container.NewTabItem("Outline-Client", outlineClientContent)
+        tabs.Append(outlineClientTab)
+
+        w.SetContent(tabs)
+	w.Resize(fyne.NewSize(600, 400))
 	w.ShowAndRun()
 }
