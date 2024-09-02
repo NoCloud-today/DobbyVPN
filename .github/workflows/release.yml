@@ -34,6 +34,7 @@ jobs:
           cp ck-client/Icon.png Cloak/Windows
           cp ck-client/log_android.go Cloak/Windows
           cp ck-client/outline_device.go Cloak/Windows
+          cp ck-client/outline_packet_proxy.go Cloak/Windows
           cp ck-client/protector.go Cloak/Windows
           cd Cloak/Windows
           go mod tidy
