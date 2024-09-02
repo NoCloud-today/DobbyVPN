@@ -45,6 +45,7 @@ jobs:
         run: |
           cd Cloak/Windows
           fyne package -os windows
+          dir
           cd ../..
       - name: Windows build
         run: |
