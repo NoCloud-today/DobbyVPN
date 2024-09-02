@@ -28,15 +28,21 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          cp -r ck-client Cloak
-          cd Cloak/ck-client
+          cp -r ck-client/Windows Cloak
+          cp ck-client/app.go Cloak/Windows
+          cp ck-client/ck-client.go Cloak/Windows
+          cp ck-client/Icon.png Cloak/Windows
+          cp ck-client/log_android.go Cloak/Windows
+          cp ck-client/outline_device.go Cloak/Windows
+          cp ck-client/protector.go Cloak/Windows
+          cd Cloak/Windows
           go mod tidy
           go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
 
       - name: Build windows ck-client
         run: |
-          cd Cloak/ck-client
+          cd Cloak/Windows
           fyne package -os windows
           cd ../..
       - name: Windows build
@@ -46,7 +52,7 @@ jobs:
       - name: Make windows zip
         run: |
           mkdir windows_client
-          mv Cloak/ck-client/ck-client.exe windows_client/ck-client.exe
+          mv Cloak/Windows/ck-client.exe windows_client/ck-client.exe
           tar.exe -a -c -f windows_client.zip windows_client
       - name: Upload Windows client
         uses: actions/upload-artifact@master
@@ -80,7 +86,8 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          cp -r ck-client Cloak
+          cp -r ck-client/Windows Cloak
+          cp -r ck-client/app.go Cloak/Windows
           cd Cloak/ck-client
           go mod tidy
           go install fyne.io/fyne/v2/cmd/fyne@latest
