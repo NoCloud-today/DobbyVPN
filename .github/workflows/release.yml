@@ -45,7 +45,6 @@ jobs:
         run: |
           cd Cloak/Windows
           fyne package -os windows
-          dir
           cd ../..
       - name: Windows build
         run: |
@@ -54,7 +53,7 @@ jobs:
       - name: Make windows zip
         run: |
           mkdir windows_client
-          mv Cloak/Windows/ck-client.exe windows_client/ck-client.exe
+          mv Cloak/Windows/Windows.exe windows_client/Windows.exe
           tar.exe -a -c -f windows_client.zip windows_client
       - name: Upload Windows client
         uses: actions/upload-artifact@master
@@ -88,16 +87,23 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          cp -r ck-client/Windows Cloak
-          cp -r ck-client/app.go Cloak/Windows
-          cd Cloak/ck-client
+          cp -r ck-client/Linux Cloak
+          cp ck-client/app.go Cloak/Linux
+          cp ck-client/ck-client.go Cloak/Linux
+          cp ck-client/Icon.png Cloak/Linux
+          cp ck-client/log_android.go Cloak/Linux
+          cp ck-client/outline_device.go Cloak/Linux
+          cp ck-client/outline_packet_proxy.go Cloak/Linux
+          cp ck-client/protector.go Cloak/Linux
+          cd Cloak/Linux
           go mod tidy
           go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
       - name: Build linux ck-client
         run: |
-          cd Cloak/ck-client
+          cd Cloak/Linux
           fyne package -os linux
+          ls
           cd ../..
       - name: Linux build
         run: |
@@ -106,7 +112,7 @@ jobs:
       - name: Make linux zip
         run: |
           mkdir linux_client
-          mv Cloak/ck-client/ck-client.tar.xz linux_client/ck-client.tar.xz
+          mv Cloak/Linux/Linux.tar.xz linux_client/Linux.tar.xz
           zip -r linux_client.zip linux_client
       - name: Upload Linux client
         uses: actions/upload-artifact@master
@@ -134,15 +140,22 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          cp -r ck-client Cloak
-          cd Cloak/ck-client
+          cp -r ck-client/MacOs Cloak
+          cp ck-client/app.go Cloak/MacOs
+          cp ck-client/ck-client.go Cloak/MacOs
+          cp ck-client/Icon.png Cloak/MacOs
+          cp ck-client/log_android.go Cloak/MacOs
+          cp ck-client/outline_device.go Cloak/MacOs
+          cp ck-client/outline_packet_proxy.go Cloak/MacOs
+          cp ck-client/protector.go Cloak/MacOs
+          cd Cloak/MacOs
           go mod tidy
           go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
 
       - name: Build macos ck-client
         run: |
-          cd Cloak/ck-client
+          cd Cloak/MacOs
           fyne package -os darwin
           cd ../..
       - name: MacOs build
@@ -152,7 +165,7 @@ jobs:
       - name: Make macos zip
         run: |
           mkdir macos_client
-          mv Cloak/ck-client/ck-client.app macos_client/ck-client.app
+          mv Cloak/MacOs/MacOs.app macos_client/MacOs.app
           zip -r macos_client.zip macos_client
       - name: Upload MacOs client
         uses: actions/upload-artifact@master
@@ -186,14 +199,21 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          cp -r ck-client Cloak
-          cd Cloak/ck-client
+          cp -r ck-client/Android Cloak
+          cp ck-client/app.go Cloak/Android
+          cp ck-client/ck-client.go Cloak/Android
+          cp ck-client/Icon.png Cloak/Android
+          cp ck-client/log_android.go Cloak/Android
+          cp ck-client/outline_device.go Cloak/Android
+          cp ck-client/outline_packet_proxy.go Cloak/Android
+          cp ck-client/protector_android.go Cloak/Android
+          cd Cloak/Android
           go mod tidy
           go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
       - name: Build linux ck-client
         run: |
-          cd Cloak/ck-client
+          cd Cloak/Android
           fyne package -os android -appID com.example.DobbyVPN
           cd ../..
       - name: Android build
@@ -203,7 +223,7 @@ jobs:
       - name: Make Android zip
         run: |
           mkdir android_client
-          mv Cloak/ck-client/ck_client.apk android_client/ck-client.apk
+          mv Cloak/Android/Android.apk android_client/Android.apk
           zip -r android_client.zip android_client
       - name: Upload Android client
         uses: actions/upload-artifact@master
