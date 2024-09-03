@@ -5,14 +5,11 @@ package main
 import (
 	"fmt"
 	"io"
-	"os"
-	"os/signal"
 	"sync"
 
-	"golang.org/x/sys/unix"
 )
 
-func (app App) Run() error {
+func (app App) Run(ctx context.Context) error {
 	// this WaitGroup must Wait() after tun is closed
 	trafficCopyWg := &sync.WaitGroup{}
 	defer trafficCopyWg.Wait()
@@ -66,6 +63,5 @@ func (app App) Run() error {
     
         tun.Close()
         ss.Close()
-	logging.Info.Printf("received %v, terminating...\n", s)
 	return nil
 }
