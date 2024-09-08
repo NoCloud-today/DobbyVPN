@@ -20,9 +20,9 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/cbeuw/Cloak/client"
-	"github.com/cbeuw/Cloak/common"
-	mux "github.com/cbeuw/Cloak/multiplex"
+	"github.com/cbeuw/Cloak/internal/common"
+	"github.com/cbeuw/Cloak/internal/client"
+	mux "github.com/cbeuw/Cloak/internal/multiplex"
 )
 
 var logging = &struct {
