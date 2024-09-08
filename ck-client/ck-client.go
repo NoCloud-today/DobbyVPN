@@ -20,9 +20,9 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/cbeuw/Cloak/internal/common"
-	"github.com/cbeuw/Cloak/internal/client"
-	mux "github.com/cbeuw/Cloak/internal/multiplex"
+	"github.com/cbeuw/Cloak/client"
+	"github.com/cbeuw/Cloak/common"
+	mux "github.com/cbeuw/Cloak/multiplex"
 )
 
 var logging = &struct {
@@ -35,6 +35,41 @@ var logging = &struct {
 }
 
 const configFileName = "config.json"
+
+const combinedConfigFileName = "combined_config.json"
+const combinedKeyFileName = "combined_shadowsocks_key.txt"
+
+func saveCombinedConfig(config string) error {
+	configPath := filepath.Join(os.TempDir(), combinedConfigFileName)
+	return ioutil.WriteFile(configPath, []byte(config), 0644)
+}
+
+func loadCombinedConfig() (string, error) {
+	configPath := filepath.Join(os.TempDir(), combinedConfigFileName)
+	data, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+func saveCombinedKey(key string) error {
+	keyPath := filepath.Join(os.TempDir(), combinedKeyFileName)
+	return ioutil.WriteFile(keyPath, []byte(key), 0644)
+}
+
+func loadCombinedKey() (string, error) {
+	keyPath := filepath.Join(os.TempDir(), combinedKeyFileName)
+	if _, err := os.Stat(keyPath); os.IsNotExist(err) {
+		return "", nil
+	}
+	data, err := ioutil.ReadFile(keyPath)
+	if err != nil {
+		fmt.Println("Error reading combined key file:", err)
+		return "", nil
+	}
+	return string(data), nil
+}
 
 func saveConfig(config string) error {
 	configPath := filepath.Join(os.TempDir(), configFileName)
@@ -327,6 +362,8 @@ func main() {
 	ckClientTab := container.NewTabItem("ck-client", ckClientContent)
         tabs.Append(ckClientTab)
 
+//---------------------------------------------------------------------Outline-Client-----------------------------------------------------------------------
+
         outlineKeyEntry := widget.NewEntry()
         outlineKeyEntry.SetPlaceHolder("Enter Shadowsocks Key")
 
@@ -397,6 +434,231 @@ func main() {
         )
         outlineClientTab := container.NewTabItem("Outline-Client", outlineClientContent)
         tabs.Append(outlineClientTab)
+
+//---------------------------------------------------------------------Outline-Cloak-----------------------------------------------------------------------
+        combinedConfigEntry := widget.NewMultiLineEntry()
+        combinedConfigEntry.Wrapping = fyne.TextWrapWord
+        combinedConfigEntry.SetMinRowsVisible(10)
+
+        loadedCombinedConfig, err := loadCombinedConfig()
+        if err != nil {
+	    loadedCombinedConfig = loadedConfig
+	}
+        combinedConfigEntry.SetText(loadedCombinedConfig)
+        
+        combinedKeyEntry := widget.NewEntry()
+        combinedKeyEntry.SetPlaceHolder("Enter Shadowsocks Key")
+        savedCombinedKey, err := loadCombinedKey()
+        if err != nil {
+	}
+        combinedKeyEntry.SetText(savedCombinedKey)
+
+        combinedKeyEntry.OnChanged = func(key string) {
+	    if err := saveCombinedKey(key); err != nil {
+		fmt.Println("Error saving combined key:", err)
+	    } else {
+	        fmt.Println("Combined key saved successfully")
+	    }
+        }
+        
+        combinedStatusLabel := widget.NewLabel("Not connected")
+        
+        combinedConnectButton := widget.NewButton("Connect", func() {
+            configText := combinedConfigEntry.Text
+            key := combinedKeyEntry.Text
+        
+            if key == "" {
+                showMessage("Error", "Please enter a valid Shadowsocks key", w)
+                return
+            }
+        
+            err := saveConfig(configText)
+            if err != nil {
+                dialog.ShowError(errors.New("Failed to save config: "+err.Error()), w)
+                return
+            }
+        
+            var rawConfig client.RawConfig
+            err = json.Unmarshal([]byte(configText), &rawConfig)
+            if err != nil {
+                dialog.ShowError(errors.New("Invalid JSON input: "+err.Error()), w)
+                return
+            }
+        
+            rawConfig.LocalHost = localHostEntry.Text
+            rawConfig.LocalPort = localPortEntry.Text
+            rawConfig.UDP = udpEntry.Checked
+            UID = string((rawConfig.UID)[:])
+
+	    localConfig, remoteConfig, authInfo, err := rawConfig.ProcessRawConfig(common.RealWorldState)
+	    if err != nil {
+		dialog.ShowError(err, w)
+		return
+	    }
+
+	    var adminUID []byte
+	    if UID != "" {
+		adminUID = []byte(UID)
+	    }
+
+	    stopChan = make(chan struct{})
+	    ctx, cancel := context.WithCancel(context.Background())
+	    defer cancel()
+
+        
+            keyPtr := &key
+            app := App{
+                TransportConfig: keyPtr,
+                    RoutingConfig: &RoutingConfig{
+                    TunDeviceName:        "outline233",
+                    TunDeviceIP:          "10.233.233.1",
+                    TunDeviceMTU:         1500, // todo: read this from netlink
+                    TunGatewayCIDR:       "10.233.233.2/32",
+                    RoutingTableID:       233,
+                    RoutingTablePriority: 23333,
+                    DNSServerIP:          "9.9.9.9",
+                },
+            }
+        
+            ctx, cancel = context.WithCancel(context.Background())
+            cancelFunc = cancel
+        
+            go func() {
+                if err := app.Run(ctx); err != nil {
+                    logging.Err.Printf("%v\n", err)
+                }
+            }()
+
+            go func() {
+		defer func() {
+			connectionLock.Lock()
+			defer connectionLock.Unlock()
+			//connected = false
+			//statusLabel.SetText("Not connected")
+			//showMessage("Disconnected", "You have been disconnected.", w)
+		}()
+
+		var seshMaker func() *mux.Session
+		d := &net.Dialer{Control: protector, KeepAlive: remoteConfig.KeepAlive}
+
+		statusLabel.SetText("Connecting...")
+                if flag {
+                        currentSession.Close()
+                }
+
+		if adminUID != nil {
+			showMessage("API Base", "API base is "+localConfig.LocalAddr, w)
+			authInfo.UID = adminUID
+			authInfo.SessionId = 0
+			remoteConfig.NumConn = 1
+
+			seshMaker = func() *mux.Session {
+	                        if !connected {
+		                        authInfo.UID = []byte("")
+                                        authInfo.SessionId = 1
+	                        }
+                                if connected {
+                                        authInfo.UID = adminUID
+                                        authInfo.SessionId = 0
+                                }
+                                currentSession = client.MakeSession(remoteConfig, authInfo, d)
+			        return currentSession
+			}
+		} else {
+			var network string
+			if authInfo.Unordered {
+				network = "UDP"
+			} else {
+				network = "TCP"
+			}
+			showMessage("Listening", "Listening on "+network+" "+localConfig.LocalAddr+" for "+authInfo.ProxyMethod+" client", w)
+			seshMaker = func() *mux.Session {
+				authInfo := authInfo
+
+				randByte := make([]byte, 1)
+				common.RandRead(authInfo.WorldState.Rand, randByte)
+				authInfo.MockDomain = localConfig.MockDomainList[int(randByte[0])%len(localConfig.MockDomainList)]
+
+				quad := make([]byte, 4)
+				common.RandRead(authInfo.WorldState.Rand, quad)
+				authInfo.SessionId = binary.BigEndian.Uint32(quad)
+				currentSession = client.MakeSession(remoteConfig, authInfo, d)
+				return currentSession
+			}
+		}
+
+		connectionLock.Lock()
+		connected = true
+                flag = true
+		statusLabel.SetText("Connected")
+		connectionLock.Unlock()
+
+		showMessage("Connected", "You are now connected.", w)
+
+		if authInfo.Unordered {
+			showMessage("UDP", "UDP", w)
+			acceptor := func() (*net.UDPConn, error) {
+				udpAddr, _ := net.ResolveUDPAddr("udp", localConfig.LocalAddr)
+				udpConn, err = net.ListenUDP("udp", udpAddr)
+				return udpConn, err
+			}
+
+		        client.RouteUDP(acceptor, localConfig.Timeout, true, seshMaker)
+		} else {
+			showMessage("TCP", "TCP", w)
+			s.listener, err = net.Listen("tcp", localConfig.LocalAddr)
+			if err != nil {
+				dialog.ShowError(err, w)
+				return
+			}
+			s.wg.Add(1)
+
+			go func() {
+				select {
+				case <-ctx.Done():
+					return
+				}
+			}()
+
+			client.RouteTCP(s.listener, localConfig.Timeout, true, seshMaker)
+		}
+
+		select {
+		case <-stopChan:
+			return
+		case <-ctx.Done():
+			return
+		}
+	    }()
+        
+            combinedStatusLabel.SetText("Connected")
+            showMessage("Connected", "You are now connected.", w)
+        })
+        
+        combinedDisconnectButton := widget.NewButton("Disconnect", func() {
+            if cancelFunc != nil {
+                cancelFunc()
+                cancelFunc = nil
+            }
+
+            connected = false
+        
+            combinedStatusLabel.SetText("Not connected")
+            showMessage("Disconnected", "You have been disconnected.", w)
+        })
+        
+        combinedClientContent := container.NewVBox(
+            widget.NewLabel("Enter JSON-config:"),
+            combinedConfigEntry,
+            widget.NewLabel("Shadowsocks Key:"),
+            combinedKeyEntry,
+            combinedConnectButton,
+            combinedDisconnectButton,
+            combinedStatusLabel,
+        )
+        
+        combinedClientTab := container.NewTabItem("Combined Client", combinedClientContent)
+        tabs.Append(combinedClientTab)
 
         w.SetContent(tabs)
 	w.Resize(fyne.NewSize(600, 400))
