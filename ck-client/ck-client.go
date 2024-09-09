@@ -1,16 +1,16 @@
 package main
 
 import (
-        "fmt"
+	"fmt"
 	"io"
 	"log"
+	"os"
 	"context"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net"
-	"os"
 	"path/filepath"
 	"sync"
 
@@ -20,8 +20,8 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/cbeuw/Cloak/internal/common"
 	"github.com/cbeuw/Cloak/internal/client"
+	"github.com/cbeuw/Cloak/internal/common"
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
 )
 
@@ -85,8 +85,8 @@ func loadConfig() (string, error) {
 	return string(data), nil
 }
 
-func showMessage(title, message string, w fyne.Window) {
-	dialog.ShowInformation(title, message, w)
+func showMessage(message string) {
+	log.Printf(message)
 }
 
 type Server struct {
@@ -121,9 +121,24 @@ func saveKey(key string) error {
 
 var cancelFunc context.CancelFunc
 
+type LogWriter struct {
+	Output *widget.Entry
+}
+
+func (w *LogWriter) Write(p []byte) (n int, err error) {
+	w.Output.SetText(w.Output.Text + string(p))
+	return len(p), nil
+}
+
 func main() {
 	a := app.New()
 	w := a.NewWindow("Cloak Client")
+
+	logOutput := widget.NewMultiLineEntry()
+	logOutput.SetMinRowsVisible(10)
+
+	logWriter := &LogWriter{Output: logOutput}
+	log.SetOutput(logWriter)
 
         tabs := container.NewAppTabs()
 
@@ -186,7 +201,7 @@ func main() {
 		//	return
 		//}
 
-		showMessage("Info", "Connect button clicked", w)
+		showMessage("Connect button clicked")
 		configText := configEntry.Text
 
 		err := saveConfig(configText)
@@ -208,7 +223,7 @@ func main() {
 
 		UID = string((rawConfig.UID)[:])
 
-		showMessage("UID", "strUID: "+UID, w)
+		showMessage(UID)
 
 		localConfig, remoteConfig, authInfo, err := rawConfig.ProcessRawConfig(common.RealWorldState)
 		if err != nil {
@@ -221,7 +236,7 @@ func main() {
 			adminUID = []byte(UID)
 		}
 
-		showMessage("AdminUID", "AdminUID: "+string(adminUID), w)
+		showMessage(string(adminUID))
 
 		stopChan = make(chan struct{})
 		ctx, cancel := context.WithCancel(context.Background())
@@ -245,7 +260,7 @@ func main() {
                         }
 
 			if adminUID != nil {
-				showMessage("API Base", "API base is "+localConfig.LocalAddr, w)
+				showMessage(localConfig.LocalAddr)
 				authInfo.UID = adminUID
 				authInfo.SessionId = 0
 				remoteConfig.NumConn = 1
@@ -269,7 +284,7 @@ func main() {
 				} else {
 					network = "TCP"
 				}
-				showMessage("Listening", "Listening on "+network+" "+localConfig.LocalAddr+" for "+authInfo.ProxyMethod+" client", w)
+				showMessage("Listening on "+network+" "+localConfig.LocalAddr+" for "+authInfo.ProxyMethod+" client")
 				seshMaker = func() *mux.Session {
 					authInfo := authInfo
 
@@ -291,10 +306,10 @@ func main() {
 			statusLabel.SetText("Connected")
 			connectionLock.Unlock()
 
-			showMessage("Connected", "You are now connected.", w)
+			showMessage("You are now connected.")
 
 			if authInfo.Unordered {
-				showMessage("UDP", "UDP", w)
+				showMessage("UDP")
 				acceptor := func() (*net.UDPConn, error) {
 					udpAddr, _ := net.ResolveUDPAddr("udp", localConfig.LocalAddr)
 					udpConn, err = net.ListenUDP("udp", udpAddr)
@@ -303,7 +318,7 @@ func main() {
 
 				client.RouteUDP(acceptor, localConfig.Timeout, true, seshMaker)
 			} else {
-				showMessage("TCP", "TCP", w)
+				showMessage("TCP")
 				s.listener, err = net.Listen("tcp", localConfig.LocalAddr)
 				if err != nil {
 					dialog.ShowError(err, w)
@@ -343,7 +358,7 @@ func main() {
 
 		connected = false
 		statusLabel.SetText("Not connected")
-		showMessage("Disconnected", "You have been disconnected.", w)
+		showMessage("You have been disconnected.")
 	})
 
 	ckClientContent := container.NewVBox(
@@ -383,7 +398,7 @@ func main() {
         outlineConnectButton := widget.NewButton("Connect", func() {
             key := outlineKeyEntry.Text
             if key == "" {
-                showMessage("Error", "Please enter a valid Shadowsocks key", w)
+                showMessage("Please enter a valid Shadowsocks key")
                 return
             }
  
@@ -412,7 +427,7 @@ func main() {
             }()
 
             outlineStatusLabel.SetText("Connected")
-            showMessage("Connected", "You are now connected via Outline.", w)
+            showMessage("Connected: You are now connected via Outline.")
         })
 
         outlineDisconnectButton := widget.NewButton("Disconnect", func() {
@@ -422,7 +437,7 @@ func main() {
             }
 
             outlineStatusLabel.SetText("Not connected")
-            showMessage("Disconnected", "You have been disconnected from Outline.", w)
+            showMessage("Disconnected: You have been disconnected from Outline.")
         })
 
         outlineClientContent := container.NewVBox(
@@ -468,7 +483,7 @@ func main() {
             key := combinedKeyEntry.Text
         
             if key == "" {
-                showMessage("Error", "Please enter a valid Shadowsocks key", w)
+                showMessage("Error: Please enter a valid Shadowsocks key")
                 return
             }
         
@@ -547,7 +562,7 @@ func main() {
                 }
 
 		if adminUID != nil {
-			showMessage("API Base", "API base is "+localConfig.LocalAddr, w)
+			showMessage("API base is "+localConfig.LocalAddr)
 			authInfo.UID = adminUID
 			authInfo.SessionId = 0
 			remoteConfig.NumConn = 1
@@ -571,7 +586,7 @@ func main() {
 			} else {
 				network = "TCP"
 			}
-			showMessage("Listening", "Listening on "+network+" "+localConfig.LocalAddr+" for "+authInfo.ProxyMethod+" client", w)
+			showMessage("Listening on "+network+" "+localConfig.LocalAddr+" for "+authInfo.ProxyMethod+" client")
 			seshMaker = func() *mux.Session {
 				authInfo := authInfo
 
@@ -593,10 +608,10 @@ func main() {
 		statusLabel.SetText("Connected")
 		connectionLock.Unlock()
 
-		showMessage("Connected", "You are now connected.", w)
+		showMessage("You are now connected.")
 
 		if authInfo.Unordered {
-			showMessage("UDP", "UDP", w)
+			showMessage("UDP")
 			acceptor := func() (*net.UDPConn, error) {
 				udpAddr, _ := net.ResolveUDPAddr("udp", localConfig.LocalAddr)
 				udpConn, err = net.ListenUDP("udp", udpAddr)
@@ -605,7 +620,7 @@ func main() {
 
 		        client.RouteUDP(acceptor, localConfig.Timeout, true, seshMaker)
 		} else {
-			showMessage("TCP", "TCP", w)
+			showMessage("TCP")
 			s.listener, err = net.Listen("tcp", localConfig.LocalAddr)
 			if err != nil {
 				dialog.ShowError(err, w)
@@ -632,7 +647,7 @@ func main() {
 	    }()
         
             combinedStatusLabel.SetText("Connected")
-            showMessage("Connected", "You are now connected.", w)
+            showMessage("You are now connected.")
         })
         
         combinedDisconnectButton := widget.NewButton("Disconnect", func() {
@@ -644,7 +659,7 @@ func main() {
             connected = false
         
             combinedStatusLabel.SetText("Not connected")
-            showMessage("Disconnected", "You have been disconnected.", w)
+            showMessage("You have been disconnected.")
         })
         
         combinedClientContent := container.NewVBox(
@@ -659,6 +674,9 @@ func main() {
         
         combinedClientTab := container.NewTabItem("Combined Client", combinedClientContent)
         tabs.Append(combinedClientTab)
+
+        logTab := container.NewTabItem("Logs", logOutput)
+        tabs.Append(logTab)
 
         w.SetContent(tabs)
 	w.Resize(fyne.NewSize(600, 400))
