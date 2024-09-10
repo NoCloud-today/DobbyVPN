@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"fmt"
 	"os/exec"
 	"errors"
@@ -30,7 +31,7 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 		return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
 	}
 
-	fmt.Printf("Successfully created TUN/TAP device\n")
+	log.Printf("Successfully created TUN/TAP device\n")
 
 	defer func() {
 		if err != nil {
@@ -38,7 +39,7 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 		}
 	}()
 
-	fmt.Println("Tun successful")
+	log.Printf("Tun successful")
 
 	tunDev := &tunDevice{tun, tun.Name()}
 	// Uncomment and implement if needed
@@ -48,7 +49,7 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 	//if err := tunDev.bringUp(); err != nil {
 	//	return nil, fmt.Errorf("failed to bring up TUN/TAP device: %w", err)
 	//}
-	fmt.Printf("TUN device %s is configured with IP %s\n", tunDev.Interface.Name(), "10.0.85.2")
+	log.Printf("TUN device %s is configured with IP %s\n", tunDev.Interface.Name(), "10.0.85.2")
 	return tunDev, nil
 }
 

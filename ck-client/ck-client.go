@@ -148,7 +148,7 @@ func main() {
 	var connectionLock sync.Mutex
 
 	var currentSession *mux.Session
-	//var listener net.Listener
+	var listener net.Listener
 	var udpConn *net.UDPConn
 	var stopChan chan struct{}
 
@@ -192,8 +192,12 @@ func main() {
 	statusLabel := widget.NewLabel("Not connected")
 
 	connectButton := widget.NewButton("Connect", func() {
-		connectionLock.Lock()
-		defer connectionLock.Unlock()
+                defer func() {
+                    if r := recover(); r != nil {
+                        log.Printf("Recovered from panic in goroutine: %v", r)
+                        showMessage("An error occurred while connecting")
+                    }
+                }()
 		
 
 		//if connected {
@@ -202,6 +206,11 @@ func main() {
 		//}
 
 		showMessage("Connect button clicked")
+
+                stopChan = make(chan struct{})
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
 		configText := configEntry.Text
 
 		err := saveConfig(configText)
@@ -238,14 +247,16 @@ func main() {
 
 		showMessage(string(adminUID))
 
-		stopChan = make(chan struct{})
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+
+                log.Printf("Cloak starting")
 
 		go func() {
 			defer func() {
-				connectionLock.Lock()
-				defer connectionLock.Unlock()
+                                log.Printf("Cloak finish1")
+                                if r := recover(); r != nil {
+                                    log.Printf("Recovered from panic: %v", r)
+                                    showMessage("Error: An unexpected error occurred.")
+                                }
 				//connected = false
 				//statusLabel.SetText("Not connected")
 				//showMessage("Disconnected", "You have been disconnected.", w)
@@ -255,7 +266,7 @@ func main() {
 			d := &net.Dialer{Control: protector, KeepAlive: remoteConfig.KeepAlive}
 
 			statusLabel.SetText("Connecting...")
-                        if flag {
+                        if flag && currentSession != nil {
                                 currentSession.Close()
                         }
 
@@ -319,7 +330,7 @@ func main() {
 				client.RouteUDP(acceptor, localConfig.Timeout, true, seshMaker)
 			} else {
 				showMessage("TCP")
-				s.listener, err = net.Listen("tcp", localConfig.LocalAddr)
+				listener, err = net.Listen("tcp", localConfig.LocalAddr)
 				if err != nil {
 					dialog.ShowError(err, w)
 					return
@@ -333,7 +344,7 @@ func main() {
 					}
 				}()
 
-				client.RouteTCP(s.listener, localConfig.Timeout, true, seshMaker)
+				client.RouteTCP(listener, localConfig.Timeout, true, seshMaker)
 			}
 
 			select {
@@ -348,13 +359,16 @@ func main() {
 	disconnectButton := widget.NewButton("Disconnect", func() {
 		connectionLock.Lock()
 		defer connectionLock.Unlock()
+                log.Printf("Cloak finish2")
 
 		//if !connected {
 		//	showMessage("Error", "Not connected", w)
 		//	return
 		//}
 
-		currentSession.Close()
+		if flag && currentSession != nil {
+                        currentSession.Close()
+                }
 
 		connected = false
 		statusLabel.SetText("Not connected")
@@ -479,6 +493,14 @@ func main() {
         combinedStatusLabel := widget.NewLabel("Not connected")
         
         combinedConnectButton := widget.NewButton("Connect", func() {
+            defer func() {
+                if r := recover(); r != nil {
+                    log.Printf("Recovered from panic in goroutine: %v", r)
+                    showMessage("An error occurred while connecting")
+                }
+            }()
+
+            log.Println("Starting session...")
             configText := combinedConfigEntry.Text
             key := combinedKeyEntry.Text
         
@@ -548,6 +570,10 @@ func main() {
 		defer func() {
 			connectionLock.Lock()
 			defer connectionLock.Unlock()
+                        if r := recover(); r != nil {
+                            log.Printf("Recovered from panic: %v", r)
+                            showMessage("Error: An unexpected error occurred.")
+                        }
 			//connected = false
 			//statusLabel.SetText("Not connected")
 			//showMessage("Disconnected", "You have been disconnected.", w)
@@ -557,7 +583,7 @@ func main() {
 		d := &net.Dialer{Control: protector, KeepAlive: remoteConfig.KeepAlive}
 
 		statusLabel.SetText("Connecting...")
-                if flag {
+                if flag && currentSession != nil {
                         currentSession.Close()
                 }
 
@@ -628,22 +654,26 @@ func main() {
 			}
 			s.wg.Add(1)
 
-			go func() {
+			/*go func() {
 				select {
 				case <-ctx.Done():
 					return
 				}
-			}()
+			}()*/
 
+                        log.Printf("RouteTCP starting")
 			client.RouteTCP(s.listener, localConfig.Timeout, true, seshMaker)
+                        defer func() {
+			    log.Printf("RouteTCP stopping")
+		        }()
 		}
 
-		select {
+		/*select {
 		case <-stopChan:
 			return
 		case <-ctx.Done():
 			return
-		}
+		}*/
 	    }()
         
             combinedStatusLabel.SetText("Connected")
@@ -653,10 +683,13 @@ func main() {
         combinedDisconnectButton := widget.NewButton("Disconnect", func() {
             if cancelFunc != nil {
                 cancelFunc()
-                cancelFunc = nil
             }
 
             connected = false
+            
+            //if currentSession != nil {
+            //        currentSession.Close()
+            //}
         
             combinedStatusLabel.SetText("Not connected")
             showMessage("You have been disconnected.")

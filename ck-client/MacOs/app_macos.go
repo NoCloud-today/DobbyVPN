@@ -3,11 +3,12 @@
 package main
 
 import (
-        "context"
+	"context"
 	"fmt"
-	"io"
+	"log"
+	"os/exec"
 	"sync"
-
+	"time"
 )
 
 func (app App) Run(ctx context.Context) error {
@@ -38,7 +39,7 @@ func (app App) Run(ctx context.Context) error {
                     return
                 default:
 		    written, err := io.Copy(ss, tun)
-		    logging.Info.Printf("tun -> OutlineDevice stopped: %v %v\n", written, err)
+		    log.Printf("tun -> OutlineDevice stopped: %v %v\n", written, err)
                 }
 	}()
 	go func() {
@@ -51,11 +52,30 @@ func (app App) Run(ctx context.Context) error {
 		    logging.Info.Printf("OutlineDevice -> tun stopped: %v %v\n", written, err)
                 }
 	}()
+	
+	go func() {
+	    for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			cmd := exec.Command("netstat", "-rn")
+			output, err := cmd.Output()
+			if err != nil {
+				log.Printf("failed to execute netstat: %v", err)
+			} else {
+				log.Printf("Routing table:\n%s", string(output))
+			}
+			time.Sleep(6 * time.Second)
+		}
+	    }
+	}()
 
-	//if err := startRouting(ss.GetServerIP().String(), app.RoutingConfig); err != nil {
-	//	return fmt.Errorf("failed to configure routing: %w", err)
-	//}
-	//defer stopRouting(app.RoutingConfig.RoutingTableID)
+
+	if err := startRouting(ss.GetServerIP().String(), app.RoutingConfig); err != nil {
+		return fmt.Errorf("failed to configure routing: %w", err)
+	}
+	defer stopRouting(app.RoutingConfig.RoutingTableID)
 
 	trafficCopyWg.Wait()
 
