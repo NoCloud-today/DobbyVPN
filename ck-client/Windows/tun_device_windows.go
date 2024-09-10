@@ -7,6 +7,7 @@ import (
         "bytes"
 	"errors"
 	"fmt"
+        "log"
 	"net"
 	"sync"
 	"syscall"
@@ -358,7 +359,7 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 		return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
 	}
 
-        fmt.Printf("Successfully created TUN/TAP device\n")
+        log.Printf("Outline/newTunDevice: Successfully created TUN/TAP device\n")
 
 	defer func() {
 		if err != nil {
@@ -366,7 +367,7 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 		}
 	}()
 
-	fmt.Println("Tun successful")
+	log.Printf("Outline/newTunDevice: Tun successful")
 
 	tunDev := &tunDevice{tun, tun.name}
 	//if err := tunDev.configureSubnet(ip); err != nil {
@@ -375,7 +376,7 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 	//if err := tunDev.bringUp(); err != nil {
 	//	return nil, fmt.Errorf("failed to bring up TUN/TAP device: %w", err)
 	//}
-        fmt.Printf("TUN device %s is configured with IP %s\n", tunDev.Interface.name, "10.0.85.2")
+        log.Printf("Outline/newTunDevice: TUN device %s is configured with IP %s\n", tunDev.Interface.name, "10.0.85.2")
 	return tunDev, nil
 }
 
@@ -384,7 +385,7 @@ func (d *tunDevice) MTU() int {
 }
 
 func (d *tunDevice) configureSubnet(ip string) error {
-        fmt.Printf("Configuring subnet for TUN device %s with IP %s\n", d.name, ip)
+        log.Printf("Outline/newTunDevice: Configuring subnet for TUN device %s with IP %s\n", d.name, ip)
 	//subnet := ip + "/24"
 	var cmd *exec.Cmd
 	cmd = exec.Command("netsh", "interface", "ip", "set", "address", d.Interface.name, "static", ip, "255.255.255.0", "none")
@@ -393,18 +394,18 @@ func (d *tunDevice) configureSubnet(ip string) error {
 		return fmt.Errorf("failed to configure subnet: %w, output: %s", err, output)
 	}
         
-        fmt.Printf("Subnet configuration completed for TUN device %s\n", d.name)
+        log.Printf("Outline/newTunDevice: Subnet configuration completed for TUN device %s\n", d.name)
 	return nil
 }
 
 func (d *tunDevice) bringUp() error {
-        fmt.Printf("Bringing up TUN device %s\n", d.name)
+        log.Printf("Outline/newTunDevice: Bringing up TUN device %s\n", d.name)
 	var cmd *exec.Cmd
 	cmd = exec.Command("netsh", "interface", "set", "interface", d.Interface.name, "admin=ENABLED")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to bring up device: %w, output: %s", err, output)
 	}
-        fmt.Printf("TUN device %s is now active\n", d.name)
+        log.Printf("Outline/newTunDevice: TUN device %s is now active\n", d.name)
 	return nil
 }

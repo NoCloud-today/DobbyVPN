@@ -20,9 +20,9 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/cbeuw/Cloak/internal/client"
-	"github.com/cbeuw/Cloak/internal/common"
-	mux "github.com/cbeuw/Cloak/internal/multiplex"
+	"github.com/cbeuw/Cloak/client"
+	"github.com/cbeuw/Cloak/common"
+	mux "github.com/cbeuw/Cloak/multiplex"
 )
 
 var logging = &struct {
@@ -327,7 +327,7 @@ func main() {
 					return udpConn, err
 				}
 
-				client.RouteUDP(acceptor, localConfig.Timeout, true, seshMaker)
+				client.RouteUDP(acceptor, localConfig.Timeout, false, seshMaker)
 			} else {
 				showMessage("TCP")
 				listener, err = net.Listen("tcp", localConfig.LocalAddr)
@@ -344,6 +344,7 @@ func main() {
 					}
 				}()
 
+                                log.Printf("Starting Cloak")
 				client.RouteTCP(listener, localConfig.Timeout, true, seshMaker)
 			}
 
@@ -495,12 +496,12 @@ func main() {
         combinedConnectButton := widget.NewButton("Connect", func() {
             defer func() {
                 if r := recover(); r != nil {
-                    log.Printf("Recovered from panic in goroutine: %v", r)
-                    showMessage("An error occurred while connecting")
+                    log.Printf("DobbyVPN/ck-client: Recovered from panic in goroutine: %v", r)
+                    showMessage("DobbyVPN/ck-client: An error occurred while connecting")
                 }
             }()
 
-            log.Println("Starting session...")
+            log.Println("DobbyVPN/ck-client: Starting session...")
             configText := combinedConfigEntry.Text
             key := combinedKeyEntry.Text
         
@@ -571,7 +572,7 @@ func main() {
 			connectionLock.Lock()
 			defer connectionLock.Unlock()
                         if r := recover(); r != nil {
-                            log.Printf("Recovered from panic: %v", r)
+                            log.Printf("DobbyVPN/ck-client: Recovered from panic: %v", r)
                             showMessage("Error: An unexpected error occurred.")
                         }
 			//connected = false
@@ -588,10 +589,13 @@ func main() {
                 }
 
 		if adminUID != nil {
-			showMessage("API base is "+localConfig.LocalAddr)
+			showMessage("DobbyVPN/ck-client: API base is "+localConfig.LocalAddr)
 			authInfo.UID = adminUID
 			authInfo.SessionId = 0
 			remoteConfig.NumConn = 1
+                        log.Printf("DobbyVPN/ck-client: authInfo.UID = %x", authInfo.UID)
+                        log.Printf("DobbyVPN/ck-client: authInfo.SessionId = %d", authInfo.SessionId)
+                        
 
 			seshMaker = func() *mux.Session {
 	                        if !connected {
@@ -612,7 +616,7 @@ func main() {
 			} else {
 				network = "TCP"
 			}
-			showMessage("Listening on "+network+" "+localConfig.LocalAddr+" for "+authInfo.ProxyMethod+" client")
+			showMessage("DobbyVPN/ck-client: Listening on "+network+" "+localConfig.LocalAddr+" for "+authInfo.ProxyMethod+" client")
 			seshMaker = func() *mux.Session {
 				authInfo := authInfo
 
@@ -634,10 +638,10 @@ func main() {
 		statusLabel.SetText("Connected")
 		connectionLock.Unlock()
 
-		showMessage("You are now connected.")
+		showMessage("DobbyVPN/ck-client: You are now connected to Client.")
 
 		if authInfo.Unordered {
-			showMessage("UDP")
+			showMessage("DobbyVPN/ck-client: UDP")
 			acceptor := func() (*net.UDPConn, error) {
 				udpAddr, _ := net.ResolveUDPAddr("udp", localConfig.LocalAddr)
 				udpConn, err = net.ListenUDP("udp", udpAddr)
@@ -646,7 +650,8 @@ func main() {
 
 		        client.RouteUDP(acceptor, localConfig.Timeout, true, seshMaker)
 		} else {
-			showMessage("TCP")
+			showMessage("DobbyVPN/ck-client: TCP")
+                        showMessage("DobbyVPN/ck-client: localConfig.LocalAddr" + localConfig.LocalAddr)
 			s.listener, err = net.Listen("tcp", localConfig.LocalAddr)
 			if err != nil {
 				dialog.ShowError(err, w)
@@ -661,10 +666,12 @@ func main() {
 				}
 			}()*/
 
-                        log.Printf("RouteTCP starting")
-			client.RouteTCP(s.listener, localConfig.Timeout, true, seshMaker)
+                        log.Printf("DobbyVPN/ck-client.go: Enter the function RouteTCP")
+                        log.Printf("DobbyVPN/ck-client.go: localConfig.Timeout = %v", localConfig.Timeout)
+                        
+			client.RouteTCP(s.listener, localConfig.Timeout, false, seshMaker)
                         defer func() {
-			    log.Printf("RouteTCP stopping")
+			    log.Printf("DobbyVPN/ck-client: RouteTCP stopping")
 		        }()
 		}
 
@@ -677,7 +684,7 @@ func main() {
 	    }()
         
             combinedStatusLabel.SetText("Connected")
-            showMessage("You are now connected.")
+            showMessage("DobbyVPN/ck-client: You are now connected.")
         })
         
         combinedDisconnectButton := widget.NewButton("Disconnect", func() {

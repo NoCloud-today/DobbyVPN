@@ -129,6 +129,7 @@ func (app App) Run(ctx context.Context) error {
     if err != nil {
         return fmt.Errorf("failed to create OutlineDevice: %w", err)
     }
+    log.Printf("Create Device")
     defer ss.Close()
     
     if err := ss.Refresh(); err != nil {
@@ -167,8 +168,8 @@ func (app App) Run(ctx context.Context) error {
                     break
                 }
                 if n > 0 {
-                    log.Printf("Read %d bytes from tun\n", n)
-                    log.Printf("Data from tun: % x\n", buffer[:n])
+                    //log.Printf("Read %d bytes from tun\n", n)
+                    //log.Printf("Data from tun: % x\n", buffer[:n])
                     ipPacket, err := ExtractIPPacketFromEthernet(buffer[:n])
                     if err != nil {
                         //fmt.Println("Error:", err)
@@ -197,8 +198,8 @@ func (app App) Run(ctx context.Context) error {
                     break
                 }
                 if n > 0 {
-                  log.Printf("Read %d bytes from OutlineDevice\n", n)
-                  log.Printf("Data from OutlineDevice: % x\n", buf[:n])
+                  //log.Printf("Read %d bytes from OutlineDevice\n", n)
+                  //log.Printf("Data from OutlineDevice: % x\n", buf[:n])
 
                     ethernetPacket, err := CreateEthernetPacket(dst, src, buf[:n])
                     if err != nil {
@@ -223,7 +224,7 @@ func (app App) Run(ctx context.Context) error {
     
     trafficCopyWg.Wait()
 
-    log.Printf("received interrupt signal, terminating...\n")
+    log.Printf("Outline/app: received interrupt signal, terminating...\n")
     
     tun.Close()
     ss.Close()
