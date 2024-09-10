@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"sync"
 	"time"
+	"io"
 )
 
 func (app App) Run(ctx context.Context) error {

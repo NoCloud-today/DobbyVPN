@@ -3,11 +3,14 @@
 package main
 
 import (
-	"errors"
 	"log"
 )
 
 func startRouting(proxyIP string, config *RoutingConfig) error {
-	log.Printf("Routing")
+	log.Printf("Start routing")
 	return nil
+}
+
+func stopRouting(routingTable int) {
+	log.Printf("Stop routing")
 }
