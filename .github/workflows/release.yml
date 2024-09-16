@@ -197,7 +197,7 @@ jobs:
       - name: Android build
         run: |
           cd ck-android/CkClient
-          gradlew assembleDebug
+          ./gradlew assembleDebug
           cd ../..
       - name: Make Android zip
         run: |
