@@ -53,7 +53,7 @@ jobs:
       - name: Make windows zip
         run: |
           mkdir windows_client
-          mv Cloak/Windows/Windows.exe windows_client/Windows.exe
+          mv Cloak/Windows/Windows.exe windows_client/DobbyVPN.exe
           tar.exe -a -c -f windows_client.zip windows_client
       - name: Upload Windows client
         uses: actions/upload-artifact@master
@@ -112,7 +112,7 @@ jobs:
       - name: Make linux zip
         run: |
           mkdir linux_client
-          mv Cloak/Linux/Linux.tar.xz linux_client/Linux.tar.xz
+          mv Cloak/Linux/Linux.tar.xz linux_client/DobbyVPN.tar.xz
           zip -r linux_client.zip linux_client
       - name: Upload Linux client
         uses: actions/upload-artifact@master
@@ -165,7 +165,7 @@ jobs:
       - name: Make macos zip
         run: |
           mkdir macos_client
-          mv Cloak/MacOs/MacOs.app macos_client/MacOs.app
+          mv Cloak/MacOs/MacOs.app macos_client/DobbyVPN.app
           zip -r macos_client.zip macos_client
       - name: Upload MacOs client
         uses: actions/upload-artifact@master
@@ -194,36 +194,15 @@ jobs:
           sudo apt-get install golang gcc libgl1-mesa-dev xorg-dev
           sudo apt-get install gcc-multilib
           sudo apt-get install gcc-mingw-w64
-      - name: Clone Cloak and copying ck-client
-        run: |
-          git submodule add https://github.com/cbeuw/Cloak
-          git submodule init
-          git submodule update
-          cp -r ck-client/Android Cloak
-          cp ck-client/app.go Cloak/Android
-          cp ck-client/ck-client.go Cloak/Android
-          cp ck-client/Icon.png Cloak/Android
-          cp ck-client/log_android.go Cloak/Android
-          cp ck-client/outline_device.go Cloak/Android
-          cp ck-client/outline_packet_proxy.go Cloak/Android
-          cp ck-client/protector_android.go Cloak/Android
-          cd Cloak/Android
-          go mod tidy
-          go install fyne.io/fyne/v2/cmd/fyne@latest
-          cd ../..
-      - name: Build linux ck-client
-        run: |
-          cd Cloak/Android
-          fyne package -os android -appID com.example.DobbyVPN
-          cd ../..
       - name: Android build
         run: |
-          cd Cloak
-          cd ..
+          cd ck-android/CkClient
+          gradlew assembleDebug
+          cd ../..
       - name: Make Android zip
         run: |
           mkdir android_client
-          mv Cloak/Android/Android.apk android_client/Android.apk
+          mv ck-android/CkClient/app/build/outputs/apk/debug/Android.apk android_client/app-debug.apk android_client/DobbyVPN.apk
           zip -r android_client.zip android_client
       - name: Upload Android client
         uses: actions/upload-artifact@master
