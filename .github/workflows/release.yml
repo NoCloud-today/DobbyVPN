@@ -194,6 +194,8 @@ jobs:
           sudo apt-get install golang gcc libgl1-mesa-dev xorg-dev
           sudo apt-get install gcc-multilib
           sudo apt-get install gcc-mingw-w64
+          sudo apt update
+          sudo apt install openjdk-17-jdk
       - name: Android build
         run: |
           cd ck-android/CkClient
