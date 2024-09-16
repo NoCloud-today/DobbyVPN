@@ -47,6 +47,7 @@ class MyVpnService : VpnService() {
     private val bufferSize = 65536
     private lateinit var inputStream: FileInputStream
     private lateinit var outputStream: FileOutputStream
+    private var check = true
     private val reservedBypassSubnets = listOf(
         "1.0.0.0/8", "2.0.0.0/7", "4.0.0.0/6", "8.0.0.0/7", "11.0.0.0/8",
         "12.0.0.0/6", "16.0.0.0/4", "32.0.0.0/3", "64.0.0.0/3", "96.0.0.0/6",
@@ -88,12 +89,16 @@ class MyVpnService : VpnService() {
         val vpnKey = intent?.getStringExtra(VPN_KEY_EXTRA)
         if (vpnKey != null) {
             if (vpnKey == "Stop") {
+                check = false
                 vpnInterface?.close()
+                stopSelf()
             }
             else {
+                check = true
                 device = Cloak_outline.newOutlineDevice(vpnKey)
             }
         } else {
+            check = false
             LogHelper.log(this@MyVpnService, "MyVpnService: VPN key is missing")
             stopSelf()
             return START_NOT_STICKY
@@ -293,8 +298,8 @@ class MyVpnService : VpnService() {
         val logFile = File(filesDir, "cloak_logs.txt")
         try {
             val fileStream = PrintStream(logFile)
-            System.setOut(fileStream) // Перенаправляем стандартный вывод (stdout)
-            System.setErr(fileStream) // Перенаправляем вывод ошибок (stderr)
+            System.setOut(fileStream)
+            System.setErr(fileStream)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -332,18 +337,23 @@ class MyVpnService : VpnService() {
                 val buffer = ByteBuffer.allocate(bufferSize)
 
                 while (true) {
-                    val length = inputStream.read(buffer.array())
-                    if (length > 0) {
-                        val packetData = buffer.array().copyOfRange(0, length)
-                        try {
-                            device?.write(packetData)
-                            //val hexString = packetData.joinToString(separator = " ") { byte -> "%02x".format(byte) }
-                            //LogHelper.log(this@MyVpnService, "MyVpnService: Packet Data Written (Hex): $hexString")
-                        } catch (e: Exception) {
-                            LogHelper.log(this@MyVpnService, "MyVpnService: Failed to write packet to Outline: ${e.message}")
+                    if (check == true) {
+                        val length = inputStream.read(buffer.array())
+                        if (length > 0) {
+                            val packetData = buffer.array().copyOfRange(0, length)
+                            try {
+                                device?.write(packetData)
+                                //val hexString = packetData.joinToString(separator = " ") { byte -> "%02x".format(byte) }
+                                //LogHelper.log(this@MyVpnService, "MyVpnService: Packet Data Written (Hex): $hexString")
+                            } catch (e: Exception) {
+                                LogHelper.log(
+                                    this@MyVpnService,
+                                    "MyVpnService: Failed to write packet to Outline: ${e.message}"
+                                )
+                            }
                         }
+                        buffer.clear()
                     }
-                    buffer.clear()
                 }
             }
         }
@@ -433,12 +443,14 @@ class MyVpnService : VpnService() {
                         //}
                         //buffer.clear()
                         //LogHelper.log(this@MyVpnService, "MyVpnService: read packet from tunnel")
-                        val packetData = device?.read()
-                        packetData?.let {
-                            outputStream.write(it)
-                            //val hexString = it.joinToString(separator = " ") { byte -> "%02x".format(byte) }
-                            //LogHelper.log(this@MyVpnService, "MyVpnService: Packet Data Read (Hex): $hexString")
-                        } ?: LogHelper.log(this@MyVpnService, "No data read from Outline")
+                        if (check == true) {
+                            val packetData = device?.read()
+                            packetData?.let {
+                                outputStream.write(it)
+                                //val hexString = it.joinToString(separator = " ") { byte -> "%02x".format(byte) }
+                                //LogHelper.log(this@MyVpnService, "MyVpnService: Packet Data Read (Hex): $hexString")
+                            } ?: LogHelper.log(this@MyVpnService, "No data read from Outline")
+                        }
                     } catch (e: Exception) {
                         LogHelper.log(this@MyVpnService, "MyVpnService: Failed to read packet from tunnel: ${e.message}")
                     }

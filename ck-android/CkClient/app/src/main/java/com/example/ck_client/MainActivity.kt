@@ -124,6 +124,7 @@ class MainActivity : ComponentActivity() {
 
             Button(
                 onClick = {
+                    LogHelper.log(this@MainActivity, "Connected")
                     if (config.isNotEmpty() && localHost.isNotEmpty() && localPort.isNotEmpty()) {
                         if (!isConnected) {
                             connectionJob = CoroutineScope(Dispatchers.IO).launch {

@@ -23,32 +23,34 @@ class LogService : Service() {
     private fun startLogcatProcess() {
         thread {
             try {
-                // Запускаем команду logcat для получения логов с тегом "cloak"
                 logcatProcess = ProcessBuilder("logcat", "-s", "cloak").start()
 
-                // Логируем информацию о запуске процесса
-                Log.d("LogService", "Started logcat process with tag 'cloak'")
+                //Log.d("LogService", "Started logcat process with tag 'cloak'")
 
                 val reader = BufferedReader(InputStreamReader(logcatProcess!!.inputStream))
                 var line: String?
 
-                // Читаем строки из потока
                 while (reader.readLine().also { line = it } != null) {
                     if (line != null) {
-                        // Логируем каждую полученную строку
-                        //Log.d("LogService", "Logcat output: $line")
-                        handleLogMessage(line!!)
+                        handleLogMessage(removeDateFromLog(line!!))
                     }
                 }
             } catch (e: Exception) {
-                // Логируем ошибку
                 Log.e("LogService", "Error in logcat process", e)
             }
         }
     }
 
+    private fun removeDateFromLog(logMessage: String): String {
+        return if (logMessage.length > 6) {
+            logMessage.substring(6)
+        } else {
+            logMessage
+        }
+    }
+
     private fun handleLogMessage(logMessage: String) {
-        // Добавляем новое сообщение в SharedPreferences
+
         val logs = sharedPreferences.getString("logs", "") ?: ""
         val updatedLogs = if (logs.isEmpty()) {
             logMessage
@@ -69,6 +71,11 @@ class LogService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         logcatProcess?.destroy()
+        clearLogs()
+    }
+
+    private fun clearLogs() {
+        sharedPreferences.edit().clear().apply()
     }
 
     override fun onBind(intent: Intent?): IBinder? {

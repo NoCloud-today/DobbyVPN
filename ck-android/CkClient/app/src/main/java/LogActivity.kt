@@ -58,4 +58,13 @@ class LogActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        clearLogs()
+    }
+
+    private fun clearLogs() {
+        sharedPreferences.edit().clear().apply()
+    }
 }
