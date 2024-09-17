@@ -170,8 +170,13 @@ class CloakOutlineActivity : ComponentActivity() {
 
             Button(
                 onClick = {
-                    val intent = Intent(this@CloakOutlineActivity, LogActivity::class.java)
-                    startActivity(intent)
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        val intent = Intent(this@CloakOutlineActivity, LogActivity::class.java)
+
+                        launch(Dispatchers.Main) {
+                            startActivity(intent)
+                        }
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -191,18 +196,20 @@ class CloakOutlineActivity : ComponentActivity() {
 
     private fun startVpnService() {
         if (apiKey.isNotEmpty()) {
-            if (counter == 0) {
-                connectionJob = lifecycleScope.launch(Dispatchers.IO) {
-                    Cloak_outline.startCloakClient(localHost, localPort, config, false)
-                }
-            }
-            counter += 1
+
             val vpnServiceIntent = Intent(this, MyVpnService::class.java).apply {
                 putExtra("API_KEY", apiKey)
             }
             startService(vpnServiceIntent)
             isVpnRunning = true
             saveData()
+
+            if (counter == 0) {
+                connectionJob = lifecycleScope.launch(Dispatchers.IO) {
+                    Cloak_outline.startCloakClient(localHost, localPort, config, false)
+                }
+            }
+            counter += 1
         } else {
             Toast.makeText(this, "Enter the API key", Toast.LENGTH_SHORT).show()
         }
