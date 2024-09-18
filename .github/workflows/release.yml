@@ -97,12 +97,11 @@ jobs:
           cp ck-client/protector.go Cloak/Linux
           cd Cloak/Linux
           go mod tidy
-          go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
       - name: Build linux ck-client
         run: |
           cd Cloak/Linux
-          fyne package -os linux
+          go build -o DobbyVPN .
           ls
           cd ../..
       - name: Linux build
@@ -112,7 +111,7 @@ jobs:
       - name: Make linux zip
         run: |
           mkdir linux_client
-          mv Cloak/Linux/Linux.tar.xz linux_client/DobbyVPN.tar.xz
+          mv Cloak/Linux/DobbyVPN linux_client/DobbyVPN
           zip -r linux_client.zip linux_client
       - name: Upload Linux client
         uses: actions/upload-artifact@master
