@@ -39,42 +39,31 @@ jobs:
           mv -Force log-files/connector.go Cloak/internal/client/connector.go
           mv -Force log-files/TLS.go Cloak/internal/client/TLS.go
           mv -Force log-files/copy.go Cloak/internal/Common/copy.go
-          cp -r ck-desktop/Desktop/Cloak Cloak
-          cd Cloak/Cloak
+          cp -r ck-client/Windows Cloak
+          cp ck-client/app.go Cloak/Windows
+          cp ck-client/ck-client.go Cloak/Windows
+          cp ck-client/Icon.png Cloak/Windows
+          cp ck-client/log_android.go Cloak/Windows
+          cp ck-client/outline_device.go Cloak/Windows
+          cp ck-client/outline_packet_proxy.go Cloak/Windows
+          cp ck-client/protector.go Cloak/Windows
+          cd Cloak/Windows
           go mod tidy
-          go build -o cloak.so -buildmode=c-shared .
-          dir
+          go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
-          cp Cloak/Cloak/cloak.so ck-desktop/Client/libs
-          cp ck-client/Windows/app_windows.go ck-desktop/Desktop/Outline
-          cp ck-client/Windows/routing_windows.go ck-desktop/Desktop/Outline
-          cp ck-client/Windows/tun_device_windows.go ck-desktop/Desktop/Outline
-          cp -r ck-desktop/Desktop/Outline Cloak
-          cd Cloak/Outline
-          go get ./...
-          go build -o outline.so -buildmode=c-shared .
-          dir
-          cd ../..
-          cp Cloak/Outline/outline.so ck-desktop/Client/libs
       - name: Build windows ck-client
         run: |
-          cd ck-desktop/Client
-          ./gradlew.bat jar
+          cd Cloak/Windows
+          fyne package -os windows
           cd ../..
       - name: Windows build
         run: |
-          cd ck-desktop/Client/build/libs
-          dir
-          cd ../../../..
+          cd Cloak
+          cd ..
       - name: Make windows zip
         run: |
           mkdir windows_client
-          cd windows_client
-          mkdir libs
-          cd ..
-          mv ck-desktop/Client/build/libs/Client-1.0-SNAPSHOT.jar windows_client/DobbyVPN.jar
-          cp Cloak/Outline/outline.so windows_client/libs
-          cp Cloak/Cloak/cloak.so windows_client/libs
+          mv Cloak/Windows/Windows.exe windows_client/DobbyVPN.exe
           tar.exe -a -c -f windows_client.zip windows_client
       - name: Upload Windows client
         uses: actions/upload-artifact@master
@@ -118,46 +107,32 @@ jobs:
           mv -f log-files/piper.go Cloak/internal/client/piper.go
           mv -f log-files/connector.go Cloak/internal/client/connector.go
           mv -f log-files/TLS.go Cloak/internal/client/TLS.go
-          mv -f log-files/copy.go Cloak/internal/common/copy.go
-          cp -r ck-desktop/Desktop/Cloak Cloak
-          cd Cloak/Cloak
+          mv -f log-files/copy.go Cloak/internal/Common/copy.go
+          cp -r ck-client/Linux Cloak
+          cp ck-client/app.go Cloak/Linux
+          cp ck-client/ck-client.go Cloak/Linux
+          cp ck-client/Icon.png Cloak/Linux
+          cp ck-client/log_android.go Cloak/Linux
+          cp ck-client/outline_device.go Cloak/Linux
+          cp ck-client/outline_packet_proxy.go Cloak/Linux
+          cp ck-client/protector.go Cloak/Linux
+          cd Cloak/Linux
           go mod tidy
-          go build -o cloak.so -buildmode=c-shared .
-          dir
+          go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
-          cp Cloak/Cloak/cloak.so ck-desktop/Client/libs
-          cp ck-client/Linux/app_linux.go ck-desktop/Desktop/Outline
-          cp ck-client/Linux/routing_linux.go ck-desktop/Desktop/Outline
-          cp ck-client/Linux/tun_device_linux.go ck-desktop/Desktop/Outline
-          cp ck-client/Linux/ipv6_linux.go ck-desktop/Desktop/Outline
-          cp ck-client/Linux/dns_linux.go ck-desktop/Desktop/Outline
-          cp -r ck-desktop/Desktop/Outline Cloak
-          cd Cloak/Outline
-          go get ./...
-          go build -o outline.so -buildmode=c-shared .
-          dir
-          cd ../..
-          cp Cloak/Outline/outline.so ck-desktop/Client/libs
       - name: Build linux ck-client
         run: |
-          cd Cloak
-          ls
-          cd ..
+          cd Cloak/Linux
+          go build -o DobbyVPN .
+          cd ../..
       - name: Linux build
         run: |
-          cd ck-desktop/Client
-          chmod +x gradlew
-          ./gradlew jar
-          cd ../..
+          cd Cloak
+          cd ..
       - name: Make linux zip
         run: |
           mkdir linux_client
-          cd linux_client
-          mkdir libs
-          cd ..
-          mv ck-desktop/Client/build/libs/Client-1.0-SNAPSHOT.jar linux_client/DobbyVPN.jar
-          cp Cloak/Outline/outline.so linux_client/libs
-          cp Cloak/Cloak/cloak.so linux_client/libs
+          mv Cloak/Linux/DobbyVPN linux_client/DobbyVPN
           zip -r linux_client.zip linux_client
       - name: Upload Linux client
         uses: actions/upload-artifact@master
