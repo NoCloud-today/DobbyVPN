@@ -31,7 +31,6 @@ jobs:
           cp -r ck-desktop/Desktop/Outline Cloak
           cd Cloak/Outline
           go get ./...
-          go mod tidy
           go build -o outline.so -buildmode=c-shared .
           dir
           cd ../..
@@ -39,7 +38,6 @@ jobs:
           cp -r ck-desktop/Desktop/Cloak Cloak
           cd Cloak/Cloak
           go get ./...
-          go mod tidy
           go build -o cloak.so -buildmode=c-shared .
           dir
           cd ../..
