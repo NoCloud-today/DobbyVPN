@@ -25,6 +25,13 @@ jobs:
           cd ..
       - name: Clone Cloak and copying ck-client
         run: |
+          cp -r ck-desktop/Desktop/Cloak Cloak
+          cd Cloak/Cloak
+          go mod tidy
+          go build -o cloak.so -buildmode=c-shared .
+          dir
+          cd ../..
+          cp Cloak/Cloak/outline.so ck-desktop/Client/libs
           cp ck-client/Windows/app_windows.go ck-desktop/Desktop/Outline
           cp ck-client/Windows/routing_windows.go ck-desktop/Desktop/Outline
           cp ck-client/Windows/tun_device_windows.go ck-desktop/Desktop/Outline
@@ -35,13 +42,6 @@ jobs:
           dir
           cd ../..
           cp Cloak/Outline/outline.so ck-desktop/Client/libs
-          cp -r ck-desktop/Desktop/Cloak Cloak
-          cd Cloak/Cloak
-          go mod tidy
-          go build -o cloak.so -buildmode=c-shared .
-          dir
-          cd ../..
-          cp Cloak/Cloak/outline.so ck-desktop/Client/libs
       - name: Build windows ck-client
         run: |
           cd ck-desktop/Client
