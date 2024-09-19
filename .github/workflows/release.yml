@@ -37,7 +37,7 @@ jobs:
           cp Cloak/Outline/outline.so ck-desktop/Client/libs
           cp -r ck-desktop/Desktop/Cloak Cloak
           cd Cloak/Cloak
-          go get ./...
+          go mod tidy
           go build -o cloak.so -buildmode=c-shared .
           dir
           cd ../..
