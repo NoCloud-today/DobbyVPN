@@ -69,8 +69,12 @@ jobs:
       - name: Make windows zip
         run: |
           mkdir windows_client
+          cd windows_client
+          mkdir libs
+          cd ..
           mv ck-desktop/Client/build/libs/Client-1.0-SNAPSHOT.jar windows_client/DobbyVPN.jar
-          mv ck-desktop/Client/libs windows_client/libs
+          mv ck-desktop/Client/libs/outline.so windows_client/libs/outline.so
+          mv ck-desktop/Client/libs/cloak.so windows_client/libs/cloak.so
           tar.exe -a -c -f windows_client.zip windows_client
       - name: Upload Windows client
         uses: actions/upload-artifact@master
@@ -148,8 +152,12 @@ jobs:
       - name: Make linux zip
         run: |
           mkdir linux_client
+          cd linux_client
+          mkdir libs
+          cd ..
           mv ck-desktop/Client/build/libs/Client-1.0-SNAPSHOT.jar linux_client/DobbyVPN.jar
-          mv ck-desktop/Client/libs linux_client/libs
+          mv ck-desktop/Client/libs/outline.so linux_client/libs/outline.so
+          mv ck-desktop/Client/libs/cloak.so linux_client/libs/cloak.so
           zip -r linux_client.zip linux_client
       - name: Upload Linux client
         uses: actions/upload-artifact@master
