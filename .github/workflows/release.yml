@@ -42,6 +42,7 @@ jobs:
           cp ck-client/protector.go Cloak/Windows
           cd Cloak/Windows
           go mod tidy
+          go get ./...
           go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
       - name: Build windows ck-client
