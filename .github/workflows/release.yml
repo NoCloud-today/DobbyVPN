@@ -25,31 +25,30 @@ jobs:
           cd ..
       - name: Clone Cloak and copying ck-client
         run: |
-          git submodule add https://github.com/cbeuw/Cloak
-          git submodule init
-          git submodule update
-          cp -r ck-client/Windows Cloak
-          cp ck-client/app.go Cloak/Windows
-          cp ck-client/ck-client.go Cloak/Windows
-          cp ck-client/Icon.png Cloak/Windows
-          cp ck-client/log_android.go Cloak/Windows
-          cp ck-client/outline_device.go Cloak/Windows
-          cp ck-client/outline_packet_proxy.go Cloak/Windows
-          cp ck-client/protector.go Cloak/Windows
-          cd Cloak/Windows
+          cp ck-client/Windows/app_windows.go ck-desktop/Desktop
+          cp ck-client/Windows/routing_windows.go ck-desktop/Desktop
+          cp ck-client/Windows/tun_device_windows.go ck-desktop/Desktop
+          cd ck-desktop/Desktop
           go mod tidy
-          go install fyne.io/fyne/v2/cmd/fyne@latest
+          go build -o outline.so -buildmode=c-shared .
           cd ../..
-
+          cp ck-desktop/Desktop/outline.so ck-desktop/Client/libs
+          cp -r ck-desktop/Cloak Cloak
+          cd Cloak/Cloak
+          go mod tidy
+          go build -o cloak.so -buildmode=c-shared .
+          cd ../..
+          cp Cloak/Cloak/outline.so ck-desktop/Client/libs
       - name: Build windows ck-client
         run: |
-          cd Cloak/Windows
-          fyne package -os windows
+          cd ck-desktop/Client
+          gradlew jar
           cd ../..
       - name: Windows build
         run: |
-          cd Cloak
-          cd ..
+          cd ck-desktop/Client/build/libs
+          dir
+          cd ../../../..
       - name: Make windows zip
         run: |
           mkdir windows_client
