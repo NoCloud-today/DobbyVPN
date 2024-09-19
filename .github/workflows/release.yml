@@ -25,6 +25,13 @@ jobs:
           cd ..
       - name: Clone Cloak and copying ck-client
         run: |
+          git submodule add https://github.com/cbeuw/Cloak
+          git submodule init
+          git submodule update
+          mv log-files/piper.go Cloak/internal/Client/piper.go
+          mv log-files/connector.go Cloak/internal/Client/connector.go
+          mv log-files/TLS.go Cloak/internal/Client/TLS.go
+          mv log-files/copy.go Cloak/internal/Common/copy.go
           cp -r ck-desktop/Desktop/Cloak Cloak
           cd Cloak/Cloak
           go mod tidy

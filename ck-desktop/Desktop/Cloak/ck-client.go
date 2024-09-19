@@ -9,9 +9,9 @@ import (
 	"net"
         "os"
 
-	"github.com/cbeuw/Cloak/client"
-	"github.com/cbeuw/Cloak/common"
-	mux "github.com/cbeuw/Cloak/multiplex"
+	"github.com/cbeuw/Cloak/internal/client"
+	"github.com/cbeuw/Cloak/internal/common"
+	mux "github.com/cbeuw/Cloak/internal/multiplex"
 	log "github.com/sirupsen/logrus"
 )
 
