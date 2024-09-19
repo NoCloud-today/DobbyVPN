@@ -24,6 +24,8 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@v2
       - name: Install dependencies
         run: |
           cd src
@@ -57,7 +59,7 @@ jobs:
       - name: Build windows ck-client
         run: |
           cd ck-desktop/Client
-          gradlew jar
+          ./gradlew.bat jar
           cd ../..
       - name: Windows build
         run: |
