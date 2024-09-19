@@ -70,6 +70,7 @@ jobs:
         run: |
           mkdir windows_client
           mv ck-desktop/Client/build/libs/Client-1.0-SNAPSHOT.jar windows_client/DobbyVPN.jar
+          mv ck-desktop/Client/libs windows_client/libs
           tar.exe -a -c -f windows_client.zip windows_client
       - name: Upload Windows client
         uses: actions/upload-artifact@master
@@ -148,6 +149,7 @@ jobs:
         run: |
           mkdir linux_client
           mv ck-desktop/Client/build/libs/Client-1.0-SNAPSHOT.jar linux_client/DobbyVPN.jar
+          mv ck-desktop/Client/libs linux_client/libs
           zip -r linux_client.zip linux_client
       - name: Upload Linux client
         uses: actions/upload-artifact@master
