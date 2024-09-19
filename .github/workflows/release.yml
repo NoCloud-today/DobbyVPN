@@ -124,6 +124,8 @@ jobs:
           cp ck-client/Linux/app_linux.go ck-desktop/Desktop/Outline
           cp ck-client/Linux/routing_linux.go ck-desktop/Desktop/Outline
           cp ck-client/Linux/tun_device_linux.go ck-desktop/Desktop/Outline
+          cp ck-client/Linux/ipv6_linux.go ck-desktop/Desktop/Outline
+          cp ck-client/Linux/dns_linux.go ck-desktop/Desktop/Outline
           cp -r ck-desktop/Desktop/Outline Cloak
           cd Cloak/Outline
           go get ./...
