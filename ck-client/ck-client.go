@@ -448,7 +448,6 @@ func main() {
         outlineDisconnectButton := widget.NewButton("Disconnect", func() {
             if cancelFunc != nil {
                 cancelFunc()
-                cancelFunc = nil
             }
 
             outlineStatusLabel.SetText("Not connected")

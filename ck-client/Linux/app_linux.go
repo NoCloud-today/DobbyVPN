@@ -73,7 +73,9 @@ func (app App) Run(ctx context.Context) error {
 
     
         trafficCopyWg.Wait()
-    
+        
+        restoreSystemDNSServer()
+        stopRouting(app.RoutingConfig.RoutingTableID)
         tun.Close()
         ss.Close()
 	return nil
