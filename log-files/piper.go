@@ -9,7 +9,7 @@ import (
 	"github.com/cbeuw/Cloak/internal/common"
 
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
-	"logging"
+	//"logging"
 )
 
 func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration, singleplex bool, newSeshFunc func() *mux.Session) {
