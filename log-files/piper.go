@@ -5,22 +5,20 @@ import (
 	"sync"
 	"time"
 	"io"
+        "os"
 	"log"
 
 	"github.com/cbeuw/Cloak/internal/common"
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
 )
 
-// Объявляем глобальную переменную Logging для логирования
-var Logging *struct {
+var Logging = &struct {
 	Debug, Info, Warn, Err *log.Logger
-}
-
-// Функция для установки логгера из другого пакета
-func SetLogger(logger *struct {
-	Debug, Info, Warn, Err *log.Logger
-}) {
-	Logging = logger
+}{
+	Debug: log.New(io.Discard, "[DEBUG] ", log.LstdFlags),
+	Info:  log.New(os.Stdout, "[INFO] ", log.LstdFlags),
+	Warn:  log.New(os.Stderr, "[WARN] ", log.LstdFlags),
+	Err:   log.New(os.Stderr, "[ERROR] ", log.LstdFlags),
 }
 
 func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration, singleplex bool, newSeshFunc func() *mux.Session) {
