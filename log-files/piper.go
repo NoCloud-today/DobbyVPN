@@ -9,7 +9,7 @@ import (
 	"github.com/cbeuw/Cloak/internal/common"
 
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
-	"logging"
+	//"logging"
 )
 
 var logging = &struct {
