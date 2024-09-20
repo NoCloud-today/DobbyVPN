@@ -114,7 +114,7 @@ func (app App) Run(ctx context.Context) error {
         //            return
         //        default:
 	//	    written, err := io.Copy(ss, tun)
-	//	    logging.Info.Printf("tun -> OutlineDevice stopped: %v %v\n", written, err)
+	//	    Logging.Info.Printf("tun -> OutlineDevice stopped: %v %v\n", written, err)
         //        }
 	//}()
 	//go func() {
@@ -124,7 +124,7 @@ func (app App) Run(ctx context.Context) error {
         //            return
         //        default:
 	//	    written, err := io.Copy(tun, ss)
-	//	    logging.Info.Printf("OutlineDevice -> tun stopped: %v %v\n", written, err)
+	//	    Logging.Info.Printf("OutlineDevice -> tun stopped: %v %v\n", written, err)
         //        }
 	//}()
 

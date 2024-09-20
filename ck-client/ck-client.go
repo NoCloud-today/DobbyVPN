@@ -25,7 +25,7 @@ import (
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
 )
 
-var logging = &struct {
+var Logging = &struct {
 	Debug, Info, Warn, Err *log.Logger
 }{
 	Debug: log.New(io.Discard, "[DEBUG] ", log.LstdFlags),
@@ -86,7 +86,7 @@ func loadConfig() (string, error) {
 }
 
 func showMessage(message string) {
-	logging.Info.Printf(message)
+	Logging.Info.Printf(message)
 }
 
 type Server struct {
@@ -139,10 +139,10 @@ func main() {
 
 	logWriter := &LogWriter{Output: logOutput}
 	log.SetOutput(logWriter)
-        logging.Debug.SetOutput(logWriter)
-	logging.Info.SetOutput(logWriter)
-	logging.Warn.SetOutput(logWriter)
-	logging.Err.SetOutput(logWriter)
+        Logging.Debug.SetOutput(logWriter)
+	Logging.Info.SetOutput(logWriter)
+	Logging.Warn.SetOutput(logWriter)
+	Logging.Err.SetOutput(logWriter)
 
         tabs := container.NewAppTabs()
 

@@ -43,14 +43,14 @@ func (proxy *outlinePacketProxy) testConnectivityAndRefresh(resolverAddr, domain
 	dnsResolver := dns.NewUDPResolver(dialer, resolverAddr)
 	result, err := connectivity.TestConnectivityWithResolver(context.Background(), dnsResolver, domain)
 	if err != nil {
-		logging.Info.Printf("connectivity test failed. Refresh skipped. Error: %v\n", err)
+		Logging.Info.Printf("connectivity test failed. Refresh skipped. Error: %v\n", err)
 		return err
 	}
 	if result != nil {
-		logging.Info.Println("remote server cannot handle UDP traffic, switch to DNS truncate mode.")
+		Logging.Info.Println("remote server cannot handle UDP traffic, switch to DNS truncate mode.")
 		return proxy.SetProxy(proxy.fallback)
 	} else {
-		logging.Info.Println("remote server supports UDP, we will delegate all UDP packets to it")
+		Logging.Info.Println("remote server supports UDP, we will delegate all UDP packets to it")
 		return proxy.SetProxy(proxy.remote)
 	}
 }

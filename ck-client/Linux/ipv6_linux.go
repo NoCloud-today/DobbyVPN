@@ -32,6 +32,6 @@ func enableIPv6(enabled bool) (bool, error) {
 		return prevEnabled, fmt.Errorf("failed to write IPv6 config: %w", err)
 	}
 
-	logging.Info.Printf("updated global IPv6 support: %v\n", enabled)
+	Logging.Info.Printf("updated global IPv6 support: %v\n", enabled)
 	return prevEnabled, nil
 }
