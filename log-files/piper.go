@@ -14,7 +14,7 @@ import (
 	//"logging"
 )
 
-var Logging struct {
+var logging struct {
     Debug *log.Logger
     Info  *log.Logger
     Warn  *log.Logger

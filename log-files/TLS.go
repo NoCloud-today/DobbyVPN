@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+var logging struct {
+    Debug *log.Logger
+    Info  *log.Logger
+    Warn  *log.Logger
+    Err   *log.Logger
+}
+
 const appDataMaxLength = 16401
 
 type clientHelloFields struct {

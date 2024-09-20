@@ -11,6 +11,13 @@ import (
 	//logging "github.com/sirupsen/logrus"
 )
 
+var logging struct {
+    Debug *log.Logger
+    Info  *log.Logger
+    Warn  *log.Logger
+    Err   *log.Logger
+}
+
 func MakeSession(connConfig RemoteConnConfig, authInfo AuthInfo, dialer common.Dialer) *mux.Session {
 	logging.Info.Printf("Cloak/MakeSession: Start function MakeSession(connConfig RemoteConnConfig, authInfo AuthInfo, dialer common.Dialer) *mux.Session")
 	logging.Info.Printf("Cloak/MakeSession: Starting the process to create a new session")
