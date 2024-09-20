@@ -86,7 +86,7 @@ func loadConfig() (string, error) {
 }
 
 func showMessage(message string) {
-	log.Printf(message)
+	logging.Info.Printf(message)
 }
 
 type Server struct {
