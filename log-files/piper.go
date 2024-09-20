@@ -4,6 +4,7 @@ import (
 	"net"
 	"sync"
 	"time"
+        "io"
         "log"
 
 	"github.com/cbeuw/Cloak/internal/common"
