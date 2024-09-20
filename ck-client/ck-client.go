@@ -541,11 +541,6 @@ func main() {
 	    if UID != "" {
 		adminUID = []byte(UID)
 	    }
-
-	    stopChan = make(chan struct{})
-	    ctx, cancel := context.WithCancel(context.Background())
-	    defer cancel()
-
         
             keyPtr := &key
             app := App{
@@ -561,11 +556,11 @@ func main() {
                 },
             }
         
-            ctx, cancel = context.WithCancel(context.Background())
+            ctx2, cancel := context.WithCancel(context.Background())
             cancelFunc = cancel
         
             go func() {
-                if err := app.Run(ctx); err != nil {
+                if err := app.Run(ctx2); err != nil {
                     logging.Err.Printf("%v\n", err)
                 }
             }()
