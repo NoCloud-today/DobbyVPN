@@ -31,7 +31,7 @@ jobs:
           mv -Force log-files/piper.go Cloak/internal/client/piper.go
           mv -Force log-files/connector.go Cloak/internal/client/connector.go
           mv -Force log-files/TLS.go Cloak/internal/client/TLS.go
-          mv -Force log-files/copy.go Cloak/internal/Common/copy.go
+          mv -Force log-files/copy.go Cloak/internal/common/copy.go
           cp -r ck-client/Windows Cloak
           cp ck-client/app.go Cloak/Windows
           cp ck-client/ck-client.go Cloak/Windows
@@ -94,7 +94,7 @@ jobs:
           mv -f log-files/piper.go Cloak/internal/client/piper.go
           mv -f log-files/connector.go Cloak/internal/client/connector.go
           mv -f log-files/TLS.go Cloak/internal/client/TLS.go
-          mv -f log-files/copy.go Cloak/internal/Common/copy.go
+          mv -f log-files/copy.go Cloak/internal/common/copy.go
           cp -r ck-client/Linux Cloak
           cp ck-client/app.go Cloak/Linux
           cp ck-client/ck-client.go Cloak/Linux
