@@ -1,19 +1,24 @@
 package client
 
 import (
+	"fmt"
 	"io"
 	"net"
+	"os"
 	"sync"
 	"time"
-        "os"
-        "log"
+	"log"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 
 	"github.com/cbeuw/Cloak/internal/common"
-
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
-	//"logging"
 )
 
+// Структура для логирования
 var logging = &struct {
 	Debug, Info, Warn, Err *log.Logger
 }{
@@ -21,6 +26,53 @@ var logging = &struct {
 	Info:  log.New(os.Stdout, "[INFO] ", log.LstdFlags),
 	Warn:  log.New(os.Stderr, "[WARN] ", log.LstdFlags),
 	Err:   log.New(os.Stderr, "[ERROR] ", log.LstdFlags),
+}
+
+// LogWriter — структура для записи логов в интерфейс
+type LogWriter struct {
+	Output *widget.Entry
+}
+
+// Реализация метода Write для записи логов
+func (w *LogWriter) Write(p []byte) (n int, err error) {
+	w.Output.SetText(w.Output.Text + string(p))
+	return len(p), nil
+}
+
+// Функция создания интерфейса с логами
+func startLogWindow() *LogWriter {
+	// Создаем приложение и окно
+	a := app.New()
+	w := a.NewWindow("Cloak Logs")
+
+	// Виджет для отображения логов
+	logOutput := widget.NewMultiLineEntry()
+	logOutput.SetMinRowsVisible(10)
+
+	// Создаем LogWriter для перенаправления логов в окно
+	logWriter := &LogWriter{Output: logOutput}
+	
+	// Перенаправляем вывод логов
+	log.SetOutput(logWriter)
+	logging.Debug.SetOutput(logWriter)
+	logging.Info.SetOutput(logWriter)
+	logging.Warn.SetOutput(logWriter)
+	logging.Err.SetOutput(logWriter)
+
+	// Создаем вкладки и добавляем в окно
+	tabs := container.NewAppTabs()
+	logTab := container.NewTabItem("Logs", logOutput)
+	tabs.Append(logTab)
+
+	w.SetContent(tabs)
+	w.Resize(fyne.NewSize(600, 400))
+
+	// Запуск интерфейса в отдельной горутине
+	go func() {
+		w.ShowAndRun()
+	}()
+	
+	return logWriter
 }
 
 func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration, singleplex bool, newSeshFunc func() *mux.Session) {
