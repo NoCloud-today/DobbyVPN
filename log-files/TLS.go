@@ -5,6 +5,7 @@ import (
 	utls "github.com/refraction-networking/utls"
 	"net"
 	"strings"
+        "log"
 )
 
 var logging = &struct {
