@@ -4,12 +4,17 @@ import (
 	"net"
 	"sync"
 	"time"
+        "log"
 
 	"github.com/cbeuw/Cloak/internal/common"
 
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
 	//"logging"
 )
+
+var Logging *struct {
+	Debug, Info, Warn, Err *log.Logger
+}
 
 func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration, singleplex bool, newSeshFunc func() *mux.Session) {
 	var sesh *mux.Session
