@@ -441,7 +441,7 @@ func main() {
 
             go func() {
 	        if err := app.Run(ctx); err != nil {
-		        logging.Err.Printf("%v\n", err)
+		        Logging.Err.Printf("%v\n", err)
 	        }
             }()
 
@@ -562,7 +562,7 @@ func main() {
         
             go func() {
                 if err := app.Run(ctx); err != nil {
-                    logging.Err.Printf("%v\n", err)
+                    Logging.Err.Printf("%v\n", err)
                 }
             }()
 
