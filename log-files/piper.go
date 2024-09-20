@@ -12,6 +12,13 @@ import (
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
 )
 
+var Logging struct {
+    Debug *log.Logger
+    Info  *log.Logger
+    Warn  *log.Logger
+    Err   *log.Logger
+}
+
 func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration, singleplex bool, newSeshFunc func() *mux.Session) {
 	var sesh *mux.Session
 	localConn, err := bindFunc()
