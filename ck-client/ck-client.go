@@ -436,11 +436,11 @@ func main() {
 		},
 	    }
 
-            ctx1, cancel := context.WithCancel(context.Background())
+            ctx, cancel := context.WithCancel(context.Background())
             cancelFunc = cancel
 
             go func() {
-	        if err := app.Run(ctx1); err != nil {
+	        if err := app.Run(ctx); err != nil {
 		        logging.Err.Printf("%v\n", err)
 	        }
             }()
@@ -452,6 +452,7 @@ func main() {
         outlineDisconnectButton := widget.NewButton("Disconnect", func() {
             if cancelFunc != nil {
                 cancelFunc()
+                cancelFunc = nil
             }
 
             outlineStatusLabel.SetText("Not connected")
@@ -556,11 +557,11 @@ func main() {
                 },
             }
         
-            ctx2, cancel := context.WithCancel(context.Background())
+            ctx, cancel := context.WithCancel(context.Background())
             cancelFunc = cancel
         
             go func() {
-                if err := app.Run(ctx2); err != nil {
+                if err := app.Run(ctx); err != nil {
                     logging.Err.Printf("%v\n", err)
                 }
             }()
@@ -688,6 +689,7 @@ func main() {
         combinedDisconnectButton := widget.NewButton("Disconnect", func() {
             if cancelFunc != nil {
                 cancelFunc()
+                cancelFunc = nil
             }
 
             connected = false
