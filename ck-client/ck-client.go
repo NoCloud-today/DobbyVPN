@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
+	//"os"
 	"context"
 	"encoding/binary"
 	"encoding/json"
@@ -24,15 +24,6 @@ import (
 	"github.com/cbeuw/Cloak/internal/common"
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
 )
-
-var Logging = &struct {
-	Debug, Info, Warn, Err *log.Logger
-}{
-	Debug: log.New(io.Discard, "[DEBUG] ", log.LstdFlags),
-	Info:  log.New(os.Stdout, "[INFO] ", log.LstdFlags),
-	Warn:  log.New(os.Stderr, "[WARN] ", log.LstdFlags),
-	Err:   log.New(os.Stderr, "[ERROR] ", log.LstdFlags),
-}
 
 const configFileName = "config.json"
 
@@ -349,7 +340,7 @@ func main() {
 				}()
 
                                 log.Printf("Starting Cloak")
-				client.RouteTCP(listener, localConfig.Timeout, true, seshMaker, Logging)
+				client.RouteTCP(listener, localConfig.Timeout, true, seshMaker)
 			}
 
 			select {
@@ -668,7 +659,7 @@ func main() {
                         log.Printf("DobbyVPN/ck-client.go: Enter the function RouteTCP")
                         log.Printf("DobbyVPN/ck-client.go: localConfig.Timeout = %v", localConfig.Timeout)
                         
-			client.RouteTCP(s.listener, localConfig.Timeout, false, seshMaker, Logging)
+			client.RouteTCP(s.listener, localConfig.Timeout, false, seshMaker)
                         defer func() {
 			    log.Printf("DobbyVPN/ck-client: RouteTCP stopping")
 		        }()
