@@ -5,10 +5,11 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+        "log"
 
 	"github.com/cbeuw/Cloak/internal/common"
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
-	logging "github.com/sirupsen/logrus"
+	//logging "github.com/sirupsen/logrus"
 )
 
 func MakeSession(connConfig RemoteConnConfig, authInfo AuthInfo, dialer common.Dialer) *mux.Session {
