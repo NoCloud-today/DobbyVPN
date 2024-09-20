@@ -5,8 +5,9 @@ package main
 import (
         "context"
 	"fmt"
-	"io"
+	//"io"
 	"sync"
+        "log"
 )
 
 func (app App) Run(ctx context.Context) error {
