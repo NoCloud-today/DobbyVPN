@@ -107,6 +107,9 @@ func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration
 }
 
 func RouteTCP(listener net.Listener, streamTimeout time.Duration, singleplex bool, newSeshFunc func() *mux.Session) {
+	// Запуск окна с логами
+	startLogWindow()
+
 	var sesh *mux.Session
 	logging.Info.Printf("Cloak/RouteTCP: Starting TCP route. Stream timeout: %v, Singleplex: %v", streamTimeout, singleplex)
 
