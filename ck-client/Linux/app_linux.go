@@ -132,10 +132,16 @@ func (app App) Run(ctx context.Context) error {
 
     
         trafficCopyWg.Wait()
+        
+        log.Printf("Disconnected")
 
         tun.Close()
-        ss.Close()        
+        log.Printf("tun closed")
+        ss.Close()
+        log.Printf("device closed")        
         restoreSystemDNSServer()
+        log.Printf("Stop routing")
         stopRouting(app.RoutingConfig.RoutingTableID)
+        log.Printf("Stopped")
 	return nil
 }
