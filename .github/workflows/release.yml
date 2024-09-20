@@ -28,6 +28,10 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
+          mv -Force log-files/piper.go Cloak/internal/client/piper.go
+          mv -Force log-files/connector.go Cloak/internal/client/connector.go
+          mv -Force log-files/TLS.go Cloak/internal/client/TLS.go
+          mv -Force log-files/copy.go Cloak/internal/Common/copy.go
           cp -r ck-client/Windows Cloak
           cp ck-client/app.go Cloak/Windows
           cp ck-client/ck-client.go Cloak/Windows
@@ -101,7 +105,6 @@ jobs:
           cp ck-client/protector.go Cloak/Linux
           cd Cloak/Linux
           go mod tidy
-          go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
       - name: Build linux ck-client
         run: |
