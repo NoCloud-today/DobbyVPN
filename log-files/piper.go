@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 	"io"
-        "os"
+        //"os"
 	"log"
 
 	"github.com/cbeuw/Cloak/internal/common"
