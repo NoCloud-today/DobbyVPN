@@ -1,28 +1,15 @@
 package client
 
 import (
-	"io"
 	"net"
 	"sync"
 	"time"
-        "os"
-        "log"
 
 	"github.com/cbeuw/Cloak/internal/common"
 
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
 	//"logging"
 )
-
-var logging = &struct {
-	Debug, Info, Warn, Err *log.Logger
-}{
-	Debug: log.New(io.Discard, "[DEBUG] ", log.LstdFlags),
-	Info:  log.New(os.Stdout, "[INFO] ", log.LstdFlags),
-	Warn:  log.New(os.Stderr, "[WARN] ", log.LstdFlags),
-	Err:   log.New(os.Stderr, "[ERROR] ", log.LstdFlags),
-}
-
 
 func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration, singleplex bool, newSeshFunc func() *mux.Session) {
 	var sesh *mux.Session
