@@ -3,8 +3,19 @@ package common
 import (
 	"io"
 	"net"
+        "os"
+        "log"
 	//"logging"
 )
+
+var logging = &struct {
+	Debug, Info, Warn, Err *log.Logger
+}{
+	Debug: log.New(io.Discard, "[DEBUG] ", log.LstdFlags),
+	Info:  log.New(os.Stdout, "[INFO] ", log.LstdFlags),
+	Warn:  log.New(os.Stderr, "[WARN] ", log.LstdFlags),
+	Err:   log.New(os.Stderr, "[ERROR] ", log.LstdFlags),
+}
 
 func Copy(dst net.Conn, src net.Conn) (written int64, err error) {
 	defer func() {
