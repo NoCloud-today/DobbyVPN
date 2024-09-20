@@ -35,30 +35,7 @@ func (app App) Run(ctx context.Context) error {
 
 	ss.Refresh()
 
-	// Copy the traffic from tun device to OutlineDevice bidirectionally
-	trafficCopyWg.Add(2)
-	go func() {
-		defer trafficCopyWg.Done()
-                select {
-                case <-ctx.Done():
-                    return
-                default:
-		    written, err := io.Copy(ss, tun)
-		    logging.Info.Printf("tun -> OutlineDevice stopped: %v %v\n", written, err)
-                }
-	}()
-	go func() {
-		defer trafficCopyWg.Done()
-                select {
-                case <-ctx.Done():
-                    return
-                default:
-		    written, err := io.Copy(tun, ss)
-		    logging.Info.Printf("OutlineDevice -> tun stopped: %v %v\n", written, err)
-                }
-	}()
-
-	err = setSystemDNSServer(app.RoutingConfig.DNSServerIP)
+        err = setSystemDNSServer(app.RoutingConfig.DNSServerIP)
 	if err != nil {
 		return fmt.Errorf("failed to configure system DNS: %w", err)
 	}
@@ -69,14 +46,95 @@ func (app App) Run(ctx context.Context) error {
 	}
 	defer stopRouting(app.RoutingConfig.RoutingTableID)
 
+        trafficCopyWg.Add(2)
+    go func() {
+        defer trafficCopyWg.Done()
+        buffer := make([]byte, 65536)
+        
+        for {
+            select {
+            case <-ctx.Done():
+                return
+            default:
+                n, err := tun.Read(buffer)
+                if err != nil {
+                    //fmt.Printf("Error reading from device: %x %v\n", n, err)
+                    break
+                }
+                if n > 0 {
+                    //log.Printf("Read %d bytes from tun\n", n)
+                    //log.Printf("Data from tun: % x\n", buffer[:n])
+                    
+                    _, err = ss.Write(buffer[:n])
+                    if err != nil {
+                        //   log.Printf("Error writing to device: %v", err)
+                        break
+                    }
+                }
+            }
+        }
+    }()
+
+    go func() {
+        defer trafficCopyWg.Done()
+        buf := make([]byte, 65536)
+        for {
+            select {
+            case <-ctx.Done():
+                return
+            default:
+                n, err := ss.Read(buf)
+                if err != nil {
+                //  fmt.Printf("Error reading from device: %v\n", err)
+                    break
+                }
+                if n > 0 {
+                  //log.Printf("Read %d bytes from OutlineDevice\n", n)
+                  //log.Printf("Data from OutlineDevice: % x\n", buf[:n])
+
+                    _, err = tun.Write(buf[:n])
+                    if err != nil {
+                    //    log.Printf("Error writing to tun: %v", err)
+                        break
+                    }
+                }
+            
+            }
+        }
+        log.Printf("OutlineDevice -> tun stopped")
+    }()
+
+	// Copy the traffic from tun device to OutlineDevice bidirectionally
+	//trafficCopyWg.Add(2)
+	//go func() {
+	//	defer trafficCopyWg.Done()
+        //        select {
+        //        case <-ctx.Done():
+        //            return
+        //        default:
+	//	    written, err := io.Copy(ss, tun)
+	//	    logging.Info.Printf("tun -> OutlineDevice stopped: %v %v\n", written, err)
+        //        }
+	//}()
+	//go func() {
+	//	defer trafficCopyWg.Done()
+        //        select {
+        //        case <-ctx.Done():
+        //            return
+        //        default:
+	//	    written, err := io.Copy(tun, ss)
+	//	    logging.Info.Printf("OutlineDevice -> tun stopped: %v %v\n", written, err)
+        //        }
+	//}()
+
 	trafficCopyWg.Wait()
 
     
         trafficCopyWg.Wait()
-        
+
+        tun.Close()
+        ss.Close()        
         restoreSystemDNSServer()
         stopRouting(app.RoutingConfig.RoutingTableID)
-        tun.Close()
-        ss.Close()
 	return nil
 }
