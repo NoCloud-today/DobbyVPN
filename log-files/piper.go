@@ -28,7 +28,7 @@ func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration
 	var sesh *mux.Session
 	localConn, err := bindFunc()
 	if err != nil {
-		logging.Fatal(err)
+		logging.Err.Printf(err)
 	}
 
 	streams := make(map[string]*mux.Stream)
@@ -73,14 +73,14 @@ func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration
 				for {
 					n, err := stream.Read(buf)
 					if err != nil {
-						logging.Trace.Printf("copying stream to proxy client: %v", err)
+						logging.Info.Printf("copying stream to proxy client: %v", err)
 						break
 					}
 					_ = stream.SetReadDeadline(time.Now().Add(streamTimeout))
 
 					_, err = localConn.WriteTo(buf[:n], proxyAddr)
 					if err != nil {
-						logging.Trace.Printf("copying stream to proxy client: %v", err)
+						logging.Info.Printf("copying stream to proxy client: %v", err)
 						break
 					}
 				}
@@ -96,7 +96,7 @@ func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration
 
 		_, err = stream.Write(data[:i])
 		if err != nil {
-			logging.Trace.Printf("copying proxy client to stream: %v", err)
+			logging.Info.Printf("copying proxy client to stream: %v", err)
 			streamsMutex.Lock()
 			delete(streams, addr.String())
 			streamsMutex.Unlock()
