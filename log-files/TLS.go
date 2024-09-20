@@ -4,6 +4,7 @@ import (
 	"github.com/cbeuw/Cloak/internal/common"
 	utls "github.com/refraction-networking/utls"
 	"net"
+        "log"
 	"strings"
 )
 
@@ -133,7 +134,7 @@ func (tls *DirectTLS) Handshake(rawConn net.Conn, authInfo AuthInfo, Logging *st
 
 	_, err = tls.Read(buf)
 	if err != nil {
-		logging.Info.Printf("Cloak/Handshake: Failed to read ServerHello: %v", err)
+		Logging.Info.Printf("Cloak/Handshake: Failed to read ServerHello: %v", err)
 		return
 	}
 	Logging.Info.Printf("Cloak/Handshake: ServerHello received")
