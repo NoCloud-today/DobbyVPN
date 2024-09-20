@@ -146,6 +146,10 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
+          mv -f log-files/piper.go Cloak/internal/client/piper.go
+          mv -f log-files/connector.go Cloak/internal/client/connector.go
+          mv -f log-files/TLS.go Cloak/internal/client/TLS.go
+          mv -f log-files/copy.go Cloak/internal/common/copy.go
           cp -r ck-client/MacOs Cloak
           cp ck-client/app.go Cloak/MacOs
           cp ck-client/ck-client.go Cloak/MacOs
