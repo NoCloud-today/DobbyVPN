@@ -27,7 +27,7 @@ func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration
 	var sesh *mux.Session
 	localConn, err := bindFunc()
 	if err != nil {
-		logging.Fatal(err)
+		logging.Info.Printf("Error localConn")
 	}
 
 	streams := make(map[string]*mux.Stream)
