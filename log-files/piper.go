@@ -14,11 +14,13 @@ import (
 	//"logging"
 )
 
-var logging struct {
-    Debug *log.Logger
-    Info  *log.Logger
-    Warn  *log.Logger
-    Err   *log.Logger
+var logging = &struct {
+	Debug, Info, Warn, Err *log.Logger
+}{
+	Debug: log.New(io.Discard, "[DEBUG] ", log.LstdFlags),
+	Info:  log.New(os.Stdout, "[INFO] ", log.LstdFlags),
+	Warn:  log.New(os.Stderr, "[WARN] ", log.LstdFlags),
+	Err:   log.New(os.Stderr, "[ERROR] ", log.LstdFlags),
 }
 
 func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration, singleplex bool, newSeshFunc func() *mux.Session) {
@@ -104,9 +106,7 @@ func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration
 	}
 }
 
-func RouteTCP(listener net.Listener, streamTimeout time.Duration, singleplex bool, newSeshFunc func() *mux.Session, logging *struct {
-	Debug, Info, Warn, Err *log.Logger
-}) {
+func RouteTCP(listener net.Listener, streamTimeout time.Duration, singleplex bool, newSeshFunc func() *mux.Session) {
 	var sesh *mux.Session
 	logging.Info.Printf("Cloak/RouteTCP: Starting TCP route. Stream timeout: %v, Singleplex: %v", streamTimeout, singleplex)
 
