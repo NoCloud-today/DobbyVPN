@@ -10,7 +10,7 @@ import (
 	"github.com/Jigsaw-Code/outline-sdk/network"
 	"github.com/Jigsaw-Code/outline-sdk/network/lwip2transport"
 	"github.com/Jigsaw-Code/outline-sdk/transport"
-	"github.com/Jigsaw-Code/outline-sdk/x/config"
+	"github.com/Jigsaw-Code/outline-sdk/x/configurl"
 )
 
 const (
@@ -25,7 +25,7 @@ type OutlineDevice struct {
 	svrIP net.IP
 }
 
-var configToDialer = config.NewDefaultConfigToDialer()
+var configToDialer = configurl.NewDefaultConfigToDialer()
 
 func NewOutlineDevice(transportConfig string) (od *OutlineDevice, err error) {
 	ip, err := resolveShadowsocksServerIPFromConfig(transportConfig)
