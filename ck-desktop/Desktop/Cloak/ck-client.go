@@ -112,7 +112,7 @@ func StartCloakClient(localHost *C.char, localPort *C.char, config *C.char, udp 
 				authInfo.SessionId = 0
 				log.Printf("Cloak/ck-client.go: Connected, setting adminUID: SessionId=%d", authInfo.SessionId)
 			}
-			currentSession = client.MakeSession(remoteConfig, authInfo, d)
+			currentSession = client.MakeSession(remoteConfig, authInfo, d, Logging)
 			log.Printf("Cloak/ck-client.go: Current session created: %+v", currentSession)
 			return currentSession
 		}
@@ -138,7 +138,7 @@ func StartCloakClient(localHost *C.char, localPort *C.char, config *C.char, udp 
 			authInfo.SessionId = binary.BigEndian.Uint32(quad)
 			log.Printf("Cloak/ck-client.go: SessionId generated: %d", authInfo.SessionId)
 
-			currentSession = client.MakeSession(remoteConfig, authInfo, d)
+			currentSession = client.MakeSession(remoteConfig, authInfo, d, Logging)
 			log.Printf("Cloak/ck-client.go: Current session created: %+v", currentSession)
 			return currentSession
 		}
