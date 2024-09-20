@@ -5,6 +5,8 @@ import (
 	"net"
 	"sync"
 	"time"
+        "os"
+        "log"
 
 	"github.com/cbeuw/Cloak/internal/common"
 
