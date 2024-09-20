@@ -12,7 +12,7 @@ import (
 	//"logging"
 )
 
-var Logging *struct {
+var logging *struct {
 	Debug, Info, Warn, Err *log.Logger
 }
 
