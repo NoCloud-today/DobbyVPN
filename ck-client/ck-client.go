@@ -350,7 +350,7 @@ func main() {
 				}()
 
                                 log.Printf("Starting Cloak")
-				client.RouteTCP(listener, localConfig.Timeout, true, seshMaker)
+				client.RouteTCP(listener, localConfig.Timeout, true, seshMaker, Logging)
 			}
 
 			select {
@@ -669,7 +669,7 @@ func main() {
                         log.Printf("DobbyVPN/ck-client.go: Enter the function RouteTCP")
                         log.Printf("DobbyVPN/ck-client.go: localConfig.Timeout = %v", localConfig.Timeout)
                         
-			client.RouteTCP(s.listener, localConfig.Timeout, false, seshMaker)
+			client.RouteTCP(s.listener, localConfig.Timeout, false, seshMaker, Logging)
                         defer func() {
 			    log.Printf("DobbyVPN/ck-client: RouteTCP stopping")
 		        }()
