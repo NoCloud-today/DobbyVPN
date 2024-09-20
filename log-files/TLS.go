@@ -4,7 +4,6 @@ import (
 	"github.com/cbeuw/Cloak/internal/common"
 	utls "github.com/refraction-networking/utls"
 	"net"
-        "log"
 	"strings"
 )
 
@@ -86,13 +85,11 @@ func buildClientHello(browser browser, fields clientHelloFields) ([]byte, error)
 	return uclient.HandshakeState.Hello.Raw, nil
 }
 
-func (tls *DirectTLS) Handshake(rawConn net.Conn, authInfo AuthInfo, Logging *struct {
-	Debug, Info, Warn, Err *log.Logger
-}) (sessionKey [32]byte, err error) {
-	Logging.Info.Printf("Cloak/Handshake: Starting TLS handshake with server %s", authInfo.MockDomain)
+func (tls *DirectTLS) Handshake(rawConn net.Conn, authInfo AuthInfo) (sessionKey [32]byte, err error) {
+	logging.Info.Printf("Cloak/Handshake: Starting TLS handshake with server %s", authInfo.MockDomain)
 
 	payload, sharedSecret := makeAuthenticationPayload(authInfo)
-	Logging.Info.Printf("Cloak/Handshake: Authentication payload generated with public key and shared secret")
+	logging.Info.Printf("Cloak/Handshake: Authentication payload generated with public key and shared secret")
 
 	fields := clientHelloFields{
 		random:         payload.randPubKey[:],
@@ -103,67 +100,67 @@ func (tls *DirectTLS) Handshake(rawConn net.Conn, authInfo AuthInfo, Logging *st
 
 	if strings.EqualFold(fields.serverName, "random") {
 		fields.serverName = randomServerName()
-		Logging.Info.Printf("Cloak/Handshake: Using random server name: %s", fields.serverName)
+		logging.Info.Printf("Cloak/Handshake: Using random server name: %s", fields.serverName)
 	} else {
-		Logging.Info.Printf("Cloak/Handshake: Using provided server name: %s", fields.serverName)
+		logging.Info.Printf("Cloak/Handshake: Using provided server name: %s", fields.serverName)
 	}
 
 	var ch []byte
 	ch, err = buildClientHello(tls.browser, fields)
 	if err != nil {
-		Logging.Info.Printf("Cloak/Handshake: Failed to build ClientHello: %v", err)
+		logging.Info.Printf("Cloak/Handshake: Failed to build ClientHello: %v", err)
 		return
 	}
-	Logging.Info.Printf("Cloak/Handshake: ClientHello built successfully")
+	logging.Info.Printf("Cloak/Handshake: ClientHello built successfully")
 
 	chWithRecordLayer := common.AddRecordLayer(ch, common.Handshake, common.VersionTLS11)
-	Logging.Info.Printf("Cloak/Handshake: ClientHello with record layer created")
+	logging.Info.Printf("Cloak/Handshake: ClientHello with record layer created")
 
 	_, err = rawConn.Write(chWithRecordLayer)
 	if err != nil {
-		Logging.Info.Printf("Cloak/Handshake: Failed to send ClientHello: %v", err)
+		logging.Info.Printf("Cloak/Handshake: Failed to send ClientHello: %v", err)
 		return
 	}
-	Logging.Info.Printf("Cloak/Handshake: ClientHello sent successfully")
+	logging.Info.Printf("Cloak/Handshake: ClientHello sent successfully")
 
 	tls.TLSConn = common.NewTLSConn(rawConn)
-	Logging.Info.Printf("Cloak/Handshake: TLS connection object created")
+	logging.Info.Printf("Cloak/Handshake: TLS connection object created")
 
 	buf := make([]byte, 1024)
-	Logging.Info.Printf("Cloak/Handshake: Waiting for ServerHello")
+	logging.Info.Printf("Cloak/Handshake: Waiting for ServerHello")
 
 	_, err = tls.Read(buf)
 	if err != nil {
-		Logging.Info.Printf("Cloak/Handshake: Failed to read ServerHello: %v", err)
+		logging.Info.Printf("Cloak/Handshake: Failed to read ServerHello: %v", err)
 		return
 	}
-	Logging.Info.Printf("Cloak/Handshake: ServerHello received")
+	logging.Info.Printf("Cloak/Handshake: ServerHello received")
 
 	encrypted := append(buf[6:38], buf[84:116]...)
 	nonce := encrypted[0:12]
 	ciphertextWithTag := encrypted[12:60]
-	Logging.Info.Printf("Cloak/Handshake: Encrypted data extracted from ServerHello")
+	logging.Info.Printf("Cloak/Handshake: Encrypted data extracted from ServerHello")
 
 	sessionKeySlice, err := common.AESGCMDecrypt(nonce, sharedSecret[:], ciphertextWithTag)
 	if err != nil {
-		Logging.Info.Printf("Cloak/Handshake: Failed to decrypt session key: %v", err)
+		logging.Info.Printf("Cloak/Handshake: Failed to decrypt session key: %v", err)
 		return
 	}
-	Logging.Info.Printf("Cloak/Handshake: Session key decrypted successfully")
+	logging.Info.Printf("Cloak/Handshake: Session key decrypted successfully")
 
 	copy(sessionKey[:], sessionKeySlice)
-	Logging.Info.Printf("Cloak/Handshake: Session key stored")
+	logging.Info.Printf("Cloak/Handshake: Session key stored")
 
 	for i := 0; i < 2; i++ {
-		Logging.Info.Printf("Cloak/Handshake: Waiting for ChangeCipherSpec or EncryptedCert message")
+		logging.Info.Printf("Cloak/Handshake: Waiting for ChangeCipherSpec or EncryptedCert message")
 		_, err = tls.Read(buf)
 		if err != nil {
-			Logging.Info.Printf("Cloak/Handshake: Failed to read message: %v", err)
+			logging.Info.Printf("Cloak/Handshake: Failed to read message: %v", err)
 			return
 		}
-		Logging.Info.Printf("Cloak/Handshake: Message received")
+		logging.Info.Printf("Cloak/Handshake: Message received")
 	}
 
-	Logging.Info.Printf("Cloak/Handshake: TLS handshake completed successfully")
+	logging.Info.Printf("Cloak/Handshake: TLS handshake completed successfully")
 	return sessionKey, nil
 }
