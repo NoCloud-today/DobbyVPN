@@ -370,9 +370,9 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 	log.Printf("Outline/newTunDevice: Tun successful")
 
 	tunDev := &tunDevice{tun, tun.name}
-	//if err := tunDev.configureSubnet(ip); err != nil {
-	//	return nil, fmt.Errorf("failed to configure TUN/TAP device subnet: %w", err)
-	//}
+	if err := tunDev.configureSubnet(ip); err != nil {
+		return nil, fmt.Errorf("failed to configure TUN/TAP device subnet: %w", err)
+	}
 	//if err := tunDev.bringUp(); err != nil {
 	//	return nil, fmt.Errorf("failed to bring up TUN/TAP device: %w", err)
 	//}

@@ -119,7 +119,7 @@ func (app App) Run(ctx context.Context) error {
 	os.Exit(1)
     }
 
-    tun, err := newTunDevice(app.RoutingConfig.TunDeviceName, app.RoutingConfig.TunDeviceIP)
+    tun, err := newTunDevice(app.RoutingConfig.TunDeviceName, TunDeviceIP)
     if err != nil {
         return fmt.Errorf("failed to create tun device: %w", err)
     }
