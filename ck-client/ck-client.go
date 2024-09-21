@@ -502,8 +502,8 @@ func main() {
         
         combinedStatusLabel := widget.NewLabel("Not connected")
 
-        ctx, cancel := context.WithCancel(context.Background())
-        cancelFunc = cancel
+        //ctx, cancel := context.WithCancel(context.Background())
+        //cancelFunc = cancel
         
         combinedConnectButton := widget.NewButton("Connect", func() {
             defer func() {
