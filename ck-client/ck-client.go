@@ -415,6 +415,9 @@ func main() {
 
         outlineStatusLabel := widget.NewLabel("Not connected")
 
+        ctx, cancel := context.WithCancel(context.Background())
+        cancelFunc = cancel
+
         outlineConnectButton := widget.NewButton("Connect", func() {
             key := outlineKeyEntry.Text
             if key == "" {
@@ -436,8 +439,8 @@ func main() {
 			DNSServerIP:          "9.9.9.9",
 		},
 	    }
-
-            ctx, cancel := context.WithCancel(context.Background())
+  
+            ctx, cancel = context.WithCancel(context.Background())
             cancelFunc = cancel
 
             go func() {
@@ -452,8 +455,9 @@ func main() {
 
         outlineDisconnectButton := widget.NewButton("Disconnect", func() {
             if cancelFunc != nil {
+                showMessage("Start cancel Outline")
                 cancelFunc()
-                cancelFunc = nil
+                showMessage("Finish cancel Outline")
             }
 
             outlineStatusLabel.SetText("Not connected")
@@ -497,6 +501,9 @@ func main() {
         }
         
         combinedStatusLabel := widget.NewLabel("Not connected")
+
+        ctx, cancel := context.WithCancel(context.Background())
+        cancelFunc = cancel
         
         combinedConnectButton := widget.NewButton("Connect", func() {
             defer func() {
@@ -558,7 +565,7 @@ func main() {
                 },
             }
         
-            ctx, cancel := context.WithCancel(context.Background())
+            ctx, cancel = context.WithCancel(context.Background())
             cancelFunc = cancel
         
             go func() {
@@ -689,8 +696,9 @@ func main() {
         
         combinedDisconnectButton := widget.NewButton("Disconnect", func() {
             if cancelFunc != nil {
+                showMessage("Start cancel Combined")
                 cancelFunc()
-                cancelFunc = nil
+                showMessage("Finish cancel Combined")
             }
 
             connected = false
