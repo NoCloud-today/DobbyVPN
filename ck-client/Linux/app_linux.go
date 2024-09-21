@@ -21,13 +21,6 @@ func (app App) Run(ctx context.Context) error {
 	}
 	defer tun.Close()
 
-	// disable IPv6 before resolving Shadowsocks server IP
-	prevIPv6, err := enableIPv6(false)
-	if err != nil {
-		return fmt.Errorf("failed to disable IPv6: %w", err)
-	}
-	defer enableIPv6(prevIPv6)
-
 	ss, err := NewOutlineDevice(*app.TransportConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create OutlineDevice: %w", err)
@@ -35,12 +28,6 @@ func (app App) Run(ctx context.Context) error {
 	defer ss.Close()
 
 	ss.Refresh()
-
-        err = setSystemDNSServer(app.RoutingConfig.DNSServerIP)
-	if err != nil {
-		return fmt.Errorf("failed to configure system DNS: %w", err)
-	}
-	defer restoreSystemDNSServer()
 
 	if err := startRouting(ss.GetServerIP().String(), app.RoutingConfig); err != nil {
 		return fmt.Errorf("failed to configure routing: %w", err)
@@ -139,7 +126,6 @@ func (app App) Run(ctx context.Context) error {
         log.Printf("tun closed")
         ss.Close()
         log.Printf("device closed")        
-        restoreSystemDNSServer()
         log.Printf("Stop routing")
         stopRouting(app.RoutingConfig.RoutingTableID)
         log.Printf("Stopped")
