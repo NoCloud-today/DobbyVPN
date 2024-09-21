@@ -121,6 +121,7 @@ func saveKey(key string) error {
 }
 
 var cancelFunc context.CancelFunc
+var cancelFunc1 context.CancelFunc
 
 type LogWriter struct {
 	Output *widget.Entry
@@ -502,8 +503,8 @@ func main() {
         
         combinedStatusLabel := widget.NewLabel("Not connected")
 
-        //ctx, cancel := context.WithCancel(context.Background())
-        //cancelFunc = cancel
+        ctx1, cancel1 := context.WithCancel(context.Background())
+        cancelFunc1 = cancel1
         
         combinedConnectButton := widget.NewButton("Connect", func() {
             defer func() {
@@ -512,6 +513,9 @@ func main() {
                     showMessage("DobbyVPN/ck-client: An error occurred while connecting")
                 }
             }()
+
+            ctx1, cancel1 = context.WithCancel(context.Background())
+            cancelFunc1 = cancel1
 
             log.Println("DobbyVPN/ck-client: Starting session...")
             configText := combinedConfigEntry.Text
@@ -565,11 +569,8 @@ func main() {
                 },
             }
         
-            ctx, cancel = context.WithCancel(context.Background())
-            cancelFunc = cancel
-        
             go func() {
-                if err := app.Run(ctx); err != nil {
+                if err := app.Run(ctx1); err != nil {
                     Logging.Err.Printf("%v\n", err)
                 }
             }()
@@ -695,9 +696,9 @@ func main() {
         })
         
         combinedDisconnectButton := widget.NewButton("Disconnect", func() {
-            if cancelFunc != nil {
+            if cancelFunc1 != nil {
                 showMessage("Start cancel Combined")
-                cancelFunc()
+                cancelFunc1()
                 showMessage("Finish cancel Combined")
             }
 
