@@ -150,22 +150,22 @@ jobs:
           mv -f log-files/connector.go Cloak/internal/client/connector.go
           mv -f log-files/TLS.go Cloak/internal/client/TLS.go
           mv -f log-files/copy.go Cloak/internal/common/copy.go
-          cp -r ck-client/MacOs Cloak
-          cp ck-client/app.go Cloak/MacOs
-          cp ck-client/ck-client.go Cloak/MacOs
-          cp ck-client/Icon.png Cloak/MacOs
-          cp ck-client/log_android.go Cloak/MacOs
-          cp ck-client/outline_device.go Cloak/MacOs
-          cp ck-client/outline_packet_proxy.go Cloak/MacOs
-          cp ck-client/protector.go Cloak/MacOs
-          cd Cloak/MacOs
+          cp -r ck-client/MacOs Cloak/internal/main
+          cp ck-client/app.go Cloak/internal/main
+          cp ck-client/ck-client.go Cloak/internal/main
+          cp ck-client/Icon.png Cloak/internal/main
+          cp ck-client/log_android.go Cloak/internal/main
+          cp ck-client/outline_device.go Cloak/internal/main
+          cp ck-client/outline_packet_proxy.go Cloak/internal/main
+          cp ck-client/protector.go Cloak/internal/main
+          cd Cloak/internal/main
           go mod tidy
           go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
 
       - name: Build macos ck-client
         run: |
-          cd Cloak/MacOs
+          cd Cloak/internal/main
           fyne package -os darwin
           cd ../..
       - name: MacOs build
@@ -175,7 +175,7 @@ jobs:
       - name: Make macos zip
         run: |
           mkdir macos_client
-          mv Cloak/MacOs/MacOs.app macos_client/DobbyVPN.app
+          mv Cloak/internal/main/main.app macos_client/DobbyVPN.app
           zip -r macos_client.zip macos_client
       - name: Upload MacOs client
         uses: actions/upload-artifact@master
