@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"context"
@@ -22,11 +21,17 @@ import (
 
 	"github.com/cbeuw/Cloak/internal/client"
 	"github.com/cbeuw/Cloak/internal/common"
-        "github.com/cbeuw/Cloak/internal/out"
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
 )
 
-var Logging = out.Logging
+var Logging = &struct {
+	Debug, Info, Warn, Err *log.Logger
+}{
+	Debug: log.New(io.Discard, "[DEBUG] ", log.LstdFlags),
+	Info:  log.New(os.Stdout, "[INFO] ", log.LstdFlags),
+	Warn:  log.New(os.Stderr, "[WARN] ", log.LstdFlags),
+	Err:   log.New(os.Stderr, "[ERROR] ", log.LstdFlags),
+}
 
 
 const configFileName = "config.json"
