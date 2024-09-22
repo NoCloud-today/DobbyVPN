@@ -174,7 +174,7 @@ jobs:
       - name: Build linux arm64 ck-client
         run: |
           cd Cloak/Linux
-          GOARCH=arm64 go build -o DobbyVPN_ARM64 .
+          GOARCH=arm64 CGO_ENABLED=yes go build -o DobbyVPN_ARM64 .
           cd ../..
       - name: Make linux arm64 zip
         run: |
