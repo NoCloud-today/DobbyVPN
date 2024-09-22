@@ -150,7 +150,8 @@ jobs:
           mv -f log-files/connector.go Cloak/internal/client/connector.go
           mv -f log-files/TLS.go Cloak/internal/client/TLS.go
           mv -f log-files/copy.go Cloak/internal/common/copy.go
-          cp log-files/logging.go Cloak/internal/out/logging.go
+          mkdir Cloak/internal/out
+          cp log-files/logging.go Cloak/internal/out
           cp -r ck-client/MacOs Cloak/internal/main
           cp ck-client/app.go Cloak/internal/main
           cp ck-client/ck-client.go Cloak/internal/main
