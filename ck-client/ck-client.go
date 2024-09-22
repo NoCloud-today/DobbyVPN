@@ -157,6 +157,7 @@ func main() {
 	var listener net.Listener
 	var udpConn *net.UDPConn
 	var stopChan chan struct{}
+        var counter = 0
 
 	s := &Server{
 		quit: make(chan interface{}),
@@ -529,6 +530,30 @@ func main() {
                 return
             }
 
+            var rawConfig client.RawConfig
+            err = json.Unmarshal([]byte(configText), &rawConfig)
+            if err != nil {
+                dialog.ShowError(errors.New("Invalid JSON input: "+err.Error()), w)
+                return
+            }
+
+            rawConfig.LocalHost = localHostEntry.Text
+            rawConfig.LocalPort = localPortEntry.Text
+            rawConfig.UDP = udpEntry.Checked
+            UID = string((rawConfig.UID)[:])
+
+	    localConfig, remoteConfig, authInfo, err := rawConfig.ProcessRawConfig(common.RealWorldState)
+	    if err != nil {
+		dialog.ShowError(err, w)
+		return
+	    }
+
+	    var adminUID []byte
+	    if UID != "" {
+		adminUID = []byte(UID)
+	    }
+
+
             keyPtr := &key
             app := App{
                 TransportConfig: keyPtr,
@@ -549,8 +574,114 @@ func main() {
                 }
             }()
 
-            combinedStatusLabel.SetText("Connected")
-            showMessage("DobbyVPN/ck-client: You are now connected.")
+            if (counter == 0) {
+                        log.Println("DobbyVPN/ck-client: Starting session...")
+
+                        go func() {
+                                defer func() {
+                                        connectionLock.Lock()
+                                        defer connectionLock.Unlock()
+                                        if r := recover(); r != nil {
+                                                log.Printf("DobbyVPN/ck-client: Recovered from panic: %v", r)
+                                                showMessage("Error: An unexpected error occurred.")
+                                        }
+                                }()
+
+                                var seshMaker func() *mux.Session
+                                d := &net.Dialer{Control: protector, KeepAlive: remoteConfig.KeepAlive}
+
+                                statusLabel.SetText("Connecting...")
+                                if flag && currentSession != nil {
+                                        currentSession.Close()
+                                }
+
+                                if adminUID != nil {
+                                        showMessage("DobbyVPN/ck-client: API base is "+localConfig.LocalAddr)
+                                        authInfo.UID = adminUID
+                                        authInfo.SessionId = 0
+                                        remoteConfig.NumConn = 1
+                                        log.Printf("DobbyVPN/ck-client: authInfo.UID = %x", authInfo.UID)
+                                        log.Printf("DobbyVPN/ck-client: authInfo.SessionId = %d", authInfo.SessionId)
+
+
+                                        seshMaker = func() *mux.Session {
+                                                if !connected {
+                                                        authInfo.UID = []byte("")
+                                                        authInfo.SessionId = 1
+                                                }
+                                                if connected {
+                                                        authInfo.UID = adminUID
+                                                        authInfo.SessionId = 0
+                                                }
+                                                currentSession = client.MakeSession(remoteConfig, authInfo, d)
+                                                return currentSession
+                                        }
+                                } else {
+                                        var network string
+                                        if authInfo.Unordered {
+                                                network = "UDP"
+                                        } else {
+                                                network = "TCP"
+                                        }
+                                        showMessage("DobbyVPN/ck-client: Listening on "+network+" "+localConfig.LocalAddr+" for "+authInfo.ProxyMethod+" client")
+                                        seshMaker = func() *mux.Session {
+                                                authInfo := authInfo
+
+                                                randByte := make([]byte, 1)
+                                                common.RandRead(authInfo.WorldState.Rand, randByte)
+                                                authInfo.MockDomain = localConfig.MockDomainList[int(randByte[0])%len(localConfig.MockDomainList)]
+
+                                                quad := make([]byte, 4)
+                                                common.RandRead(authInfo.WorldState.Rand, quad)
+                                                authInfo.SessionId = binary.BigEndian.Uint32(quad)
+                                                currentSession = client.MakeSession(remoteConfig, authInfo, d)
+                                                return currentSession
+                                        }
+                                }
+
+                                connectionLock.Lock()
+                                connected = true
+                                flag = true
+                                statusLabel.SetText("Connected")
+                                connectionLock.Unlock()
+
+                                showMessage("DobbyVPN/ck-client: You are now connected to Client.")
+
+                                if authInfo.Unordered {
+                                        showMessage("DobbyVPN/ck-client: UDP")
+                                        acceptor := func() (*net.UDPConn, error) {
+                                                udpAddr, _ := net.ResolveUDPAddr("udp", localConfig.LocalAddr)
+                                                udpConn, err = net.ListenUDP("udp", udpAddr)
+                                                return udpConn, err
+                                        }
+
+                                        client.RouteUDP(acceptor, localConfig.Timeout, true, seshMaker)
+                                } else {
+                                        showMessage("DobbyVPN/ck-client: TCP")
+                                        showMessage("DobbyVPN/ck-client: localConfig.LocalAddr" + localConfig.LocalAddr)
+                                        s.listener, err = net.Listen("tcp", localConfig.LocalAddr)
+                                        if err != nil {
+                                                dialog.ShowError(err, w)
+                                                return
+                                        }
+                                        s.wg.Add(1)
+
+                                        log.Printf("DobbyVPN/ck-client.go: Enter the function RouteTCP")
+                                        log.Printf("DobbyVPN/ck-client.go: localConfig.Timeout = %v", localConfig.Timeout)
+
+                                        client.RouteTCP(s.listener, localConfig.Timeout, false, seshMaker)
+                                        defer func() {
+                                                log.Printf("DobbyVPN/ck-client: RouteTCP stopping")
+                                        }()
+                                }
+                        }()
+
+                        combinedStatusLabel.SetText("Connected")
+                        showMessage("DobbyVPN/ck-client: You are now connected.")
+                } else {
+                        connected = true
+                }
+                counter += 1
         })
 
         combinedDisconnectButton := widget.NewButton("Disconnect", func() {
