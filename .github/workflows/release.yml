@@ -176,6 +176,7 @@ jobs:
           cp ck-client/protector.go Cloak/Linux
           cd Cloak/Linux
           go mod tidy
+          go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
 
       - name: Cross-compile linux arm64 ck-client using fyne-cross
