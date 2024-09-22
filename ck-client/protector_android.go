@@ -1,7 +1,7 @@
 //go:build android
 // +build android
 
-package main
+package outline
 
 // Stolen from https://github.com/shadowsocks/overture/blob/shadowsocks/core/utils/utils_android.go
 
