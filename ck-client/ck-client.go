@@ -515,7 +515,7 @@ func main() {
                 return
         }
 
-        err := saveConfig(configText)
+        err = saveConfig(configText)
         if err != nil {
                 dialog.ShowError(errors.New("Failed to save config: "+err.Error()), w)
                 return
