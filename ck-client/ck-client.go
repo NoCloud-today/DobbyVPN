@@ -157,7 +157,6 @@ func main() {
 	var listener net.Listener
 	var udpConn *net.UDPConn
 	var stopChan chan struct{}
-        var counter = 0
 
 	s := &Server{
 		quit: make(chan interface{}),
