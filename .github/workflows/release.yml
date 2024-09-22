@@ -170,8 +170,11 @@ jobs:
           cp ck-client/outline_device.go Cloak/Linux
           cp ck-client/outline_packet_proxy.go Cloak/Linux
           cp ck-client/protector.go Cloak/Linux
-          cd Cloak/Linux
-          go mod init client
+          cd Cloak
+          go install fyne.io/fyne/v2/cmd/fyne@latest
+          go install github.com/fyne-io/fyne-cross@latest
+          go get -u ./...
+          cd Linux
           go install fyne.io/fyne/v2/cmd/fyne@latest
           go install github.com/fyne-io/fyne-cross@latest
           go mod tidy
