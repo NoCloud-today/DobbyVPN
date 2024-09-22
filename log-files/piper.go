@@ -5,10 +5,11 @@ import (
 	"net"
 	"sync"
 	"time"
-        "os"
-        "log"
+        //"os"
+        //"log"
 
 	"github.com/cbeuw/Cloak/internal/common"
+        "github.com/cbeuw/Cloak/internal/main"
 
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
 	//"logging"
