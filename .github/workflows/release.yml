@@ -162,23 +162,24 @@ jobs:
           mv -f log-files/copy.go Cloak/internal/common/copy.go
           mkdir Cloak/internal/out
           cp log-files/logging.go Cloak/internal/out/logging.go
-          cp -r ck-client/Linux Cloak
-          cp ck-client/app.go Cloak/Linux
-          cp ck-client/ck-client.go Cloak/Linux
-          cp ck-client/Icon.png Cloak/Linux
-          cp ck-client/log_android.go Cloak/Linux
-          cp ck-client/outline_device.go Cloak/Linux
-          cp ck-client/outline_packet_proxy.go Cloak/Linux
-          cp ck-client/protector.go Cloak/Linux
+          cp ck-client/Linux/app_linux.go Cloak
+          cp ck-client/Linux/routing_linux.go Cloak
+          cp ck-client/Linux/tun_device_linux.go Cloak
+          cp ck-client/app.go Cloak
+          cp ck-client/ck-client.go Cloak
+          cp ck-client/Icon.png Cloak
+          cp ck-client/log_android.go Cloak
+          cp ck-client/outline_device.go Cloak
+          cp ck-client/outline_packet_proxy.go Cloak
+          cp ck-client/protector.go Cloak
           cd Cloak
           go install fyne.io/fyne/v2/cmd/fyne@latest
           go install github.com/fyne-io/fyne-cross@latest
           go get -u ./...
-          cd Linux
           go install fyne.io/fyne/v2/cmd/fyne@latest
           go install github.com/fyne-io/fyne-cross@latest
           go mod tidy
-          cd ../..
+          cd ..
 
       - name: Cross-compile linux arm64 ck-client using fyne-cross
         run: |
