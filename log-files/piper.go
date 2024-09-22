@@ -9,7 +9,6 @@ import (
         //"log"
 
 	"github.com/cbeuw/Cloak/internal/common"
-        "github.com/cbeuw/Cloak/outline"
 
 	mux "github.com/cbeuw/Cloak/internal/multiplex"
 	//"logging"
