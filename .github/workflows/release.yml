@@ -129,6 +129,63 @@ jobs:
         with:
           name: linux_client.zip
           path: linux_client.zip
+
+  linux_arm64_build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ '1.22.5' ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+      - name: Install dependencies
+        run: |
+          cd src
+          go get ./...
+          cd ..
+          sudo apt-get install golang gcc-aarch64-linux-gnu libgl1-mesa-dev xorg-dev
+      - name: Clone Cloak and copying ck-client
+        run: |
+          git submodule add https://github.com/cbeuw/Cloak
+          git submodule init
+          git submodule update
+          mv -f log-files/piper.go Cloak/internal/client/piper.go
+          mv -f log-files/connector.go Cloak/internal/client/connector.go
+          mv -f log-files/TLS.go Cloak/internal/client/TLS.go
+          mv -f log-files/copy.go Cloak/internal/common/copy.go
+          mkdir Cloak/internal/out
+          cp log-files/logging.go Cloak/internal/out/logging.go
+          cp -r ck-client/Linux Cloak
+          cp ck-client/app.go Cloak/Linux
+          cp ck-client/ck-client.go Cloak/Linux
+          cp ck-client/Icon.png Cloak/Linux
+          cp ck-client/log_android.go Cloak/Linux
+          cp ck-client/outline_device.go Cloak/Linux
+          cp ck-client/outline_packet_proxy.go Cloak/Linux
+          cp ck-client/protector.go Cloak/Linux
+          cd Cloak/Linux
+          go mod tidy
+          cd ../..
+      - name: Build linux arm64 ck-client
+        run: |
+          cd Cloak/Linux
+          GOARCH=arm64 go build -o DobbyVPN_ARM64 .
+          cd ../..
+      - name: Make linux arm64 zip
+        run: |
+          mkdir linux_client_arm64
+          mv Cloak/Linux/DobbyVPN_ARM64 linux_client_arm64/DobbyVPN_ARM64
+          zip -r linux_client_arm64.zip linux_client_arm64
+      - name: Upload Linux ARM64 client
+        uses: actions/upload-artifact@master
+        with:
+          name: linux_client_arm64.zip
+          path: linux_client_arm64.zip
                     
           
 
@@ -234,7 +291,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    needs: [windows_build, linux_build, macos_build, android_build]
+    needs: [windows_build, linux_build, linux_arm64_build, macos_build, android_build]
     permissions: write-all
 
     steps:
