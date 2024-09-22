@@ -171,6 +171,7 @@ jobs:
           cp ck-client/outline_packet_proxy.go Cloak/Linux
           cp ck-client/protector.go Cloak/Linux
           cd Cloak/Linux
+          go mod init client
           go install fyne.io/fyne/v2/cmd/fyne@latest
           go install github.com/fyne-io/fyne-cross@latest
           go mod tidy
@@ -178,7 +179,6 @@ jobs:
 
       - name: Cross-compile linux arm64 ck-client using fyne-cross
         run: |
-          cp Cloak/go.mod Cloak/Linux
           cd Cloak/Linux
           fyne-cross linux -arch arm64 -output DobbyVPN_ARM64
           cd ../..
