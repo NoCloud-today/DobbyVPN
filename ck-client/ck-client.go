@@ -502,6 +502,9 @@ func main() {
 	    }
         }
 
+        ctx1, cancel1 := context.WithCancel(context.Background())
+        cancelFunc1 = cancel1
+
         combinedStatusLabel := widget.NewLabel("Not connected")
         
         combinedConnectButton := widget.NewButton("Connect", func() {
@@ -512,7 +515,7 @@ func main() {
                 }
             }()
 
-            ctx1, cancel1 := context.WithCancel(context.Background())
+            ctx1, cancel1 = context.WithCancel(context.Background())
             cancelFunc1 = cancel1
 
             log.Println("DobbyVPN/ck-client: Starting session...")
