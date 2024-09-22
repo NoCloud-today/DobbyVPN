@@ -151,10 +151,6 @@ jobs:
           cd ..
           sudo apt-get install golang libgl1-mesa-dev xorg-dev
 
-      - name: Install fyne-cross
-        run: |
-          go install github.com/fyne-io/fyne-cross@latest
-
       - name: Clone Cloak and copying ck-client
         run: |
           git submodule add https://github.com/cbeuw/Cloak
@@ -177,6 +173,7 @@ jobs:
           cd Cloak/Linux
           go mod tidy
           go install fyne.io/fyne/v2/cmd/fyne@latest
+          go install github.com/fyne-io/fyne-cross@latest
           cd ../..
 
       - name: Cross-compile linux arm64 ck-client using fyne-cross
