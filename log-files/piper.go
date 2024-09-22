@@ -116,6 +116,7 @@ func RouteTCP(listener net.Listener, streamTimeout time.Duration, singleplex boo
 		// Создаем новую сессию, если нужно
 		if !singleplex && (sesh == nil || sesh.IsClosed()) {
 			logging.Info.Printf("Cloak/RouteTCP: Creating new session")
+                        logging.Info.Printf("Cloak/RouteTCP: Enter the MakeSession")
 			sesh = newSeshFunc()
 		}
 
@@ -124,6 +125,7 @@ func RouteTCP(listener net.Listener, streamTimeout time.Duration, singleplex boo
 			// Если singleplex, создаем сессию для каждого соединения
 			if singleplex {
 				logging.Info.Printf("Cloak/RouteTCP: Singleplex mode: creating new session for this connection")
+                                logging.Info.Printf("Cloak/RouteTCP: Enter the MakeSession")
 				sesh = newSeshFunc()
 			}
 
