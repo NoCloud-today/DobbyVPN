@@ -1,7 +1,7 @@
 //go:build android
 // +build android
 
-package outline
+package main
 
 /*
 To view the log output run:

@@ -1,5 +1,4 @@
-package outline
-
+package main
 import (
 	"errors"
 	"fmt"

@@ -1,4 +1,4 @@
-package outline
+package main
 type App struct {
 	TransportConfig *string
 	RoutingConfig   *RoutingConfig

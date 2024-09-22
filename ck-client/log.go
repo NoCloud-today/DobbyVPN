@@ -1,7 +1,7 @@
 //go:build !android
 // +build !android
 
-package outline
+package main
 
 func log_init() {
 }

@@ -1,6 +1,6 @@
 //go:build darwin
 
-package outline
+package main
 
 import (
 	"log"

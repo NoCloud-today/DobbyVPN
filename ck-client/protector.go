@@ -1,7 +1,7 @@
 //go:build !android
 // +build !android
 
-package outline
+package main
 
 import "syscall"
 
