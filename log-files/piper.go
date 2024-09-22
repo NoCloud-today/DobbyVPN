@@ -14,7 +14,7 @@ import (
 	//"logging"
 )
 
-var logging := main.Logging
+var logging = main.Logging
 
 func RouteUDP(bindFunc func() (*net.UDPConn, error), streamTimeout time.Duration, singleplex bool, newSeshFunc func() *mux.Session) {
 	var sesh *mux.Session
