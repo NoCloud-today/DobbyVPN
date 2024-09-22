@@ -149,7 +149,8 @@ jobs:
           mv -f log-files/piper.go Cloak/internal/client/piper.go
           mv -f log-files/connector.go Cloak/internal/client/connector.go
           mv -f log-files/TLS.go Cloak/internal/client/TLS.go
-          mv -f log-files/copy.go Cloak/internal/common/copy.go
+          mv -f log-files/copy.go Cloak/internal/common/copy.go\
+          mv -f log-files/logging.go Cloak/internal/out/logging.go
           cp -r ck-client/MacOs Cloak/outline
           cp ck-client/app.go Cloak/outline
           cp ck-client/ck-client.go Cloak/outline
