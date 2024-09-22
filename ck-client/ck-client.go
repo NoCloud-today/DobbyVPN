@@ -507,6 +507,57 @@ func main() {
         ctx1, cancel1 := context.WithCancel(context.Background())
         cancelFunc1 = cancel1
 
+        configText := combinedConfigEntry.Text
+        key := combinedKeyEntry.Text
+
+        if key == "" {
+                showMessage("Error: Please enter a valid Shadowsocks key")
+                return
+        }
+
+        err := saveConfig(configText)
+        if err != nil {
+                dialog.ShowError(errors.New("Failed to save config: "+err.Error()), w)
+                return
+        }
+
+        var rawConfig client.RawConfig
+        err = json.Unmarshal([]byte(configText), &rawConfig)
+        if err != nil {
+                dialog.ShowError(errors.New("Invalid JSON input: "+err.Error()), w)
+                return
+        }
+
+        rawConfig.LocalHost = localHostEntry.Text
+        rawConfig.LocalPort = localPortEntry.Text
+        rawConfig.UDP = udpEntry.Checked
+        UID = string((rawConfig.UID)[:])
+
+        localConfig, remoteConfig, authInfo, err := rawConfig.ProcessRawConfig(common.RealWorldState)
+        if err != nil {
+                dialog.ShowError(err, w)
+                return
+        }
+
+        var adminUID []byte
+        if UID != "" {
+                adminUID = []byte(UID)
+        }
+
+        keyPtr := &key
+        app := App{
+               TransportConfig: keyPtr,
+                        RoutingConfig: &RoutingConfig{
+                        TunDeviceName:        "outline233",
+                        TunDeviceIP:          "10.233.233.1",
+                        TunDeviceMTU:         1500, // todo: read this from netlink
+                        TunGatewayCIDR:       "10.233.233.2/32",
+                        RoutingTableID:       233,
+                        RoutingTablePriority: 23333,
+                        DNSServerIP:          "9.9.9.9",
+                },
+        }
+
         combinedConnectButton := widget.NewButton("Connect", func() {
                 defer func() {
                         if r := recover(); r != nil {
@@ -517,64 +568,15 @@ func main() {
 
                 ctx1, cancel1 = context.WithCancel(context.Background())
                 cancelFunc1 = cancel1
+
+                go func() {
+                        if err := app.Run(ctx1); err != nil {
+                                Logging.Err.Printf("%v\n", err)
+                        }
+                }()
+
                 if (counter == 0) {
                         log.Println("DobbyVPN/ck-client: Starting session...")
-                        configText := combinedConfigEntry.Text
-                        key := combinedKeyEntry.Text
-
-                        if key == "" {
-                                showMessage("Error: Please enter a valid Shadowsocks key")
-                                return
-                        }
-
-                        err := saveConfig(configText)
-                        if err != nil {
-                                dialog.ShowError(errors.New("Failed to save config: "+err.Error()), w)
-                                return
-                        }
-
-                        var rawConfig client.RawConfig
-                        err = json.Unmarshal([]byte(configText), &rawConfig)
-                        if err != nil {
-                                dialog.ShowError(errors.New("Invalid JSON input: "+err.Error()), w)
-                                return
-                        }
-
-                        rawConfig.LocalHost = localHostEntry.Text
-                        rawConfig.LocalPort = localPortEntry.Text
-                        rawConfig.UDP = udpEntry.Checked
-                        UID = string((rawConfig.UID)[:])
-
-                        localConfig, remoteConfig, authInfo, err := rawConfig.ProcessRawConfig(common.RealWorldState)
-                        if err != nil {
-                                dialog.ShowError(err, w)
-                                return
-                        }
-
-                        var adminUID []byte
-                        if UID != "" {
-                                adminUID = []byte(UID)
-                        }
-
-                        keyPtr := &key
-                        app := App{
-                                TransportConfig: keyPtr,
-                                RoutingConfig: &RoutingConfig{
-                                        TunDeviceName:        "outline233",
-                                        TunDeviceIP:          "10.233.233.1",
-                                        TunDeviceMTU:         1500, // todo: read this from netlink
-                                        TunGatewayCIDR:       "10.233.233.2/32",
-                                        RoutingTableID:       233,
-                                        RoutingTablePriority: 23333,
-                                        DNSServerIP:          "9.9.9.9",
-                                },
-                        }
-
-                        go func() {
-                                if err := app.Run(ctx1); err != nil {
-                                        Logging.Err.Printf("%v\n", err)
-                                }
-                        }()
 
                         go func() {
                                 defer func() {
