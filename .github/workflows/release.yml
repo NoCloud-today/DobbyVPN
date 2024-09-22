@@ -143,12 +143,18 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
+
       - name: Install dependencies
         run: |
           cd src
           go get ./...
           cd ..
-          sudo apt-get install golang gcc-aarch64-linux-gnu libgl1-mesa-dev xorg-dev
+          sudo apt-get install golang libgl1-mesa-dev xorg-dev
+
+      - name: Install fyne-cross
+        run: |
+          go install github.com/fyne-io/fyne-cross@latest
+
       - name: Clone Cloak and copying ck-client
         run: |
           git submodule add https://github.com/cbeuw/Cloak
@@ -171,22 +177,22 @@ jobs:
           cd Cloak/Linux
           go mod tidy
           cd ../..
-      - name: Build linux arm64 ck-client
+
+      - name: Cross-compile linux arm64 ck-client using fyne-cross
         run: |
-          cd Cloak/Linux
-          GOARCH=arm64 CGO_ENABLED=yes go build -o DobbyVPN_ARM64 .
-          cd ../..
+          fyne-cross linux -arch arm64 -output DobbyVPN_ARM64
+
       - name: Make linux arm64 zip
         run: |
           mkdir linux_client_arm64
-          mv Cloak/Linux/DobbyVPN_ARM64 linux_client_arm64/DobbyVPN_ARM64
+          mv fyne-cross/dist/linux-arm64/DobbyVPN_ARM64 linux_client_arm64/DobbyVPN_ARM64
           zip -r linux_client_arm64.zip linux_client_arm64
+
       - name: Upload Linux ARM64 client
         uses: actions/upload-artifact@master
         with:
           name: linux_client_arm64.zip
-          path: linux_client_arm64.zip
-                    
+          path: linux_client_arm64.zip    
           
 
   macos_build:
