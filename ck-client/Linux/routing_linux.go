@@ -21,10 +21,10 @@ func startRouting(proxyIP string, config *RoutingConfig) error {
 
 func stopRouting(routingTable int) {
 	if err := cleanUpRoutingTable(routingTable); err != nil {
-		Logging.Err.Printf("failed to clean up routing table '%v': %v\n", routingTable, err)
+		Logging.Err.Printf("Outline/Routing: failed to clean up routing table '%v': %v\n", routingTable, err)
 	}
 	if err := cleanUpRule(); err != nil {
-		Logging.Err.Printf("failed to clean up IP rule: %v\n", err)
+		Logging.Err.Printf("Outline/Routing: failed to clean up IP rule: %v\n", err)
 	}
 }
 
@@ -50,7 +50,7 @@ func setupRoutingTable(routingTable int, tunName, gwSubnet string, tunIP string)
 	if err = netlink.RouteAdd(&r); err != nil {
 		return fmt.Errorf("failed to add routing entry '%v' -> '%v': %w", r.Src, r.Dst, err)
 	}
-	Logging.Info.Printf("routing traffic from %v to %v through nic %v\n", r.Src, r.Dst, r.LinkIndex)
+	Logging.Info.Printf("Outline/Run: routing traffic from %v to %v through nic %v\n", r.Src, r.Dst, r.LinkIndex)
 
 	r = netlink.Route{
 		LinkIndex: tun.Attrs().Index,
@@ -61,7 +61,7 @@ func setupRoutingTable(routingTable int, tunName, gwSubnet string, tunIP string)
 	if err := netlink.RouteAdd(&r); err != nil {
 		return fmt.Errorf("failed to add gateway routing entry '%v': %w", r.Gw, err)
 	}
-	Logging.Info.Printf("routing traffic via gw %v through nic %v...\n", r.Gw, r.LinkIndex)
+	Logging.Info.Printf("Outline/Run: routing traffic via gw %v through nic %v...\n", r.Gw, r.LinkIndex)
 
 	return nil
 }
@@ -80,7 +80,7 @@ func cleanUpRoutingTable(routingTable int) error {
 		}
 	}
 	if rtDelErr == nil {
-		Logging.Info.Printf("routing table '%v' has been cleaned up\n", routingTable)
+		Logging.Info.Printf("Outline/Routing: routing table '%v' has been cleaned up\n", routingTable)
 	}
 	return rtDelErr
 }

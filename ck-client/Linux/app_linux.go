@@ -15,11 +15,15 @@ func (app App) Run(ctx context.Context) error {
 	trafficCopyWg := &sync.WaitGroup{}
 	defer trafficCopyWg.Wait()
 
+        logging.Info.Printf("Outline/Run: Start creating tun")
+
 	tun, err := newTunDevice(app.RoutingConfig.TunDeviceName, app.RoutingConfig.TunDeviceIP)
 	if err != nil {
 		return fmt.Errorf("failed to create tun device: %w", err)
 	}
 	defer tun.Close()
+
+        logging.Info.Printf("Outline/Run: Start device")
 
 	ss, err := NewOutlineDevice(*app.TransportConfig)
 	if err != nil {
@@ -29,10 +33,14 @@ func (app App) Run(ctx context.Context) error {
 
 	ss.Refresh()
 
+        logging.Info.Printf("Outline/Run: Start routing")
+
 	if err := startRouting(ss.GetServerIP().String(), app.RoutingConfig); err != nil {
 		return fmt.Errorf("failed to configure routing: %w", err)
 	}
 	defer stopRouting(app.RoutingConfig.RoutingTableID)
+
+        logging.Info.Printf("Outline/Run: Made table routing")
 
         trafficCopyWg.Add(2)
     go func() {
@@ -120,14 +128,14 @@ func (app App) Run(ctx context.Context) error {
     
         trafficCopyWg.Wait()
         
-        log.Printf("Disconnected")
+        log.Printf("Outline/Run: Disconnected")
 
         tun.Close()
-        log.Printf("tun closed")
+        log.Printf("Outline/Run: tun closed")
         ss.Close()
-        log.Printf("device closed")        
-        log.Printf("Stop routing")
+        log.Printf("Outline/Run: device closed")        
+        log.Printf("Outline/Run: Stop routing")
         stopRouting(app.RoutingConfig.RoutingTableID)
-        log.Printf("Stopped")
+        log.Printf("Outline/Run: Stopped")
 	return nil
 }

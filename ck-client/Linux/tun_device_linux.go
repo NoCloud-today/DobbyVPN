@@ -48,6 +48,8 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 		return nil, fmt.Errorf("newly created TUN/TAP device '%s' not found: %w", name, err)
 	}
 
+        Logging.Info.Printf("Outline/Tun: create tunLink : %v", tunLink)
+
 	tunDev := &tunDevice{tun, tunLink}
 	if err := tunDev.configureSubnet(ip); err != nil {
 		return nil, fmt.Errorf("failed to configure TUN/TAP device subnet: %w", err)
@@ -55,6 +57,7 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 	if err := tunDev.bringUp(); err != nil {
 		return nil, fmt.Errorf("failed to bring up TUN/TAP device: %w", err)
 	}
+        Logging.Info.Printf("Outline/Tun: tunDevice created")
 	return tunDev, nil
 }
 
