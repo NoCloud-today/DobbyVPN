@@ -179,24 +179,7 @@ jobs:
       - name: Cross-compile linux arm64 ck-client using fyne-cross
         run: |
           cd Cloak/Linux
-          go get fyne.io/fyne/v2
-          go get fyne.io/fyne/v2/app
-          go get fyne.io/fyne/v2/container
-          go get fyne.io/fyne/v2/dialog
-          go get fyne.io/fyne/v2/widget
-          go get github.com/Jigsaw-Code/outline-sdk/dns
-          go get github.com/Jigsaw-Code/outline-sdk/network
-          go get github.com/Jigsaw-Code/outline-sdk/network/dnstruncate
-          go get github.com/Jigsaw-Code/outline-sdk/network/lwip2transport
-          go get github.com/Jigsaw-Code/outline-sdk/transport
-          go get github.com/Jigsaw-Code/outline-sdk/x/configurl
-          go get github.com/Jigsaw-Code/outline-sdk/x/connectivity
-          go get github.com/cbeuw/Cloak/internal/client
-          go get github.com/cbeuw/Cloak/internal/common
-          go get github.com/cbeuw/Cloak/internal/multiplex
-          go get github.com/cbeuw/Cloak/internal/out
-          go get github.com/songgao/water
-          go get github.com/vishvananda/netlink
+          go mod tidy
           fyne-cross linux -arch arm64 -output DobbyVPN_ARM64
           cd ../..
 
