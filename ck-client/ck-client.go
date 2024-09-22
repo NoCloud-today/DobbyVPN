@@ -521,29 +521,6 @@ func main() {
                 return
         }
 
-        var rawConfig client.RawConfig
-        err = json.Unmarshal([]byte(configText), &rawConfig)
-        if err != nil {
-                dialog.ShowError(errors.New("Invalid JSON input: "+err.Error()), w)
-                return
-        }
-
-        rawConfig.LocalHost = localHostEntry.Text
-        rawConfig.LocalPort = localPortEntry.Text
-        rawConfig.UDP = udpEntry.Checked
-        UID = string((rawConfig.UID)[:])
-
-        localConfig, remoteConfig, authInfo, err := rawConfig.ProcessRawConfig(common.RealWorldState)
-        if err != nil {
-                dialog.ShowError(err, w)
-                return
-        }
-
-        var adminUID []byte
-        if UID != "" {
-                adminUID = []byte(UID)
-        }
-
         keyPtr := &key
         app := App{
                TransportConfig: keyPtr,
