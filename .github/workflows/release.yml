@@ -248,7 +248,7 @@ jobs:
       - name: Make macos zip
         run: |
           mkdir macos_client
-          mv Cloak/MacOs/MacOs.app macos_client/DobbyVPN.app
+          mv Cloak/MacOs/DobbyVPN.app macos_client/DobbyVPN.app
           zip -r macos_client.zip macos_client
       - name: Upload MacOs client
         uses: actions/upload-artifact@master
