@@ -190,7 +190,7 @@ jobs:
       - name: Make linux arm64 zip
         run: |
           mkdir linux_client_arm64
-          mv Cloak/Linux/fyne-cross/dist/linux-arm64/DobbyVPN_ARM64 linux_client_arm64/DobbyVPN_ARM64
+          mv Cloak/fyne-cross/dist/linux-arm64/DobbyVPN_ARM64.tar.xz linux_client_arm64/DobbyVPN_ARM64.tar.xz
           zip -r linux_client_arm64.zip linux_client_arm64
 
       - name: Upload Linux ARM64 client
