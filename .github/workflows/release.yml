@@ -234,13 +234,12 @@ jobs:
           cp ck-client/protector.go Cloak/MacOs
           cd Cloak/MacOs
           go mod tidy
-          go install fyne.io/fyne/v2/cmd/fyne@latest
           cd ../..
 
       - name: Build macos ck-client
         run: |
           cd Cloak/MacOs
-          fyne package -os darwin
+          go build -o DobbyVPN.app .
           cd ../..
       - name: MacOs build
         run: |
