@@ -19,7 +19,7 @@ func (app App) Run(ctx context.Context) error {
 
 	tun, err := newTunDevice(app.RoutingConfig.TunDeviceName, app.RoutingConfig.TunDeviceIP)
 	if err != nil {
-		return fmt.Errorf("failed to create tun device: %w", err)
+		return fmt.Errorf("failed to create tun device: %w, open app with sudo", err)
 	}
 	defer tun.Close()
 
