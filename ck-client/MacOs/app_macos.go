@@ -23,6 +23,8 @@ func (app App) Run(ctx context.Context) error {
 	}
 	defer tun.Close()
 
+        Logging.Info.Printf("Tun created")
+
 	ss, err := NewOutlineDevice(*app.TransportConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create OutlineDevice: %w", err)
@@ -30,6 +32,8 @@ func (app App) Run(ctx context.Context) error {
 	defer ss.Close()
 
 	ss.Refresh()
+
+        Logging.Info.Printf("Device created")
 
 	// Copy the traffic from tun device to OutlineDevice bidirectionally
 	trafficCopyWg.Add(2)
@@ -63,9 +67,9 @@ func (app App) Run(ctx context.Context) error {
 			cmd := exec.Command("netstat", "-rn")
 			output, err := cmd.Output()
 			if err != nil {
-				log.Printf("failed to execute netstat: %v", err)
+				Logging.Info.Printf("failed to execute netstat")
 			} else {
-				log.Printf("Routing table:\n%s", string(output))
+				Logging.Info.Printf("Routing table:\n%s", string(output))
 			}
 			time.Sleep(6 * time.Second)
 		}
@@ -84,6 +88,9 @@ func (app App) Run(ctx context.Context) error {
         trafficCopyWg.Wait()
     
         tun.Close()
+        Logging.Info.Printf("Tun closed")
         ss.Close()
+        Logging.Info.Printf("Device closed")
+        Logging.Info.Printf("Stopped")
 	return nil
 }
