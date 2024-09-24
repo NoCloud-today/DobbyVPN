@@ -18,6 +18,15 @@ import (
 	"github.com/songgao/water"
 )
 
+func checkRoot() bool {
+	cmd := exec.Command("net", "session")
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	if err := cmd.Run(); err != nil {
+		return false // Не администратор
+	}
+	return true
+}
+
 var (
 	errIfceNameNotFound = errors.New("Failed to find the name of interface")
 	// Device Control Codes
@@ -337,6 +346,10 @@ type tunDevice struct {
 var _ network.IPDevice = (*tunDevice)(nil)
 
 func newTunDevice(name, ip string) (d network.IPDevice, err error) {
+        if !checkRoot() {
+		return nil, errors.New("this operation requires superuser privileges. Please run the program with administrator")
+	}
+
 	if len(name) == 0 {
 		return nil, errors.New("name is required for TUN/TAP device")
 	}
