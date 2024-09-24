@@ -15,7 +15,7 @@ import (
 func checkRoot() bool {
 	user, err := user.Current()
 	if err != nil {
-		logging.Info.Printf("Failed to get current user")
+		Logging.Info.Printf("Failed to get current user")
 		return false
 	}
 	return user.Uid == "0"
