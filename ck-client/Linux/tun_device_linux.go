@@ -5,11 +5,21 @@ package main
 import (
 	"errors"
 	"fmt"
+        "os/user"
 
 	"github.com/Jigsaw-Code/outline-sdk/network"
 	"github.com/songgao/water"
 	"github.com/vishvananda/netlink"
 )
+
+func checkRoot() bool {
+	user, err := user.Current()
+	if err != nil {
+		log.Printf("Failed to get current user: %v", err)
+		return false
+	}
+	return user.Uid == "0"
+}
 
 type tunDevice struct {
 	*water.Interface
@@ -19,6 +29,10 @@ type tunDevice struct {
 var _ network.IPDevice = (*tunDevice)(nil)
 
 func newTunDevice(name, ip string) (d network.IPDevice, err error) {
+        if !checkRoot() {
+		return nil, errors.New("this operation requires superuser privileges. Please run the program with sudo or as root")
+	}
+
 	if len(name) == 0 {
 		return nil, errors.New("name is required for TUN/TAP device")
 	}
