@@ -76,12 +76,14 @@ func loadCombinedKey() (string, error) {
 }
 
 func saveConfig(config string) error {
-	configPath := filepath.Join(os.TempDir(), configFileName)
+	homeDir, _ := os.UserHomeDir() 
+	configPath := filepath.Join(homeDir, configFileName)
 	return ioutil.WriteFile(configPath, []byte(config), 0644)
 }
 
 func loadConfig() (string, error) {
-	configPath := filepath.Join(os.TempDir(), configFileName)
+	homeDir, _ := os.UserHomeDir() 
+	configPath := filepath.Join(homeDir, configFileName)
 	data, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return "", err
