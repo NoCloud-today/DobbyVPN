@@ -52,20 +52,14 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 	if err != nil {
 		//return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
                 cmd := exec.Command("pkexec", os.Args[0])
+                cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
 		err := cmd.Run()
 		if err != nil {
 			fmt.Printf("Error: %s\n", err)
 		}
-                tun, err = water.New(water.Config{
-		        DeviceType: water.TUN,
-		        PlatformSpecificParams: water.PlatformSpecificParams{
-			        Name:    name,
-			        Persist: false,
-		        },
-	        })
-                if err != nil {
-		    return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
-                }
+                os.Exit(0)
 	}
 
 	defer func() {
