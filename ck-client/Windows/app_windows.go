@@ -102,7 +102,7 @@ func (app App) Run(ctx context.Context) error {
     defer trafficCopyWg.Wait()
 
     if !checkRoot() {
-	return nil, errors.New("this operation requires superuser privileges. Please run the program with administrator")
+	return errors.New("this operation requires superuser privileges. Please run the program with administrator")
     }
 
     TunGateway := "10.0.85.1"
