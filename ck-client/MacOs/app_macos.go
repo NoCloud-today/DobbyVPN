@@ -5,22 +5,13 @@ package main
 import (
 	"context"
 	"fmt"
+        "errors"
 	"log"
 	"os/exec"
-        "os/user"
 	"sync"
 	"time"
 	"io"
 )
-
-func checkRoot() bool {
-	user, err := user.Current()
-	if err != nil {
-		Logging.Info.Printf("Failed to get current user")
-		return false
-	}
-	return user.Uid == "0"
-}
 
 func (app App) Run(ctx context.Context) error {
 	// this WaitGroup must Wait() after tun is closed
