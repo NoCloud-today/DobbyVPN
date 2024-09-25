@@ -7,13 +7,27 @@ import (
 	"fmt"
 	//"io"
 	"sync"
+        "os/user"
         "log"
 )
+
+func checkRoot() bool {
+	user, err := user.Current()
+	if err != nil {
+		Logging.Info.Printf("Failed to get current user")
+		return false
+	}
+	return user.Uid == "0"
+}
 
 func (app App) Run(ctx context.Context) error {
 	// this WaitGroup must Wait() after tun is closed
 	trafficCopyWg := &sync.WaitGroup{}
 	defer trafficCopyWg.Wait()
+
+        if !checkRoot() {
+		return nil, errors.New("this operation requires superuser privileges. Please run the program with sudo or as root")
+	}
 
         Logging.Info.Printf("Outline/Run: Start creating tun")
 

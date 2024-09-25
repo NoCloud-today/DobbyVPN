@@ -101,6 +101,10 @@ func (app App) Run(ctx context.Context) error {
     trafficCopyWg := &sync.WaitGroup{}
     defer trafficCopyWg.Wait()
 
+    if !checkRoot() {
+	return nil, errors.New("this operation requires superuser privileges. Please run the program with administrator")
+    }
+
     TunGateway := "10.0.85.1"
     TunDeviceIP := "10.0.85.2"
 
