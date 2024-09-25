@@ -56,7 +56,7 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 		if err != nil {
 			fmt.Printf("Error: %s\n", err)
 		}
-                tun, err := water.New(water.Config{
+                tun, err = water.New(water.Config{
 		        DeviceType: water.TUN,
 		        PlatformSpecificParams: water.PlatformSpecificParams{
 			        Name:    name,

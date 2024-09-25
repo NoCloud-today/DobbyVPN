@@ -5,7 +5,6 @@ package main
 import (
         "context"
 	"fmt"
-        "errors"
 	//"io"
 	"sync"
         "log"
