@@ -442,8 +442,7 @@ func main() {
 	        if err := app.Run(ctx); err != nil {
 		        Logging.Err.Printf("%v\n", err)
                         outlineStatusLabel.SetText("Disconnected")
-	        }
-                else {
+	        } else {
                     outlineStatusLabel.SetText("Connected")
                     showMessage("Connected: You are now connected via Outline.")
                 }
