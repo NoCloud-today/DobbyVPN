@@ -151,6 +151,7 @@ func main() {
 	var udpConn *net.UDPConn
 	var stopChan chan struct{}
         var counter = 0
+        var check = true
 
 	s := &Server{
 		quit: make(chan interface{}),
@@ -441,11 +442,16 @@ func main() {
             go func() {
 	        if err := app.Run(ctx); err != nil {
 		        Logging.Err.Printf("%v\n", err)
+                        outlineStatusLabel.SetText("Disconnected")
+                        check = false
 	        }
             }()
+            if (check == true) {
+                    outlineStatusLabel.SetText("Connected")
+                    showMessage("Connected: You are now connected via Outline.")
+            }
+            check = true
 
-            outlineStatusLabel.SetText("Connected")
-            showMessage("Connected: You are now connected via Outline.")
         })
 
         outlineDisconnectButton := widget.NewButton("Disconnect", func() {
