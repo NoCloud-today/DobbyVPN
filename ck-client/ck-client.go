@@ -33,13 +33,23 @@ const configFileName = "config.json"
 const combinedConfigFileName = "combined_config.json"
 const combinedKeyFileName = "combined_shadowsocks_key.txt"
 
+func getConfigPath() string {
+	homeDir, _ := os.UserHomeDir()
+	return filepath.Join(homeDir, combinedConfigFileName)
+}
+
+func getKeyPath() string {
+	homeDir, _ := os.UserHomeDir()
+	return filepath.Join(homeDir, combinedKeyFileName)
+}
+
 func saveCombinedConfig(config string) error {
-	configPath := filepath.Join(os.TempDir(), combinedConfigFileName)
+	configPath := getConfigPath()
 	return ioutil.WriteFile(configPath, []byte(config), 0644)
 }
 
 func loadCombinedConfig() (string, error) {
-	configPath := filepath.Join(os.TempDir(), combinedConfigFileName)
+	configPath := getConfigPath()
 	data, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return "", err
@@ -48,12 +58,12 @@ func loadCombinedConfig() (string, error) {
 }
 
 func saveCombinedKey(key string) error {
-	keyPath := filepath.Join(os.TempDir(), combinedKeyFileName)
+	keyPath := getKeyPath()
 	return ioutil.WriteFile(keyPath, []byte(key), 0644)
 }
 
 func loadCombinedKey() (string, error) {
-	keyPath := filepath.Join(os.TempDir(), combinedKeyFileName)
+	keyPath := getKeyPath()
 	if _, err := os.Stat(keyPath); os.IsNotExist(err) {
 		return "", nil
 	}
