@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
         "os/user"
+        "os/exec"
+        "os"
 
 	"github.com/Jigsaw-Code/outline-sdk/network"
 	"github.com/songgao/water"
@@ -29,9 +31,9 @@ type tunDevice struct {
 var _ network.IPDevice = (*tunDevice)(nil)
 
 func newTunDevice(name, ip string) (d network.IPDevice, err error) {
-        if !checkRoot() {
-		return nil, errors.New("this operation requires superuser privileges. Please run the program with sudo or as root")
-	}
+        //if !checkRoot() {
+	//	return nil, errors.New("this operation requires superuser privileges. Please run the program with sudo or as root")
+	//}
 
 	if len(name) == 0 {
 		return nil, errors.New("name is required for TUN/TAP device")
@@ -48,7 +50,22 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
+		//return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
+                cmd := exec.Command("pkexec", os.Args[0])
+		err := cmd.Run()
+		if err != nil {
+			fmt.Printf("Error: %s\n", err)
+		}
+                tun, err := water.New(water.Config{
+		        DeviceType: water.TUN,
+		        PlatformSpecificParams: water.PlatformSpecificParams{
+			        Name:    name,
+			        Persist: false,
+		        },
+	        })
+                if err != nil {
+		    return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
+                }
 	}
 
 	defer func() {

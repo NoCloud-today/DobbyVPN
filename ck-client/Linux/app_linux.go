@@ -16,9 +16,9 @@ func (app App) Run(ctx context.Context) error {
 	trafficCopyWg := &sync.WaitGroup{}
 	defer trafficCopyWg.Wait()
 
-        if !checkRoot() {
-		return errors.New("this operation requires superuser privileges. Please run the program with sudo or as root")
-	}
+        //if !checkRoot() {
+	//	return errors.New("this operation requires superuser privileges. Please run the program with sudo or as root")
+	//}
 
         Logging.Info.Printf("Outline/Run: Start creating tun")
 
