@@ -114,8 +114,6 @@ jobs:
         run: |
           cd Cloak/Linux
           go build -o DobbyVPN .
-          sudo chown root:root ./DobbyVPN
-          sudo chmod u+s ./DobbyVPN
           cd ../..
       - name: Linux build
         run: |
