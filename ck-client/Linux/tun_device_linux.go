@@ -12,7 +12,6 @@ import (
 	"github.com/vishvananda/netlink"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2"
 	"github.com/fyne-io/terminal"
 )
 
