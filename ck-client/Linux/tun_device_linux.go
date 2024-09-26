@@ -6,15 +6,13 @@ import (
 	"errors"
 	"fmt"
         "os/user"
-        "os/exec"
-        "os"
 
 	"github.com/Jigsaw-Code/outline-sdk/network"
 	"github.com/songgao/water"
 	"github.com/vishvananda/netlink"
-        "fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2"
 	"github.com/fyne-io/terminal"
 )
 
@@ -55,6 +53,9 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 	})
 	if err != nil {
 		//return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
+                a := app.New()
+		w := a.NewWindow("Terminal")
+
                 t := terminal.New()
 		w.SetContent(container.NewVBox(t))
 		w.Show()
