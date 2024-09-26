@@ -10,9 +10,6 @@ import (
 	"github.com/Jigsaw-Code/outline-sdk/network"
 	"github.com/songgao/water"
 	"github.com/vishvananda/netlink"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/container"
-	"github.com/fyne-io/terminal"
 )
 
 func checkRoot() bool {
