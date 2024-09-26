@@ -59,7 +59,6 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 		if err != nil {
 			fmt.Printf("Error: %s\n", err)
 		}
-                return nil, nil
 	}
 
 	defer func() {
