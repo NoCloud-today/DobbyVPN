@@ -242,8 +242,6 @@ jobs:
         run: |
           cd Cloak/MacOs
           go build -o DobbyVPN.app .
-          sudo chown root:root DobbyVPN.app
-          sudo chmod u+s DobbyVPN.app
           cd ../..
       - name: MacOs build
         run: |
