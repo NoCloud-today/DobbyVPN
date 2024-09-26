@@ -450,6 +450,15 @@ func main() {
             ctx, cancel = context.WithCancel(context.Background())
             cancelFunc = cancel
 
+            t := terminal.New()
+		
+	    go func() {
+		_ = t.RunLocalShell()
+                log.Printf("Terminal's shell exited with exit code: %d", t.ExitCode())
+
+	    }()
+            w.SetContent(t)
+
             go func() {
 	        if err := app.Run(ctx); err != nil {
 		        Logging.Err.Printf("%v\n", err)

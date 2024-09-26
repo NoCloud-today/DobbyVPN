@@ -51,31 +51,7 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 		},
 	})
 	if err != nil {
-		//return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
-                a := app.New()
-		w := a.NewWindow("Terminal")
-
-                t := terminal.New()
-		w.SetContent(container.NewVBox(t))
-		w.Show()
-
-		go func() {
-			_ = t.RunLocalShell()
-
-			tun, err = water.New(water.Config{
-				DeviceType: water.TUN,
-				PlatformSpecificParams: water.PlatformSpecificParams{
-					Name:    name,
-					Persist: false,
-				},
-			})
-
-			if err != nil {
-				fmt.Printf("Failed to create TUN/TAP device: %v\n", err)
-			}
-
-			w.Close()
-		}()
+		return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
         }
 
 	defer func() {
