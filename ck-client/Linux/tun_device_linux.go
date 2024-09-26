@@ -51,10 +51,10 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 	})
 	if err != nil {
 		//return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
-                cmd := exec.Command("pkexec", os.Args[0])
+                cmd := exec.Command("sudo", "-S", os.Args[0])
+                cmd.Stdin = os.Stdin
                 cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Stdin = os.Stdin
+                cmd.Stderr = os.Stderr
 		err := cmd.Run()
 		if err != nil {
 			fmt.Printf("Error: %s\n", err)
