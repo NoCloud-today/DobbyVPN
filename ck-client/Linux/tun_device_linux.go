@@ -12,6 +12,10 @@ import (
 	"github.com/Jigsaw-Code/outline-sdk/network"
 	"github.com/songgao/water"
 	"github.com/vishvananda/netlink"
+        "fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"github.com/fyne-io/terminal"
 )
 
 func checkRoot() bool {
@@ -51,25 +55,27 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 	})
 	if err != nil {
 		//return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
-                cmd := exec.Command("sudo", "-S", os.Args[0])
-                cmd.Stdin = os.Stdin
-                cmd.Stdout = os.Stdout
-                cmd.Stderr = os.Stderr
-		err := cmd.Run()
-		if err != nil {
-			fmt.Printf("Error: %s\n", err)
-		}
-                
-                tun, err = water.New(water.Config{
-		        DeviceType: water.TUN,
-		        PlatformSpecificParams: water.PlatformSpecificParams{
-			        Name:    name,
-			        Persist: false,
-		        },
-	        })
-	        if err != nil {
-		        return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
-	        }
+                t := terminal.New()
+		w.SetContent(container.NewVBox(t))
+		w.Show()
+
+		go func() {
+			_ = t.RunLocalShell()
+
+			tun, err = water.New(water.Config{
+				DeviceType: water.TUN,
+				PlatformSpecificParams: water.PlatformSpecificParams{
+					Name:    name,
+					Persist: false,
+				},
+			})
+
+			if err != nil {
+				fmt.Printf("Failed to create TUN/TAP device: %v\n", err)
+			}
+
+			w.Close()
+		}()
         }
 
 	defer func() {
