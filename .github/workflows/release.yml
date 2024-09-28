@@ -220,6 +220,15 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
+      - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v2
+      - name: Install fyne-cross
+        run: |
+          go install github.com/fyne-io/fyne-cross@latest
+      - name: Ensure fyne-cross in PATH
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          which fyne-cross
 
       - name: Clone Cloak and copying ck-client
         run: |
