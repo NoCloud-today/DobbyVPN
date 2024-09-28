@@ -247,11 +247,10 @@ jobs:
           go install github.com/fyne-io/fyne-cross@latest
           go mod tidy
           cd ..
-      - name: Cross-compile macos arm64 ck-client using fyne-cross
+      - name: Cross-compile macOS amd64 ck-client using Docker
         run: |
-          cd Cloak
-          fyne-cross darwin -arch amd64 -app-id com.example.DobbyVPN -output DobbyVPN_AMD64.app
-          cd ..
+          docker pull fyneio/fyne-cross:macos
+          docker run --rm -v $(pwd):/app -e GOARCH=amd64 -e GOOS=darwin fyneio/fyne-cross:macos fyne-cross darwin -arch amd64 -app-id com.example.DobbyVPN -output DobbyVPN_AMD64.app
       - name: MacOs_AMD64 build
         run: |
           cp -r Autorization Cloak
