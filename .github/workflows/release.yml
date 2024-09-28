@@ -224,6 +224,14 @@ jobs:
       - name: Install Docker
         run: |
           brew install --cask docker
+
+      - name: Start Docker
+        run: |
+          open /Applications/Docker.app
+          while ! docker system info > /dev/null 2>&1; do
+            sleep 1
+          done
+
       - name: Clone Cloak and copying ck-client
         run: |
           git submodule add https://github.com/cbeuw/Cloak
