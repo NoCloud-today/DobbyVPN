@@ -3,13 +3,10 @@ package main
 /*
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
-int run_privileged_tool(const char* toolPath) {
-    FILE *pipe = NULL;
-    char command[256];
-    snprintf(command, sizeof(command), "pkexec %s", toolPath);
-
-    pipe = popen(command, "r");
+int run_privileged_tool(const char* command) {
+    FILE *pipe = popen(command, "r");
     if (!pipe) {
         return -1;
     }
@@ -25,26 +22,30 @@ int run_privileged_tool(const char* toolPath) {
 */
 import "C"
 import (
+    "fmt"
     "log"
-    "unsafe"
     "os"
+    "unsafe"
 )
 
 func main() {
     toolPath := "./libs/main"
+    display := os.Getenv("DISPLAY")
+    xauthority := os.Getenv("XAUTHORITY")
+    command := fmt.Sprintf("pkexec env DISPLAY=%s XAUTHORITY=%s %s", display, xauthority, toolPath)
 
-    cToolPath := C.CString(toolPath)
-    defer C.free(unsafe.Pointer(cToolPath))
-
-    if err := runPrivilegedTool(cToolPath); err != nil {
+    if err := runPrivilegedTool(command); err != nil {
         log.Fatal("Failed to run privileged tool:", err)
     }
 }
 
-func runPrivilegedTool(toolPath *C.char) error {
-    result := C.run_privileged_tool(toolPath)
+func runPrivilegedTool(command string) error {
+    cCommand := C.CString(command)
+    defer C.free(unsafe.Pointer(cCommand))
+
+    result := C.run_privileged_tool(cCommand)
     if result != 0 {
-        return os.ErrPermission
+        return fmt.Errorf("permission denied")
     }
     return nil
 }
