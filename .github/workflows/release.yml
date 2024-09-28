@@ -187,7 +187,7 @@ jobs:
       - name: Cross-compile linux arm64 ck-client using fyne-cross
         run: |
           cd Cloak/Linux
-          CGO_ENABLED=1 GOARCH=arm64 GOOS=linux go build -o DobbyVPN_ARM64 .
+          GOARCH=arm64 GOOS=linux go build -o DobbyVPN_ARM64 .
           cd ..
 
       - name: Make linux arm64 zip
