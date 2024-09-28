@@ -207,7 +207,7 @@ jobs:
           name: linux_client_arm64.zip
           path: linux_client_arm64.zip
 
-    macos_amd64_build:
+  macos_amd64_build:
     runs-on: macos-latest
     strategy:
       matrix:
