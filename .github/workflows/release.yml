@@ -221,13 +221,9 @@ jobs:
         with:
           go-version: '1.22.x'
 
-      - name: Install dependencies
+      - name: Install Docker
         run: |
-          cd src
-          go get ./...
-          cd ..
-          sudo apt-get install golang libgl1-mesa-dev xorg-dev
-
+          brew install --cask docker
       - name: Clone Cloak and copying ck-client
         run: |
           git submodule add https://github.com/cbeuw/Cloak
