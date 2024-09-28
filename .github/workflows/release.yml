@@ -208,7 +208,7 @@ jobs:
           path: linux_client_arm64.zip
 
   macos_amd64_build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     strategy:
       matrix:
         go-version: [ '1.22.5' ]
@@ -220,6 +220,10 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
+
+      - name: Install Docker
+        run: |
+          brew install --cask docker
 
       - name: Clone Cloak and copying ck-client
         run: |
@@ -249,8 +253,9 @@ jobs:
           cd ..
       - name: Cross-compile macOS amd64 ck-client using Docker
         run: |
-          docker pull fyneio/fyne-cross:macos
-          docker run --rm -v $(pwd):/app -e GOARCH=amd64 -e GOOS=darwin fyneio/fyne-cross:macos fyne-cross darwin -arch amd64 -app-id com.example.DobbyVPN -output DobbyVPN_AMD64.app
+          cd Cloak
+          fyne-cross darwin -arch amd64 -app-id com.example.DobbyVPN -output DobbyVPN_AMD64.app
+          cd ..
       - name: MacOs_AMD64 build
         run: |
           cp -r Autorization Cloak
