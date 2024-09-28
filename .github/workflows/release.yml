@@ -205,10 +205,80 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: linux_client_arm64.zip
-          path: linux_client_arm64.zip   
+          path: linux_client_arm64.zip
+
+  macos_amd64_build:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        go-version: [ '1.22.5' ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+
+      - name: Install dependencies
+        run: |
+          cd src
+          go get ./...
+          cd ..
+          sudo apt-get install golang libgl1-mesa-dev xorg-dev
+      - name: Clone Cloak and copying ck-client
+        run: |
+          git submodule add https://github.com/cbeuw/Cloak
+          git submodule init
+          git submodule update
+          mv -f log-files/piper.go Cloak/internal/client/piper.go
+          mv -f log-files/connector.go Cloak/internal/client/connector.go
+          mv -f log-files/TLS.go Cloak/internal/client/TLS.go
+          mv -f log-files/copy.go Cloak/internal/common/copy.go
+          mkdir Cloak/internal/out
+          cp log-files/logging.go Cloak/internal/out/logging.go
+          cp ck-client/MacOs/app_macos.go Cloak
+          cp ck-client/MacOs/routing_macos.go Cloak
+          cp ck-client/MacOs/tun_device_macos.go Cloak
+          cp ck-client/app.go Cloak
+          cp ck-client/ck-client.go Cloak
+          cp ck-client/Icon.png Cloak
+          cp ck-client/log_android.go Cloak
+          cp ck-client/outline_device.go Cloak
+          cp ck-client/outline_packet_proxy.go Cloak
+          cp ck-client/protector.go Cloak
+          cd Cloak
+          go install fyne.io/fyne/v2/cmd/fyne@latest
+          go install github.com/fyne-io/fyne-cross@latest
+          go mod tidy
+          cd ..
+      - name: Cross-compile macos arm64 ck-client using fyne-cross
+        run: |
+          cd Cloak
+          fyne-cross darwin -arch amd64 -output DobbyVPN_AMD64.app
+          cd ..
+      - name: MacOs_AMD64 build
+        run: |
+          cp -r Autorization Cloak
+          cd Cloak/Autorization
+          go mod tidy
+          go build -o DobbyVPN main_macos_amd64.go
+          cd ..
+      - name: Make macos amd64 zip
+        run: |
+          mkdir macos_client_amd64
+          mv Cloak/fyne-cross/dist/macos-amd64/DobbyVPN_AMD64.app macos_client_amd64/DobbyVPN_AMD64.app
+          mv Cloak/Autorization/DobbyVPN macos_client_amd64/DobbyVPN
+          zip -r macos_client_amd64.zip macos_client_amd64
+      - name: Upload MacOs AMD64 client
+        uses: actions/upload-artifact@master
+        with:
+          name: macos_client_amd64.zip
+          path: macos_client_amd64.zip    
           
 
-  macos_build:
+  macos_build_arm64:
     runs-on: macos-latest
     strategy:
       matrix:
@@ -247,14 +317,14 @@ jobs:
       - name: Build macos ck-client
         run: |
           cd Cloak/MacOs
-          GOARCH=amd64 GOOS=darwin go build -o main .
+          go build -o main .
           cd ../..
       - name: MacOs build
         run: |
           cp -r Autorization Cloak
           cd Cloak/Autorization
           go mod tidy
-          GOARCH=amd64 GOOS=darwin go build -o DobbyVPN.app main_macos.go
+          go build -o DobbyVPN.app main_macos.go
           cd ..
       - name: Make macos zip
         run: |
@@ -316,7 +386,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    needs: [windows_build, linux_build, linux_arm64_build, macos_build, android_build]
+    needs: [windows_build, linux_build, linux_arm64_build, macos_amd64_build, macos_build_arm64, android_build]
     permissions: write-all
 
     steps:
@@ -339,6 +409,11 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: windows_client.zip
+          path: release
+      - name: Download macos_amd64 client
+        uses: actions/download-artifact@master
+        with:
+          name: macos_client_amd64.zip
           path: release
       - name: Download macos client
         uses: actions/download-artifact@master
