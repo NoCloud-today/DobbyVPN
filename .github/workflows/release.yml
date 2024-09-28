@@ -208,7 +208,7 @@ jobs:
           path: linux_client_arm64.zip
 
   macos_amd64_build:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         go-version: [ '1.22.5' ]
@@ -221,9 +221,12 @@ jobs:
         with:
           go-version: '1.22.x'
 
-      - name: Install Docker
+      - name: Install dependencies
         run: |
-          brew install --cask docker
+          cd src
+          go get ./...
+          cd ..
+          sudo apt-get install golang libgl1-mesa-dev xorg-dev
 
       - name: Clone Cloak and copying ck-client
         run: |
@@ -261,7 +264,7 @@ jobs:
           cp -r Autorization Cloak
           cd Cloak/Autorization
           go mod tidy
-          go build -o DobbyVPN main_macos_amd64.go
+          GOARCH=amd64 GOOS=darwin go build -o DobbyVPN main_macos_amd64.go
           cd ..
       - name: Make macos amd64 zip
         run: |
