@@ -220,13 +220,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
-      - name: Install fyne-cross
+      -name: Docker install
         run: |
-          go install github.com/fyne-io/fyne-cross@latest
-      - name: Ensure fyne-cross in PATH
-        run: |
-          export PATH=$PATH:$(go env GOPATH)/bin
-          which fyne-cross
+          sudo hdiutil attach Docker.dmg
+          sudo /Volumes/Docker/Docker.app/Contents/MacOS/install
+          sudo hdiutil detach /Volumes/Docker
 
       - name: Clone Cloak and copying ck-client
         run: |
