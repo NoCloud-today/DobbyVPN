@@ -224,6 +224,7 @@ jobs:
       - name: Install Docker
         run: |
           brew install --cask docker
+          systemctl start docker
 
       - name: Clone Cloak and copying ck-client
         run: |
