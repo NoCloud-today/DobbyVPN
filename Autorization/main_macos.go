@@ -24,7 +24,7 @@ int authorize_user(AuthorizationRef *authRef, const char* right) {
 
     if (status != errAuthorizationSuccess) {
         AuthorizationFree(*authRef, kAuthorizationFlagDefaults);
-        return -1; // Ошибка получения прав
+        return -1;
     }
 
     return 0;
@@ -52,6 +52,7 @@ import "C"
 import (
     "log"
     "os"
+    "path/filepath"
     "unsafe"
 )
 
@@ -64,7 +65,12 @@ func main() {
 
     toolPath := "./libs/main"
 
-    cToolPath := C.CString(toolPath)
+    absPath, err := filepath.Abs(toolPath)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    cToolPath := C.CString(absPath)
     defer C.free(unsafe.Pointer(cToolPath))
 
     if err := runPrivilegedTool(cToolPath, authRef); err != nil {

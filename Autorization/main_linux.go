@@ -25,14 +25,21 @@ import (
     "fmt"
     "log"
     "os"
+    "path/filepath"
     "unsafe"
 )
 
 func main() {
     toolPath := "./libs/main"
+    
+    absPath, err := filepath.Abs(toolPath)
+    if err != nil {
+        log.Fatal(err)
+    }
+
     display := os.Getenv("DISPLAY")
     xauthority := os.Getenv("XAUTHORITY")
-    command := fmt.Sprintf("pkexec env DISPLAY=%s XAUTHORITY=%s %s", display, xauthority, toolPath)
+    command := fmt.Sprintf("pkexec env DISPLAY=%s XAUTHORITY=%s %s", display, xauthority, absPath)
 
     if err := runPrivilegedTool(command); err != nil {
         log.Fatal("Failed to run privileged tool:", err)
