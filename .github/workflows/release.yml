@@ -257,14 +257,14 @@ jobs:
       - name: Cross-compile macos arm64 ck-client using fyne-cross
         run: |
           cd Cloak
-          fyne-cross darwin -arch amd64 -output DobbyVPN_AMD64.app
+          GOOS=darwin go build -o DobbyVPN_AMD64.app .
           cd ..
       - name: MacOs_AMD64 build
         run: |
           cp -r Autorization Cloak
           cd Cloak/Autorization
           go mod tidy
-          GOARCH=amd64 GOOS=darwin go build -o DobbyVPN main_macos_amd64.go
+          GOOS=darwin go build -o DobbyVPN main_macos_amd64.go
           cd ..
       - name: Make macos amd64 zip
         run: |
