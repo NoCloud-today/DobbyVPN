@@ -220,11 +220,10 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
-      -name: Docker install
+
+      - name: Install Docker
         run: |
-          sudo hdiutil attach Docker.dmg
-          sudo /Volumes/Docker/Docker.app/Contents/MacOS/install
-          sudo hdiutil detach /Volumes/Docker
+          brew install --cask docker
 
       - name: Clone Cloak and copying ck-client
         run: |
