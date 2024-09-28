@@ -227,7 +227,6 @@ jobs:
           go get ./...
           cd ..
           sudo apt-get install golang libgl1-mesa-dev xorg-dev
-          sudo apt-get install gcc-multilib
 
       - name: Clone Cloak and copying ck-client
         run: |
