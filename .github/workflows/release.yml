@@ -247,14 +247,14 @@ jobs:
       - name: Build macos ck-client
         run: |
           cd Cloak/MacOs
-          go build -o main .
+          GOARCH=amd64 GOOS=darwin go build -o main .
           cd ../..
       - name: MacOs build
         run: |
           cp -r Autorization Cloak
           cd Cloak/Autorization
           go mod tidy
-          go build -o DobbyVPN.app main_macos.go
+          GOARCH=amd64 GOOS=darwin go build -o DobbyVPN.app main_macos.go
           cd ..
       - name: Make macos zip
         run: |
