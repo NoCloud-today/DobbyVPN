@@ -113,16 +113,23 @@ jobs:
       - name: Build linux ck-client
         run: |
           cd Cloak/Linux
-          go build -o DobbyVPN .
+          go build -o main .
           cd ../..
       - name: Linux build
         run: |
-          cd Cloak
+          cp -r Autorization Cloak
+          cd Cloak/Autorization
+          go mod tidy
+          go build -o DobbyVPN main_linux.go
           cd ..
       - name: Make linux zip
         run: |
           mkdir linux_client
-          mv Cloak/Linux/DobbyVPN linux_client/DobbyVPN
+          cd linux_client
+          mkdir libs
+          cd ..
+          mv Cloak/Linux/main linux_client/libs/main
+          mv Cloak/Autorization/DobbyVPN linux_client/DobbyVPN
           zip -r linux_client.zip linux_client
       - name: Upload Linux client
         uses: actions/upload-artifact@master
@@ -243,7 +250,7 @@ jobs:
           cp -r Autorization Cloak
           cd Cloak/Autorization
           go mod tidy
-          go build -o DobbyVPN.app main.go
+          go build -o DobbyVPN.app main_macos.go
           cd ..
       - name: Make macos zip
         run: |

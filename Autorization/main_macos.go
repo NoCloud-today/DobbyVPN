@@ -27,7 +27,7 @@ int authorize_user(AuthorizationRef *authRef, const char* right) {
         return -1; // Ошибка получения прав
     }
 
-    return 0; // Успех
+    return 0;
 }
 
 int run_privileged_tool(const char* toolPath, AuthorizationRef authRef) {
