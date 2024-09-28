@@ -260,13 +260,14 @@ jobs:
         run: |
           cd Cloak
           fyne package -os darwin -name DobbyVPN_AMD64.app
+          fyne-cross darwin -arch amd64 -output DobbyVPN_AMD64.app
           cd ..
       - name: MacOs_AMD64 build
         run: |
           cp -r Autorization Cloak
           cd Cloak/Autorization
           go mod tidy
-          GOOS=darwin go build -o DobbyVPN main_macos_amd64.go
+          GOARCH=amd64 GOOS=darwin go build -o DobbyVPN main_macos_amd64.go
           cd ..
       - name: Make macos amd64 zip
         run: |
