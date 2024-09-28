@@ -208,7 +208,7 @@ jobs:
           path: linux_client_arm64.zip
 
   macos_amd64_build:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         go-version: [ '1.22.5' ]
@@ -220,14 +220,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
-
-      - name: Install Docker
-        run: |
-          brew install docker-machine
-          brew install --cask virtualbox
-          docker-machine create --driver virtualbox default
-          eval "$(docker-machine env default)"
-          docker ps
 
       - name: Clone Cloak and copying ck-client
         run: |
