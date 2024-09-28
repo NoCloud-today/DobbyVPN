@@ -138,6 +138,7 @@ func (w *LogWriter) Write(p []byte) (n int, err error) {
 }
 
 func main() {
+        //TODO: separate GUI and network related code
 	a := app.New()
 	w := a.NewWindow("Cloak Client")
 
