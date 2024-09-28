@@ -157,6 +157,8 @@ jobs:
           go get ./...
           cd ..
           sudo apt-get install golang libgl1-mesa-dev xorg-dev
+          sudo apt-get install gcc-multilib
+          sudo apt-get install gcc-mingw-w64
 
       - name: Clone Cloak and copying ck-client
         run: |
@@ -169,32 +171,28 @@ jobs:
           mv -f log-files/copy.go Cloak/internal/common/copy.go
           mkdir Cloak/internal/out
           cp log-files/logging.go Cloak/internal/out/logging.go
-          cp ck-client/Linux/app_linux.go Cloak
-          cp ck-client/Linux/routing_linux.go Cloak
-          cp ck-client/Linux/tun_device_linux.go Cloak
-          cp ck-client/app.go Cloak
-          cp ck-client/ck-client.go Cloak
-          cp ck-client/Icon.png Cloak
-          cp ck-client/log_android.go Cloak
-          cp ck-client/outline_device.go Cloak
-          cp ck-client/outline_packet_proxy.go Cloak
-          cp ck-client/protector.go Cloak
-          cd Cloak
-          go install fyne.io/fyne/v2/cmd/fyne@latest
-          go install github.com/fyne-io/fyne-cross@latest
+          cp -r ck-client/Linux Cloak
+          cp ck-client/app.go Cloak/Linux
+          cp ck-client/ck-client.go Cloak/Linux
+          cp ck-client/Icon.png Cloak/Linux
+          cp ck-client/log_android.go Cloak/Linux
+          cp ck-client/outline_device.go Cloak/Linux
+          cp ck-client/outline_packet_proxy.go Cloak/Linux
+          cp ck-client/protector.go Cloak/Linux
+          cd Cloak/Linux
           go mod tidy
-          cd ..
+          cd ../..
 
       - name: Cross-compile linux arm64 ck-client using fyne-cross
         run: |
-          cd Cloak
-          fyne-cross linux -arch arm64 -output DobbyVPN_ARM64
+          cd Cloak/Linux
+          GOARCH=arm64 GOOS=linux go build -o DobbyVPN_ARM64 .
           cd ..
 
       - name: Make linux arm64 zip
         run: |
           mkdir linux_client_arm64
-          mv Cloak/fyne-cross/dist/linux-arm64/DobbyVPN_ARM64.tar.xz linux_client_arm64/DobbyVPN_ARM64.tar.xz
+          mv Cloak/fyne-cross/dist/linux-arm64/DobbyVPN_ARM64 linux_client_arm64/DobbyVPN_ARM64
           zip -r linux_client_arm64.zip linux_client_arm64
 
       - name: Upload Linux ARM64 client
