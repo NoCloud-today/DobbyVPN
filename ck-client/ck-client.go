@@ -18,7 +18,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
-	"github.com/fyne-io/terminal"
 
 	"github.com/cbeuw/Cloak/internal/client"
 	"github.com/cbeuw/Cloak/internal/common"
@@ -450,15 +449,6 @@ func main() {
   
             ctx, cancel = context.WithCancel(context.Background())
             cancelFunc = cancel
-
-            t := terminal.New()
-		
-	    go func() {
-		_ = t.RunLocalShell()
-                log.Printf("Terminal's shell exited with exit code: %d", t.ExitCode())
-
-	    }()
-            w.SetContent(t)
 
             go func() {
 	        if err := app.Run(ctx); err != nil {

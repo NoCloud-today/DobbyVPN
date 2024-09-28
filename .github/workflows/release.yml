@@ -236,16 +236,23 @@ jobs:
       - name: Build macos ck-client
         run: |
           cd Cloak/MacOs
-          go build -o DobbyVPN.app .
+          go build -o main .
           cd ../..
       - name: MacOs build
         run: |
-          cd Cloak
+          cp -r Autorization Cloak
+          cd Cloak/Autorization
+          go mod tidy
+          go build -o DobbyVPN.app main.go
           cd ..
       - name: Make macos zip
         run: |
           mkdir macos_client
-          mv Cloak/MacOs/DobbyVPN.app macos_client/DobbyVPN.app
+          cd macos_client
+          mkdir libs
+          cd ..
+          mv Cloak/MacOs/main macos_client/libs/main
+          mv Cloak/Autorization/DobbyVPN.app macos_client/DobbyVPN.app
           zip -r macos_client.zip macos_client
       - name: Upload MacOs client
         uses: actions/upload-artifact@master
