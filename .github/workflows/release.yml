@@ -257,7 +257,7 @@ jobs:
       - name: Cross-compile macos arm64 ck-client using fyne-cross
         run: |
           cd Cloak
-          fyne-cross darwin -arch amd64 -appID com.example.DobbyVPN -output DobbyVPN_AMD64.app
+          fyne-cross darwin -arch amd64 -app-id com.example.DobbyVPN -output DobbyVPN_AMD64.app
           cd ..
       - name: MacOs_AMD64 build
         run: |
