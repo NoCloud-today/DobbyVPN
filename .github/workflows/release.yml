@@ -228,7 +228,7 @@ jobs:
       - name: Extract macOS SDK
         run: |
           echo "Starting extraction"
-          tar -xf macos-sdk.tar.xz -C $HOME/mac-sdk
+          7-Zip x macos-sdk.tar.xz -o$HOME/mac-sdk
           echo "Extraction completed"
      
       - name: Clone Cloak and copying ck-client
