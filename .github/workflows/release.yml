@@ -268,7 +268,7 @@ jobs:
           cp ck-client/protector.go Cloak
           cd Cloak
           go install fyne.io/fyne/v2/cmd/fyne@latest
-          go install github.com/fyne-io/fyne-cross@latest
+          go install github.com/fyne-io/fyne-cross@v1.4.0
           go mod tidy
           cd ..
       - name: Cross-compile macOS amd64 ck-client using Docker
