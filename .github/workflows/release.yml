@@ -208,7 +208,7 @@ jobs:
           path: linux_client_arm64.zip
 
   macos_amd64_build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         go-version: [ '1.22.5' ]
@@ -221,38 +221,28 @@ jobs:
         with:
           go-version: '1.22.x'
 
-      - name: Install 7-Zip
+      - name: Install dependencies for macOS SDK
         run: |
-          choco install 7zip -y
-
+          sudo apt-get update
+          sudo apt-get install -y \
+          curl \
+          unzip \
+          xz-utils
       - name: Download macOS SDK
         run: |
           curl -L -o macos-sdk.tar.xz https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.3.sdk.tar.xz
-
-      - name: Check manifest
-        run: |
-          docker manifest inspect fyneio/fyne-cross-images:darwin
- 
-      - name: Extract macOS SDK
-        run: |
-          echo "Starting extraction of tar.xz"
-          & "C:\Program Files\7-Zip\7z.exe" x macos-sdk.tar.xz
-          echo "Extraction of tar.xz completed"
-
-          echo "Starting extraction of tar"
-          & "C:\Program Files\7-Zip\7z.exe" x macos-sdk.tar -o"C:\Users\runneradmin\mac-sdk"
-          echo "Extraction of tar completed"
-          dir $HOME/mac-sdk
+          mkdir -p $HOME/mac-sdk
+          tar -xf macos-sdk.tar.xz -C $HOME/mac-sdk
      
       - name: Clone Cloak and copying ck-client
         run: |
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          mv -Force log-files/piper.go Cloak/internal/client/piper.go
-          mv -Force log-files/connector.go Cloak/internal/client/connector.go
-          mv -Force log-files/TLS.go Cloak/internal/client/TLS.go
-          mv -Force log-files/copy.go Cloak/internal/common/copy.go
+          mv -f log-files/piper.go Cloak/internal/client/piper.go
+          mv -f log-files/connector.go Cloak/internal/client/connector.go
+          mv -f log-files/TLS.go Cloak/internal/client/TLS.go
+          mv -f log-files/copy.go Cloak/internal/common/copy.go
           mkdir Cloak/internal/out
           cp log-files/logging.go Cloak/internal/out/logging.go
           cp ck-client/MacOs/app_macos.go Cloak
@@ -273,7 +263,7 @@ jobs:
       - name: Cross-compile macOS amd64 ck-client using Docker
         run: |
           cd Cloak
-          fyne-cross darwin -arch amd64 --macosx-sdk-path="C:\Users\runneradmin\mac-sdk\MacOSX11.3.sdk" -app-id com.example.DobbyVPN -output DobbyVPN_AMD64.app
+          fyne-cross darwin -arch amd64 --macosx-sdk-path=$HOME/mac-sdk/MacOSX11.3.sdk -app-id com.example.DobbyVPN -output DobbyVPN_AMD64.app
           cd ..
       - name: MacOs_AMD64 build
         run: |
@@ -292,7 +282,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: macos_client_amd64.zip
-          path: macos_client_amd64.zip   
+          path: macos_client_amd64.zip     
 
 
   macos_build_arm64:
