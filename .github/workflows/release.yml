@@ -231,9 +231,13 @@ jobs:
  
       - name: Extract macOS SDK
         run: |
-          echo "Starting extraction"
-          & "C:\Program Files\7-Zip\7z.exe" x macos-sdk.tar.xz "-o$HOME/mac-sdk"
-          echo "Extraction completed"
+          echo "Starting extraction of tar.xz"
+          & "C:\Program Files\7-Zip\7z.exe" x macos-sdk.tar.xz
+          echo "Extraction of tar.xz completed"
+
+          echo "Starting extraction of tar"
+          & "C:\Program Files\7-Zip\7z.exe" x macos-sdk.tar -o"C:\Users\runneradmin\mac-sdk"
+          echo "Extraction of tar completed"
           dir $HOME/mac-sdk
      
       - name: Clone Cloak and copying ck-client
