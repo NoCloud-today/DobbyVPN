@@ -228,6 +228,10 @@ jobs:
       - name: Download macOS SDK
         run: |
           curl -L -o macos-sdk.tar.xz https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.3.sdk.tar.xz
+
+      - name: Check manifest
+        run: |
+          docker manifest inspect fyneio/fyne-cross-images:darwin
  
       - name: Extract macOS SDK
         run: |
