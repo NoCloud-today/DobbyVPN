@@ -226,8 +226,7 @@ jobs:
           brew install docker
           brew install colima
           colima version
-          docker run
-          #colima start --cpu 3 --memory 6 --disk 100 --vm-type=qemu --mount-type=sshfs --dns=1.1.1.1
+          colima start
    
       - name: Clone Cloak and copying ck-client
         run: |
