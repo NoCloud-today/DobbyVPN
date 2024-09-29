@@ -208,7 +208,7 @@ jobs:
           path: linux_client_arm64.zip
 
   macos_amd64_build:
-    runs-on: macos-latest
+    runs-on: macos-13
     strategy:
       matrix:
         go-version: [ '1.22.5' ]
