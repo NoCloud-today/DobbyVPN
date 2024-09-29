@@ -224,7 +224,7 @@ jobs:
       - name: Setup Docker on macOS
         uses: douglascamata/setup-docker-macos-action@v1-alpha
 
-      - name: Clone Cloak and copying ck-client
+      - name: Run docker 
         run: |
           docker run fyneio/fyne-cross-images:darwin
    
@@ -266,6 +266,12 @@ jobs:
           go mod tidy
           GOARCH=amd64 GOOS=darwin go build -o DobbyVPN main_macos_amd64.go
           cd ..
+      - name: Check path
+        run: |
+          ls Cloak
+          ls Cloak/fyne-cross
+          ls Cloak/fyne-cross/dist
+          
       - name: Make macos amd64 zip
         run: |
           mkdir macos_client_amd64
