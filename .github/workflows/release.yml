@@ -208,7 +208,7 @@ jobs:
           path: linux_client_arm64.zip
 
   macos_amd64_build:
-    runs-on: macos-13
+    runs-on: macos-latest
     strategy:
       matrix:
         go-version: [ '1.22.5' ]
@@ -221,8 +221,10 @@ jobs:
         with:
           go-version: '1.22.x'
 
-      - name: Setup Docker on macOS
-        uses: douglascamata/setup-docker-macos-action@v1-alpha
+      - name: Setup docker
+        run: |
+          brew install docker
+          colima start
    
       - name: Clone Cloak and copying ck-client
         run: |
