@@ -208,7 +208,7 @@ jobs:
           path: linux_client_arm64.zip
 
   macos_amd64_build:
-    runs-on: ubuntu-latest
+    runs-on: macos-13
     strategy:
       matrix:
         go-version: [ '1.22.5' ]
@@ -221,20 +221,9 @@ jobs:
         with:
           go-version: '1.22.x'
 
-      - name: Install dependencies for macOS SDK
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-          curl \
-          unzip \
-          xz-utils
-
-      - name: Download macOS SDK
-        run: |
-          curl -L -o macos-sdk.tar.xz https://github.com/joseluisq/macosx-sdks/releases/download/14.5/MacOSX14.5.sdk.tar.xz
-          mkdir -p $HOME/mac-sdk
-          tar -xf macos-sdk.tar.xz -C $HOME/mac-sdk
-     
+      - name: Setup Docker on macOS
+        uses: douglascamata/setup-docker-macos-action@v1-alpha
+   
       - name: Clone Cloak and copying ck-client
         run: |
           git submodule add https://github.com/cbeuw/Cloak
@@ -264,7 +253,7 @@ jobs:
       - name: Cross-compile macOS amd64 ck-client using Docker
         run: |
           cd Cloak
-          fyne-cross darwin -arch amd64 --macosx-sdk-path=$HOME/mac-sdk/MacOSX14.5.sdk -app-id com.example.DobbyVPN -output DobbyVPN_AMD64.app
+          fyne-cross darwin -arch amd64 -app-id com.example.DobbyVPN -output DobbyVPN_AMD64.app
           cd ..
       - name: MacOs_AMD64 build
         run: |
