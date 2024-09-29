@@ -223,7 +223,7 @@ jobs:
 
       - name: Install dependencies for macOS SDK
         run: |
-          choco install curl unzip xz -y
+          choco install curl unzip xz-utils -y
 
       - name: Download macOS SDK
         run: |
