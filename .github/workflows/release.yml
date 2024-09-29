@@ -264,7 +264,7 @@ jobs:
       - name: Cross-compile macOS amd64 ck-client using Docker
         run: |
           cd Cloak
-          fyne-cross darwin -arch amd64 --macosx-sdk-path=$HOME/mac-sdk/MacOSX11.3.sdk -app-id com.example.DobbyVPN -output DobbyVPN_AMD64.app
+          fyne-cross darwin -arch amd64 --macosx-sdk-path="C:\Users\runneradmin\mac-sdk\MacOSX11.3.sdk" -app-id com.example.DobbyVPN -output DobbyVPN_AMD64.app
           cd ..
       - name: MacOs_AMD64 build
         run: |
