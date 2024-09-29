@@ -228,7 +228,7 @@ jobs:
       - name: Download macOS SDK
         run: |
           curl -L -o macos-sdk.tar.xz https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.3.sdk.tar.xz
-          mkdir -p $HOME/mac-sdk
+          mkdir $HOME/mac-sdk
           tar -xf macos-sdk.tar.xz -C $HOME/mac-sdk
      
       - name: Clone Cloak and copying ck-client
