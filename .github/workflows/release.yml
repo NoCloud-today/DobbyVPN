@@ -226,7 +226,7 @@ jobs:
           brew install docker
           brew install colima
           colima version
-          colima start
+          colima start --vm-type vz
    
       - name: Clone Cloak and copying ck-client
         run: |
