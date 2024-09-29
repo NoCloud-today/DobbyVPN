@@ -268,14 +268,12 @@ jobs:
           cd ..
       - name: Check path
         run: |
-          ls Cloak
-          ls Cloak/fyne-cross
-          ls Cloak/fyne-cross/dist
+          ls Cloak/fyne-cross/dist/darwin-amd64
           
       - name: Make macos amd64 zip
         run: |
           mkdir macos_client_amd64
-          mv Cloak/fyne-cross/dist/macos-amd64/DobbyVPN_AMD64.app macos_client_amd64/DobbyVPN_AMD64.app
+          mv Cloak/fyne-cross/dist/darwin-amd64/DobbyVPN_AMD64.app macos_client_amd64/DobbyVPN_AMD64.app
           mv Cloak/Autorization/DobbyVPN macos_client_amd64/DobbyVPN
           zip -r macos_client_amd64.zip macos_client_amd64
       - name: Upload MacOs AMD64 client
