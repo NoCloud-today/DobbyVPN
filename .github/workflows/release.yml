@@ -240,6 +240,10 @@ jobs:
           curl -L -o macos-sdk.tar.xz https://github.com/alexey-lysiuk/macos-sdk/releases/download/12.3/MacOSX12.3.tar.xz
           mkdir -p $HOME/mac-sdk
           tar -xf macos-sdk.tar.xz -C $HOME/mac-sdk
+
+      - name: Check macOS SDK contents
+        run: |
+          ls -la $HOME/mac-sdk
      
       - name: Clone Cloak and copying ck-client
         run: |
