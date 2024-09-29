@@ -221,6 +221,13 @@ jobs:
         with:
           go-version: '1.22.x'
 
+      - name: Install dependencies
+        run: |
+          cd src
+          go get ./...
+          cd ..
+          sudo apt-get install golang libgl1-mesa-dev xorg-dev
+
       - name: Install dependencies for macOS SDK
         run: |
           sudo apt-get update
