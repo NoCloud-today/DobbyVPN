@@ -235,12 +235,13 @@ jobs:
           curl \
           unzip \
           xz-utils
-      - name: Download macOS SDK
+
+      - name: Download Xcode SDK
         run: |
-          curl -L -o macos-sdk.tar.xz https://github.com/phracker/MacOSX-SDKs/releases/download/12.6/MacOSX12.6.sdk.tar.xz
-          mkdir -p $HOME/mac-sdk
-          tar -xf macos-sdk.tar.xz -C $HOME/mac-sdk
-     
+          curl -L -o xcode-sdk.tar.xz https://github.com/phracker/MacOSX-SDKs/releases/download/12.6/MacOSX12.6.sdk.tar.xz
+          mkdir -p $HOME/xcode-sdk
+          tar -xf xcode-sdk.tar.xz -C $HOME/xcode-sdk
+
       - name: Clone Cloak and copying ck-client
         run: |
           git submodule add https://github.com/cbeuw/Cloak
@@ -267,11 +268,13 @@ jobs:
           go install github.com/fyne-io/fyne-cross@latest
           go mod tidy
           cd ..
+
       - name: Cross-compile macOS amd64 ck-client using Docker
         run: |
           cd Cloak
-          fyne-cross darwin -arch amd64 --macosx-sdk-path=$HOME/mac-sdk/MacOSX12.6.sdk -app-id com.example.DobbyVPN -output DobbyVPN_AMD64.app
+          fyne-cross darwin -arch amd64 --macosx-sdk-path=$HOME/xcode-sdk/MacOSX12.6.sdk -app-id com.example.DobbyVPN -output DobbyVPN_AMD64.app
           cd ..
+
       - name: MacOs_AMD64 build
         run: |
           cp -r Autorization Cloak
@@ -279,18 +282,19 @@ jobs:
           go mod tidy
           GOARCH=amd64 GOOS=darwin go build -o DobbyVPN main_macos_amd64.go
           cd ..
+
       - name: Make macos amd64 zip
         run: |
           mkdir macos_client_amd64
           mv Cloak/fyne-cross/dist/macos-amd64/DobbyVPN_AMD64.app macos_client_amd64/DobbyVPN_AMD64.app
           mv Cloak/Autorization/DobbyVPN macos_client_amd64/DobbyVPN
           zip -r macos_client_amd64.zip macos_client_amd64
+
       - name: Upload MacOs AMD64 client
         uses: actions/upload-artifact@master
         with:
           name: macos_client_amd64.zip
-          path: macos_client_amd64.zip     
-
+          path: macos_client_amd64.zip
 
   macos_build_arm64:
     runs-on: macos-latest
