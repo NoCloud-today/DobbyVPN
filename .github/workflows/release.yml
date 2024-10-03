@@ -28,10 +28,10 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          mv -Force log-files/piper.go Cloak/internal/client/piper.go
-          mv -Force log-files/connector.go Cloak/internal/client/connector.go
-          mv -Force log-files/TLS.go Cloak/internal/client/TLS.go
-          mv -Force log-files/copy.go Cloak/internal/common/copy.go
+          # mv -Force log-files/piper.go Cloak/internal/client/piper.go
+          # mv -Force log-files/connector.go Cloak/internal/client/connector.go
+          # mv -Force log-files/TLS.go Cloak/internal/client/TLS.go
+          # mv -Force log-files/copy.go Cloak/internal/common/copy.go
           mkdir Cloak/internal/out
           cp log-files/logging.go Cloak/internal/out/logging.go
           cp -r ck-client/Windows Cloak
@@ -93,10 +93,10 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          mv -f log-files/piper.go Cloak/internal/client/piper.go
-          mv -f log-files/connector.go Cloak/internal/client/connector.go
-          mv -f log-files/TLS.go Cloak/internal/client/TLS.go
-          mv -f log-files/copy.go Cloak/internal/common/copy.go
+          # mv -f log-files/piper.go Cloak/internal/client/piper.go
+          # mv -f log-files/connector.go Cloak/internal/client/connector.go
+          # mv -f log-files/TLS.go Cloak/internal/client/TLS.go
+          # mv -f log-files/copy.go Cloak/internal/common/copy.go
           mkdir Cloak/internal/out
           cp log-files/logging.go Cloak/internal/out/logging.go
           cp -r ck-client/Linux Cloak
@@ -162,10 +162,10 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          mv -f log-files/piper.go Cloak/internal/client/piper.go
-          mv -f log-files/connector.go Cloak/internal/client/connector.go
-          mv -f log-files/TLS.go Cloak/internal/client/TLS.go
-          mv -f log-files/copy.go Cloak/internal/common/copy.go
+          # mv -f log-files/piper.go Cloak/internal/client/piper.go
+          # mv -f log-files/connector.go Cloak/internal/client/connector.go
+          # mv -f log-files/TLS.go Cloak/internal/client/TLS.go
+          # mv -f log-files/copy.go Cloak/internal/common/copy.go
           mkdir Cloak/internal/out
           cp log-files/logging.go Cloak/internal/out/logging.go
           cp ck-client/Linux/app_linux.go Cloak
@@ -233,10 +233,10 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          mv -f log-files/piper.go Cloak/internal/client/piper.go
-          mv -f log-files/connector.go Cloak/internal/client/connector.go
-          mv -f log-files/TLS.go Cloak/internal/client/TLS.go
-          mv -f log-files/copy.go Cloak/internal/common/copy.go
+          # mv -f log-files/piper.go Cloak/internal/client/piper.go
+          # mv -f log-files/connector.go Cloak/internal/client/connector.go
+          # mv -f log-files/TLS.go Cloak/internal/client/TLS.go
+          # mv -f log-files/copy.go Cloak/internal/common/copy.go
           mkdir Cloak/internal/out
           cp log-files/logging.go Cloak/internal/out/logging.go
           cp ck-client/MacOs/app_macos.go Cloak
@@ -300,10 +300,10 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          mv -f log-files/piper.go Cloak/internal/client/piper.go
-          mv -f log-files/connector.go Cloak/internal/client/connector.go
-          mv -f log-files/TLS.go Cloak/internal/client/TLS.go
-          mv -f log-files/copy.go Cloak/internal/common/copy.go
+          # mv -f log-files/piper.go Cloak/internal/client/piper.go
+          # mv -f log-files/connector.go Cloak/internal/client/connector.go
+          # mv -f log-files/TLS.go Cloak/internal/client/TLS.go
+          # mv -f log-files/copy.go Cloak/internal/common/copy.go
           mkdir Cloak/internal/out
           cp log-files/logging.go Cloak/internal/out/logging.go
           cp -r ck-client/MacOs Cloak

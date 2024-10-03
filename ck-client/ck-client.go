@@ -12,6 +12,8 @@ import (
 	"net"
 	"path/filepath"
 	"sync"
+        "runtime"
+        "github.com/jackpal/gateway"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -164,6 +166,10 @@ func main() {
 	var udpConn *net.UDPConn
 	var stopChan chan struct{}
         var counter = 0
+        gatewayIP, err := gateway.DiscoverGateway()
+        if err != nil {
+            panic(err)
+        }
 
 	s := &Server{
 		quit: make(chan interface{}),
@@ -340,7 +346,7 @@ func main() {
 					return udpConn, err
 				}
 
-				client.RouteUDP(acceptor, localConfig.Timeout, false, seshMaker)
+				client.RouteUDP(acceptor, localConfig.Timeout, remoteConfig.Singleplex, seshMaker)
 			} else {
 				showMessage("TCP")
 				listener, err = net.Listen("tcp", localConfig.LocalAddr)
@@ -358,7 +364,7 @@ func main() {
 				}()
 
                                 log.Printf("Starting Cloak")
-				client.RouteTCP(listener, localConfig.Timeout, true, seshMaker)
+				client.RouteTCP(listener, localConfig.Timeout, remoteConfig.Singleplex, seshMaker)
 			}
 
 			select {
@@ -578,6 +584,21 @@ func main() {
                 },
             }
 
+            if runtime.GOOS == "windows" {
+		interfaceName, err := FindInterfaceByGateway(gatewayIP.String())
+                if err != nil {
+                    panic(err)
+                }
+                netInterface, err := GetNetworkInterfaceByIP(interfaceName)
+                if err != nil {
+	            fmt.Println("Error:", err)
+	            os.Exit(1)
+                }
+                addOrUpdateProxyRoute(rawConfig.RemoteHost, gatewayIP.String(), netInterface.Name)
+	    } else {
+		
+	    }
+
             go func() {
                 if err := app.Run(ctx1); err != nil {
                     Logging.Err.Printf("%v\n", err)
@@ -665,7 +686,7 @@ func main() {
                                                 return udpConn, err
                                         }
 
-                                        client.RouteUDP(acceptor, localConfig.Timeout, true, seshMaker)
+                                        client.RouteUDP(acceptor, localConfig.Timeout, remoteConfig.Singleplex, seshMaker)
                                 } else {
                                         showMessage("DobbyVPN/ck-client: TCP")
                                         showMessage("DobbyVPN/ck-client: localConfig.LocalAddr" + localConfig.LocalAddr)
@@ -679,7 +700,7 @@ func main() {
                                         log.Printf("DobbyVPN/ck-client.go: Enter the function RouteTCP")
                                         log.Printf("DobbyVPN/ck-client.go: localConfig.Timeout = %v", localConfig.Timeout)
 
-                                        client.RouteTCP(s.listener, localConfig.Timeout, false, seshMaker)
+                                        client.RouteTCP(s.listener, localConfig.Timeout, remoteConfig.Singleplex, seshMaker)
                                         defer func() {
                                                 log.Printf("DobbyVPN/ck-client: RouteTCP stopping")
                                         }()
