@@ -149,10 +149,10 @@ func main() {
 
 	logWriter := &LogWriter{Output: logOutput}
 	log.SetOutput(logWriter)
-        Logging.Debug.SetOutput(logWriter)
-	Logging.Info.SetOutput(logWriter)
-	Logging.Warn.SetOutput(logWriter)
-	Logging.Err.SetOutput(logWriter)
+        //Logging.Debug.SetOutput(logWriter)
+	//Logging.Info.SetOutput(logWriter)
+	//Logging.Warn.SetOutput(logWriter)
+	//Logging.Err.SetOutput(logWriter)
 
         tabs := container.NewAppTabs()
 
@@ -166,10 +166,6 @@ func main() {
 	var udpConn *net.UDPConn
 	var stopChan chan struct{}
         var counter = 0
-        gatewayIP, err := gateway.DiscoverGateway()
-        if err != nil {
-            panic(err)
-        }
 
 	s := &Server{
 		quit: make(chan interface{}),
@@ -584,20 +580,7 @@ func main() {
                 },
             }
 
-            if runtime.GOOS == "windows" {
-		interfaceName, err := FindInterfaceByGateway(gatewayIP.String())
-                if err != nil {
-                    panic(err)
-                }
-                netInterface, err := GetNetworkInterfaceByIP(interfaceName)
-                if err != nil {
-	            fmt.Println("Error:", err)
-	            os.Exit(1)
-                }
-                addOrUpdateProxyRoute(rawConfig.RemoteHost, gatewayIP.String(), netInterface.Name)
-	    } else {
-		
-	    }
+            add_route(rawConfig.RemoteHost)
 
             go func() {
                 if err := app.Run(ctx1); err != nil {

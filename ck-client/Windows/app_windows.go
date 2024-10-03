@@ -16,6 +16,23 @@ import (
     "github.com/jackpal/gateway"
 )
 
+func add_route(proxyIp string) {
+    gatewayIP, err := gateway.DiscoverGateway()
+    if err != nil {
+        panic(err)
+    }
+    interfaceName, err := FindInterfaceByGateway(gatewayIP.String())
+    if err != nil {
+        panic(err)
+    }
+    netInterface, err := GetNetworkInterfaceByIP(interfaceName)
+    if err != nil {
+        fmt.Println("Error:", err)
+	os.Exit(1)
+    }
+    addOrUpdateProxyRoute(proxyIp, gatewayIP.String(), netInterface.Name)
+}
+
 func FindInterfaceByGateway(gatewayIP string) (string, error) {
     cmd := exec.Command("route", "print")
     output, err := cmd.Output()
@@ -156,16 +173,27 @@ func (app App) Run(ctx context.Context) error {
     }
     defer stopRouting(ss.GetServerIP().String(), tunInterface.Name)
 
+    /*ss1, err := NewOutlineDevice("ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpaVWVmTzExenFzN0pQbFBBMU4xWHlh@195.201.111.36:40287/?outline=1")
+    if err != nil {
+        return fmt.Errorf("failed to create OutlineDevice: %w", err)
+    }
+
+    if err = startRouting(ss1.GetServerIP().String(), gatewayIP.String(), tunInterface.Name, tunInterface.HardwareAddr.String(), netInterface.Name, TunGateway, TunDeviceIP, src); err != nil {
+	return fmt.Errorf("failed to configure routing: %w", err)
+    }
+    defer stopRouting(ss1.GetServerIP().String(), tunInterface.Name)*/
+
     trafficCopyWg.Add(2)
     go func() {
         defer trafficCopyWg.Done()
-        buffer := make([]byte, 65536)
+        buffer := make([]byte, 12000)
         
         for {
             select {
             case <-ctx.Done():
                 return
             default:
+                copy(buffer, make([]byte, len(buffer)))
                 n, err := tun.Read(buffer)
                 if err != nil {
                     //fmt.Printf("Error reading from device: %x %v\n", n, err)
@@ -190,12 +218,13 @@ func (app App) Run(ctx context.Context) error {
 
     go func() {
         defer trafficCopyWg.Done()
-        buf := make([]byte, 65536)
+        buf := make([]byte, 12000)
         for {
             select {
             case <-ctx.Done():
                 return
             default:
+                copy(buf, make([]byte, len(buf)))
                 n, err := ss.Read(buf)
                 if err != nil {
                 //  fmt.Printf("Error reading from device: %v\n", err)

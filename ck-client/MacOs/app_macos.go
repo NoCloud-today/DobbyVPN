@@ -12,6 +12,10 @@ import (
 	"io"
 )
 
+func add_route(proxyIp string) {
+
+}
+
 func (app App) Run(ctx context.Context) error {
 	// this WaitGroup must Wait() after tun is closed
 	trafficCopyWg := &sync.WaitGroup{}
