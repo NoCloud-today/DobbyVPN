@@ -12,8 +12,6 @@ import (
 	"net"
 	"path/filepath"
 	"sync"
-        "runtime"
-        "github.com/jackpal/gateway"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
