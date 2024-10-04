@@ -23,17 +23,17 @@ func executeCommand(command string) (string, error) {
 func startRouting(proxyIP string, gatewayIP string, interfaceName string, tunIp string, tunName string) error {
 	removeOldDefaultRoute := fmt.Sprintf("sudo ip route del default via %s dev %s", gatewayIP, interfaceName)
 	if _, err := executeCommand(removeOldDefaultRoute); err != nil {
-		return fmt.Errorf("failed to remove old default route: %w", err)
+		Logging.Info.Printf("failed to remove old default route: %w", err)
 	}
 
 	addNewDefaultRoute := fmt.Sprintf("sudo ip route add default via %s dev %s metric 10", tunIp, tunName)
 	if _, err := executeCommand(addNewDefaultRoute); err != nil {
-		return fmt.Errorf("failed to add new default route: %w", err)
+		Logging.Info.Printf("failed to add new default route: %w", err)
 	}
 
 	addSpecificRoute := fmt.Sprintf("sudo ip route add %s via %s dev %s metric 5", proxyIP, gatewayIP, interfaceName)
 	if _, err := executeCommand(addSpecificRoute); err != nil {
-		return fmt.Errorf("failed to add specific route: %w", err)
+		Logging.Info.Printf("failed to add specific route: %w", err)
 	}
 
 	return nil
@@ -42,17 +42,17 @@ func startRouting(proxyIP string, gatewayIP string, interfaceName string, tunIp 
 func stopRouting(proxyIP string, gatewayIP string, interfaceName string, tunIp string, tunName string) error {
 	removeNewDefaultRoute := fmt.Sprintf("sudo ip route del default via %s dev %s", tunIp, tunName)
 	if _, err := executeCommand(removeNewDefaultRoute); err != nil {
-		return fmt.Errorf("failed to remove new default route: %w", err)
+		Logging.Info.Printf("failed to remove new default route: %w", err)
 	}
 
 	addOldDefaultRoute := fmt.Sprintf("sudo ip route add default via %s dev %s metric 600", gatewayIP, interfaceName)
 	if _, err := executeCommand(addOldDefaultRoute); err != nil {
-		return fmt.Errorf("failed to add old default route: %w", err)
+		Logging.Info.Printf("failed to add old default route: %w", err)
 	}
 
 	removeSpecificRoute := fmt.Sprintf("sudo ip route del %s via %s dev %s", proxyIP, gatewayIP, interfaceName)
 	if _, err := executeCommand(removeSpecificRoute); err != nil {
-		return fmt.Errorf("failed to remove specific route: %w", err)
+		Logging.Info.Printf("failed to remove specific route: %w", err)
 	}
 
 	return nil
