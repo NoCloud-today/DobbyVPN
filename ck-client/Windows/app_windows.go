@@ -186,7 +186,7 @@ func (app App) Run(ctx context.Context) error {
     trafficCopyWg.Add(2)
     go func() {
         defer trafficCopyWg.Done()
-        buffer := make([]byte, 12000)
+        buffer := make([]byte, 65000)
         
         for {
             select {
@@ -218,7 +218,7 @@ func (app App) Run(ctx context.Context) error {
 
     go func() {
         defer trafficCopyWg.Done()
-        buf := make([]byte, 12000)
+        buf := make([]byte, 65000)
         for {
             select {
             case <-ctx.Done():

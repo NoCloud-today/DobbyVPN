@@ -8,14 +8,73 @@ import (
 	//"io"
 	"sync"
         "log"
+	"bufio"
+	"os/exec"
+	"strings"
+
+	"github.com/jackpal/gateway"
 )
 
 func add_route(proxyIp string) {
+    gatewayIP, err := gateway.DiscoverGateway()
+    if err != nil {
+        panic(err)
+    }
+    interfaceName, err := FindInterfaceByGateway(gatewayIP.String())
+    if err != nil {
+        panic(err)
+    }
+    
+    addSpecificRoute := fmt.Sprintf("sudo ip route add %s via %s dev %s metric 5", proxyIp, gatewayIP.String(), interfaceName)
+    if _, err := executeCommand(addSpecificRoute); err != nil {
+	Logging.Info.Printf("failed to add specific route: %w", err)
+    }
+}
 
+func FindInterfaceByGateway(gatewayIP string) (string, error) {
+    cmd := exec.Command("ip", "route")
+    output, err := cmd.Output()
+    if err != nil {
+        return "", fmt.Errorf("fail to execute a command route print: %v", err)
+    }
+
+    scanner := bufio.NewScanner(strings.NewReader(string(output)))
+    var foundGateway bool
+    for scanner.Scan() {
+        line := scanner.Text()
+        if strings.Contains(line, gatewayIP) {
+            foundGateway = true
+            parts := strings.Fields(line)
+            if len(parts) >= 5 {
+                interfaceName := parts[4]
+                return interfaceName, nil
+            }
+        }
+    }
+
+    if !foundGateway {
+        return "", fmt.Errorf("gateway %s is not found in the table", gatewayIP)
+    }
+
+    return "", fmt.Errorf("no interface %s", gatewayIP)
 }
 
 func (app App) Run(ctx context.Context) error {
 	// this WaitGroup must Wait() after tun is closed
+	
+	tunIp := "10.0.85.2"
+	tunName:= "outline-tun0"
+	
+	gatewayIP, err := gateway.DiscoverGateway()
+        if err != nil {
+            panic(err)
+        }
+   
+        interfaceName, err := FindInterfaceByGateway(gatewayIP.String())
+        if err != nil {
+            panic(err)
+        }
+        
 	trafficCopyWg := &sync.WaitGroup{}
 	defer trafficCopyWg.Wait()
 
@@ -25,7 +84,7 @@ func (app App) Run(ctx context.Context) error {
 
         Logging.Info.Printf("Outline/Run: Start creating tun")
 
-	tun, err := newTunDevice(app.RoutingConfig.TunDeviceName, app.RoutingConfig.TunDeviceIP)
+	tun, err := newTunDevice(tunName, tunIp)
 	if err != nil {
 		return fmt.Errorf("failed to create tun device: %w", err)
 	}
@@ -43,10 +102,10 @@ func (app App) Run(ctx context.Context) error {
 
         Logging.Info.Printf("Outline/Run: Start routing")
 
-	if err := startRouting(ss.GetServerIP().String(), app.RoutingConfig); err != nil {
+	if err := startRouting(ss.GetServerIP().String(), gatewayIP.String(), interfaceName, tunIp, tunName); err != nil {
 		return fmt.Errorf("failed to configure routing: %w", err)
 	}
-	defer stopRouting(app.RoutingConfig.RoutingTableID)
+	defer stopRouting(ss.GetServerIP().String(), gatewayIP.String(), interfaceName, tunIp, tunName)
 
         Logging.Info.Printf("Outline/Run: Made table routing")
 
@@ -108,29 +167,6 @@ func (app App) Run(ctx context.Context) error {
         log.Printf("OutlineDevice -> tun stopped")
     }()
 
-	// Copy the traffic from tun device to OutlineDevice bidirectionally
-	//trafficCopyWg.Add(2)
-	//go func() {
-	//	defer trafficCopyWg.Done()
-        //        select {
-        //        case <-ctx.Done():
-        //            return
-        //        default:
-	//	    written, err := io.Copy(ss, tun)
-	//	    Logging.Info.Printf("tun -> OutlineDevice stopped: %v %v\n", written, err)
-        //        }
-	//}()
-	//go func() {
-	//	defer trafficCopyWg.Done()
-        //        select {
-        //        case <-ctx.Done():
-        //            return
-        //        default:
-	//	    written, err := io.Copy(tun, ss)
-	//	    Logging.Info.Printf("OutlineDevice -> tun stopped: %v %v\n", written, err)
-        //        }
-	//}()
-
 	trafficCopyWg.Wait()
 
     
@@ -143,7 +179,7 @@ func (app App) Run(ctx context.Context) error {
         ss.Close()
         log.Printf("Outline/Run: device closed")        
         log.Printf("Outline/Run: Stop routing")
-        stopRouting(app.RoutingConfig.RoutingTableID)
+        stopRouting(ss.GetServerIP().String(), gatewayIP.String(), interfaceName, tunIp, tunName)
         log.Printf("Outline/Run: Stopped")
 	return nil
 }

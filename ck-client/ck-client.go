@@ -147,10 +147,10 @@ func main() {
 
 	logWriter := &LogWriter{Output: logOutput}
 	log.SetOutput(logWriter)
-        //Logging.Debug.SetOutput(logWriter)
-	//Logging.Info.SetOutput(logWriter)
-	//Logging.Warn.SetOutput(logWriter)
-	//Logging.Err.SetOutput(logWriter)
+        Logging.Debug.SetOutput(logWriter)
+	Logging.Info.SetOutput(logWriter)
+	Logging.Warn.SetOutput(logWriter)
+	Logging.Err.SetOutput(logWriter)
 
         tabs := container.NewAppTabs()
 

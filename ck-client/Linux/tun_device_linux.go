@@ -5,21 +5,11 @@ package main
 import (
 	"errors"
 	"fmt"
-        "os/user"
 
 	"github.com/Jigsaw-Code/outline-sdk/network"
 	"github.com/songgao/water"
 	"github.com/vishvananda/netlink"
 )
-
-func checkRoot() bool {
-	user, err := user.Current()
-	if err != nil {
-		Logging.Info.Printf("Failed to get current user")
-		return false
-	}
-	return user.Uid == "0"
-}
 
 type tunDevice struct {
 	*water.Interface
@@ -29,10 +19,6 @@ type tunDevice struct {
 var _ network.IPDevice = (*tunDevice)(nil)
 
 func newTunDevice(name, ip string) (d network.IPDevice, err error) {
-        //if !checkRoot() {
-	//	return nil, errors.New("this operation requires superuser privileges. Please run the program with sudo or as root")
-	//}
-
 	if len(name) == 0 {
 		return nil, errors.New("name is required for TUN/TAP device")
 	}
@@ -49,7 +35,7 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
-        }
+	}
 
 	defer func() {
 		if err != nil {
@@ -62,16 +48,27 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 		return nil, fmt.Errorf("newly created TUN/TAP device '%s' not found: %w", name, err)
 	}
 
-        Logging.Info.Printf("Outline/Tun: create tunLink : %v", tunLink)
-
 	tunDev := &tunDevice{tun, tunLink}
-	if err := tunDev.configureSubnet(ip); err != nil {
-		return nil, fmt.Errorf("failed to configure TUN/TAP device subnet: %w", err)
-	}
-	if err := tunDev.bringUp(); err != nil {
-		return nil, fmt.Errorf("failed to bring up TUN/TAP device: %w", err)
-	}
-        Logging.Info.Printf("Outline/Tun: tunDevice created")
+	
+	addTunRoute := fmt.Sprintf("sudo ip addr add 10.0.85.1/24 dev  %s", name)
+	if _, err := executeCommand(addTunRoute); err != nil {
+		return nil, fmt.Errorf("failed to add tun route: %w", err)
+	}	
+	upTunRoute := fmt.Sprintf("sudo ip link set dev %s up", name)
+	if _, err := executeCommand(upTunRoute); err != nil {
+		return nil, fmt.Errorf("failed to up tun route: %w", err)
+	}	
+	addrTunRoute := fmt.Sprintf("sudo ip route add %s dev %s scope link src 10.0.85.1", ip, name)
+	if _, err := executeCommand(addrTunRoute); err != nil {
+		return nil, fmt.Errorf("failed to add way tun route: %w", err)
+	}	
+
+	//if err := tunDev.configureSubnet(ip); err != nil {
+	//	return nil, fmt.Errorf("failed to configure TUN/TAP device subnet: %w", err)
+	//}
+	//if err := tunDev.bringUp(); err != nil {
+	//	return nil, fmt.Errorf("failed to bring up TUN/TAP device: %w", err)
+	//}
 	return tunDev, nil
 }
 
