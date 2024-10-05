@@ -7,8 +7,6 @@ import (
 	//"os/exec"
 	"sync"
 	//"time"
-	"io"
-        "os"
         "github.com/jackpal/gateway"
 )
 
@@ -18,13 +16,13 @@ func add_route(proxyIp string) {
         panic(err)
     }
     
-    addSpecificRoute := fmt.Sprintf("sudo route add -net %s/32 %s", proxyIP, gatewayIP.String())
+    addSpecificRoute := fmt.Sprintf("sudo route add -net %s/32 %s", proxyIp, gatewayIP.String())
     if _, err := executeCommand(addSpecificRoute); err != nil {
 	Logging.Info.Printf("failed to add specific route: %w", err)
     }
 }
 
-func (app App) Run() error {
+func (app App) Run(ctx context.Context) error {
 	// this WaitGroup must Wait() after tun is closed
 
         gatewayIP, err := gateway.DiscoverGateway()
@@ -67,17 +65,17 @@ func (app App) Run() error {
             buffer := make([]byte, 65536)
         
             for {
-                //select {
-                //case <-ctx.Done():
-                //    return
-                //default:
+                select {
+                case <-ctx.Done():
+                    return
+                default:
                     n, err := tun.Read(buffer)
                     if err != nil {
                         //fmt.Printf("Error reading from device: %x %v\n", n, err)
                         break
                     }
                     if n > 0 {
-                        log.Printf("Read %d bytes from tun\n", n)
+                        //log.Printf("Read %d bytes from tun\n", n)
                         //log.Printf("Data from tun: % x\n", buffer[:n])
                     
                         _, err = ss.Write(buffer[:n])
@@ -86,7 +84,7 @@ func (app App) Run() error {
                             break
                         }
                     }
-                //}
+                }
             }
         }()
 
@@ -94,17 +92,17 @@ func (app App) Run() error {
             defer trafficCopyWg.Done()
             buf := make([]byte, 65536)
             for {
-                //select {
-                //case <-ctx.Done():
-                //    return
-                //default:
+                select {
+                case <-ctx.Done():
+                    return
+                default:
                     n, err := ss.Read(buf)
                     if err != nil {
                     //  fmt.Printf("Error reading from device: %v\n", err)
                         break
                     }
                     if n > 0 {
-                      log.Printf("Read %d bytes from OutlineDevice\n", n)
+                      //log.Printf("Read %d bytes from OutlineDevice\n", n)
                       //log.Printf("Data from OutlineDevice: % x\n", buf[:n])
 
                         _, err = tun.Write(buf[:n])
@@ -114,7 +112,7 @@ func (app App) Run() error {
                         }
                     }
             
-                //}
+                }
             }
             log.Printf("OutlineDevice -> tun stopped")
         }()
