@@ -18,7 +18,7 @@ func add_route(proxyIp string) {
         panic(err)
     }
     
-    addSpecificRoute := fmt.Sprintf(sudo route add -net %s/32 %s", proxyIP, gatewayIP.String())
+    addSpecificRoute := fmt.Sprintf("sudo route add -net %s/32 %s", proxyIP, gatewayIP.String())
     if _, err := executeCommand(addSpecificRoute); err != nil {
 	Logging.Info.Printf("failed to add specific route: %w", err)
     }
