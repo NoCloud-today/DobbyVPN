@@ -13,7 +13,7 @@ import (
 func checkRoot() bool {
 	user, err := user.Current()
 	if err != nil {
-		Logging.Info.Printf("Failed to get current user")
+		log.Printf("Failed to get current user")
 		return false
 	}
 	return user.Uid == "0"
@@ -28,9 +28,9 @@ type tunDevice struct {
 var _ network.IPDevice = (*tunDevice)(nil)
 
 func newTunDevice(name, ip string) (d network.IPDevice, err error) {
-        //if !checkRoot() {
-	//	return nil, errors.New("this operation requires superuser privileges. Please run the program with sudo or as root")
-	//}
+        if !checkRoot() {
+		return nil, errors.New("this operation requires superuser privileges. Please run the program with sudo or as root")
+	}
 
 	if len(name) == 0 {
 		return nil, errors.New("name is required for TUN/TAP device")
@@ -57,6 +57,12 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 	log.Printf("Tun successful")
 
 	tunDev := &tunDevice{tun, tun.Name()}
+
+        addTunRoute := fmt.Sprintf("sudo ifconfig %s inet 169.254.19.0 169.254.19.0 netmask 255.255.255.0", tun.Name())
+	if _, err := executeCommand(addTunRoute); err != nil {
+		return nil, fmt.Errorf("failed to add tun route: %w", err)
+	}
+	
 	// Uncomment and implement if needed
 	//if err := tunDev.configureSubnet(ip); err != nil {
 	//	return nil, fmt.Errorf("failed to configure TUN/TAP device subnet: %w", err)

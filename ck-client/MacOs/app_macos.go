@@ -1,29 +1,45 @@
-//go:build darwin
-
 package main
 
 import (
-	"context"
 	"fmt"
+        "errors"
 	"log"
-	"os/exec"
+	//"os/exec"
 	"sync"
-	"time"
+	//"time"
 	"io"
+        "os"
+        "github.com/jackpal/gateway"
 )
 
 func add_route(proxyIp string) {
-
+    gatewayIP, err := gateway.DiscoverGateway()
+    if err != nil {
+        panic(err)
+    }
+    
+    addSpecificRoute := fmt.Sprintf(sudo route add -net %s/32 %s", proxyIP, gatewayIP.String())
+    if _, err := executeCommand(addSpecificRoute); err != nil {
+	Logging.Info.Printf("failed to add specific route: %w", err)
+    }
 }
 
-func (app App) Run(ctx context.Context) error {
+func (app App) Run() error {
 	// this WaitGroup must Wait() after tun is closed
+
+        gatewayIP, err := gateway.DiscoverGateway()
+        if err != nil {
+            panic(err)
+        }
+
+        Logging.Info.Printf("gatewayIP: %s", gatewayIP.String())
+
 	trafficCopyWg := &sync.WaitGroup{}
 	defer trafficCopyWg.Wait()
 
-        //if !checkRoot() {
-	//	return errors.New("this operation requires superuser privileges. Please run the program with sudo or as root")
-	//}
+        if !checkRoot() {
+		return errors.New("this operation requires superuser privileges. Please run the program with sudo or as root")
+	}
 
 	tun, err := newTunDevice(app.RoutingConfig.TunDeviceName, app.RoutingConfig.TunDeviceIP)
 	if err != nil {
@@ -31,7 +47,7 @@ func (app App) Run(ctx context.Context) error {
 	}
 	defer tun.Close()
 
-        Logging.Info.Printf("Tun created")
+        log.Printf("Tun created")
 
 	ss, err := NewOutlineDevice(*app.TransportConfig)
 	if err != nil {
@@ -41,54 +57,73 @@ func (app App) Run(ctx context.Context) error {
 
 	ss.Refresh()
 
-        Logging.Info.Printf("Device created")
+        log.Printf("Device created")
 
 	// Copy the traffic from tun device to OutlineDevice bidirectionally
 	trafficCopyWg.Add(2)
+
 	go func() {
-		defer trafficCopyWg.Done()
-                select {
-                case <-ctx.Done():
-                    return
-                default:
-		    written, err := io.Copy(ss, tun)
-		    log.Printf("tun -> OutlineDevice stopped: %v %v\n", written, err)
-                }
-	}()
-	go func() {
-		defer trafficCopyWg.Done()
-                select {
-                case <-ctx.Done():
-                    return
-                default:
-		    written, err := io.Copy(tun, ss)
-		    Logging.Info.Printf("OutlineDevice -> tun stopped: %v %v\n", written, err)
-                }
-	}()
-	
-	go func() {
-	    for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			cmd := exec.Command("netstat", "-rn")
-			output, err := cmd.Output()
-			if err != nil {
-				Logging.Info.Printf("failed to execute netstat")
-			} else {
-				Logging.Info.Printf("Routing table:\n%s", string(output))
-			}
-			time.Sleep(6 * time.Second)
-		}
-	    }
-	}()
+            defer trafficCopyWg.Done()
+            buffer := make([]byte, 65536)
+        
+            for {
+                //select {
+                //case <-ctx.Done():
+                //    return
+                //default:
+                    n, err := tun.Read(buffer)
+                    if err != nil {
+                        //fmt.Printf("Error reading from device: %x %v\n", n, err)
+                        break
+                    }
+                    if n > 0 {
+                        log.Printf("Read %d bytes from tun\n", n)
+                        //log.Printf("Data from tun: % x\n", buffer[:n])
+                    
+                        _, err = ss.Write(buffer[:n])
+                        if err != nil {
+                            //   log.Printf("Error writing to device: %v", err)
+                            break
+                        }
+                    }
+                //}
+            }
+        }()
+
+        go func() {
+            defer trafficCopyWg.Done()
+            buf := make([]byte, 65536)
+            for {
+                //select {
+                //case <-ctx.Done():
+                //    return
+                //default:
+                    n, err := ss.Read(buf)
+                    if err != nil {
+                    //  fmt.Printf("Error reading from device: %v\n", err)
+                        break
+                    }
+                    if n > 0 {
+                      log.Printf("Read %d bytes from OutlineDevice\n", n)
+                      //log.Printf("Data from OutlineDevice: % x\n", buf[:n])
+
+                        _, err = tun.Write(buf[:n])
+                        if err != nil {
+                        //    log.Printf("Error writing to tun: %v", err)
+                            break
+                        }
+                    }
+            
+                //}
+            }
+            log.Printf("OutlineDevice -> tun stopped")
+        }()
 
 
-	if err := startRouting(ss.GetServerIP().String(), app.RoutingConfig); err != nil {
+	if err := startRouting(ss.GetServerIP().String(), gatewayIP.String(), tun.(*tunDevice).name); err != nil {
 		return fmt.Errorf("failed to configure routing: %w", err)
 	}
-	defer stopRouting(app.RoutingConfig.RoutingTableID)
+	defer stopRouting(ss.GetServerIP().String(), gatewayIP.String())
 
 	trafficCopyWg.Wait()
 
@@ -96,9 +131,10 @@ func (app App) Run(ctx context.Context) error {
         trafficCopyWg.Wait()
     
         tun.Close()
-        Logging.Info.Printf("Tun closed")
+        log.Printf("Tun closed")
         ss.Close()
-        Logging.Info.Printf("Device closed")
-        Logging.Info.Printf("Stopped")
+        log.Printf("Device closed")
+        stopRouting(ss.GetServerIP().String(), gatewayIP.String())
+        log.Printf("Stopped")
 	return nil
 }
