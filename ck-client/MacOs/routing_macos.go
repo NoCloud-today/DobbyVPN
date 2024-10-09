@@ -18,6 +18,20 @@ func executeCommand(command string) (string, error) {
 	return string(output), nil
 }
 
+func saveWireguardConf(config string, fileName string) error {
+	return nil
+}
+
+func StartTunnel(name string) {
+}
+
+func StopTunnel(name string) {
+}
+
+func CheckAndInstallWireGuard() error {
+	return nil
+}
+
 func startRouting(proxyIP string, gatewayIP string, tunName string) error {
 	removeOldDefaultRoute := fmt.Sprintf("sudo route delete default")
 	if _, err := executeCommand(removeOldDefaultRoute); err != nil {
