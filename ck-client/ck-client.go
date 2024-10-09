@@ -10,6 +10,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net"
+	//"os/exec"
 	"path/filepath"
 	"sync"
 
@@ -32,6 +33,8 @@ const configFileName = "config.json"
 
 const combinedConfigFileName = "combined_config.json"
 const combinedKeyFileName = "combined_shadowsocks_key.txt"
+
+const wireguardConfigFileName = "wireguard_config.json"
 
 func getConfigPath() string {
 	homeDir, _ := os.UserHomeDir()
@@ -91,6 +94,25 @@ func loadConfig() (string, error) {
 	return string(data), nil
 }
 
+func getWireguardConfigPath() string {
+	homeDir, _ := os.UserHomeDir()
+	return filepath.Join(homeDir, wireguardConfigFileName)
+}
+
+func saveWireguardConfig(config string) error {
+	configPath := getWireguardConfigPath()
+	return ioutil.WriteFile(configPath, []byte(config), 0644)
+}
+
+func loadWireguardConfig() (string, error) {
+	configPath := getWireguardConfigPath()
+	data, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
 func showMessage(message string) {
 	Logging.Info.Printf(message)
 }
@@ -139,6 +161,7 @@ func (w *LogWriter) Write(p []byte) (n int, err error) {
 
 func main() {
         //TODO: separate GUI and network related code
+	
 	a := app.New()
 	w := a.NewWindow("Cloak Client")
 
@@ -153,6 +176,12 @@ func main() {
 	Logging.Err.SetOutput(logWriter)
 
         tabs := container.NewAppTabs()
+        
+        if err := CheckAndInstallWireGuard(); err != nil {
+		Logging.Info.Printf("Error:", err)
+	} else {
+		Logging.Info.Printf("Wireguard execute")
+	}
 
 	var UID string
 	var connected bool
@@ -725,6 +754,62 @@ func main() {
 
         combinedClientTab := container.NewTabItem("Combined Client", combinedClientContent)
         tabs.Append(combinedClientTab)
+        
+        //--------------------------------------------------------------------Wireguard--------------------------------------------
+        
+        wireguardNameEntry := widget.NewEntry()
+	wireguardNameEntry.SetText("wg0")
+
+	wireguardConfigEntry := widget.NewMultiLineEntry()
+	wireguardConfigEntry.Wrapping = fyne.TextWrapWord
+	wireguardConfigEntry.SetMinRowsVisible(10)
+
+	loadedWGConfig, err := loadWireguardConfig()
+	if err != nil {
+		loadedWGConfig = `[Interface]
+PrivateKey = <Private_client_key>
+Address = <IP_client_address>
+DNS = 8.8.8.8
+
+[Peer]
+PublicKey = <Public_server_key>
+Endpoint = <IP_server_address>:<Port>
+AllowedIPs = 0.0.0.0/0
+PersistentKeepalive = 20`
+	}
+	wireguardConfigEntry.SetText(loadedWGConfig)
+
+	wireguardConnectButton := widget.NewButton("Connect", func() {
+		wireguardConfig := wireguardConfigEntry.Text
+		wireguardName := wireguardNameEntry.Text
+		err := saveWireguardConfig(wireguardConfig)
+		if err != nil {
+			dialog.ShowError(errors.New("Failed to save WireGuard config: "+err.Error()), w)
+			showMessage("Error: unable to save config")
+		}
+		err = saveWireguardConf(wireguardConfig, wireguardName)
+		if err != nil {
+			dialog.ShowError(errors.New("Failed to save WireGuard config: "+err.Error()), w)
+			Logging.Info.Printf("Error: unable to save tunnel %s", wireguardNameEntry.Text)
+		}
+		StartTunnel(wireguardNameEntry.Text)
+	})
+
+	wireguardDisconnectButton := widget.NewButton("Disconnect", func() {
+		StopTunnel(wireguardNameEntry.Text)
+	})
+
+	wireguardContent := container.NewVBox(
+		widget.NewLabel("Enter WireGuard Config Name:"),
+		wireguardNameEntry,
+		widget.NewLabel("Enter WireGuard Config:"),
+		wireguardConfigEntry,
+		wireguardConnectButton,
+		wireguardDisconnectButton,
+	)
+
+	wireguardTab := container.NewTabItem("WireGuard", wireguardContent)
+	tabs.Append(wireguardTab)
 
         logTab := container.NewTabItem("Logs", logOutput)
         tabs.Append(logTab)

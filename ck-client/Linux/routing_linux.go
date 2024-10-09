@@ -7,8 +7,17 @@ import (
 	"net"
         "fmt"
 	"os/exec"
+	"io/ioutil"
+	"path/filepath"
 	"github.com/vishvananda/netlink"
 )
+
+const wireguardSystemConfigPath = "/etc/wireguard/"
+
+func saveWireguardConf(config string, fileName string) error {
+	systemConfigPath := filepath.Join(wireguardSystemConfigPath, fileName+".conf")
+	return ioutil.WriteFile(systemConfigPath, []byte(config), 0644)
+}
 
 func executeCommand(command string) (string, error) {
 	cmd := exec.Command("bash", "-c", command)
@@ -19,6 +28,51 @@ func executeCommand(command string) (string, error) {
 	Logging.Info.Printf("Outline/routing: Command executed: %s, output: %s", command, output)
 	return string(output), nil
 }
+
+func StartTunnel(name string) {
+        cmd := exec.Command("sudo", "wg-quick", "up", name)
+        err := cmd.Run()
+
+	if err != nil {
+		Logging.Info.Printf("Tunnel is already launched")
+	} else {
+		Logging.Info.Printf("Launch tunnel: %s", name)
+	}
+}
+
+func StopTunnel(name string) {
+        cmd := exec.Command("sudo", "wg-quick", "down", name)
+        err := cmd.Run()
+
+	if err != nil {
+		Logging.Info.Printf("Tunnel is already stopped")
+	} else {
+		Logging.Info.Printf("Stop tunnel: %s", name)
+	}
+}
+
+func CheckAndInstallWireGuard() error {
+	cmd := exec.Command("sudo", "wg", "--version")
+	err := cmd.Run()
+
+	if err != nil {
+		Logging.Info.Printf("WireGuard is not install")
+
+		installCmd := exec.Command("sudo", "apt", "install", "-y", "wireguard-tools")
+		installErr := installCmd.Run()
+
+		if installErr != nil {
+			Logging.Info.Printf("Error install WireGuard: %w", installErr)
+		}
+
+		Logging.Info.Printf("WireGuard is sucessfully installed.")
+	} else {
+		Logging.Info.Printf("WireGuard is already installed.")
+	}
+
+	return nil
+}
+
 
 func startRouting(proxyIP string, gatewayIP string, interfaceName string, tunIp string, tunName string) error {
 	removeOldDefaultRoute := fmt.Sprintf("sudo ip route del default via %s dev %s", gatewayIP, interfaceName)

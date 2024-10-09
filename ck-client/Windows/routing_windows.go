@@ -43,6 +43,20 @@ func executeCommand(command string) (string, error) {
     return string(output), nil
 }
 
+func saveWireguardConf(config string, fileName string) error {
+	return nil
+}
+
+func StartTunnel(name string) {
+}
+
+func StopTunnel(name string) {
+}
+
+func CheckAndInstallWireGuard() error {
+	return nil
+}
+
 func startRouting(proxyIP string, GatewayIP string, TunDeviceName string, MacAddress string, InterfaceName string, TunGateway string, TunDeviceIP string, addr []byte) error {
     log.Printf("Outline/routing: Starting routing configuration for Windows...")
     log.Printf("Outline/routing: Proxy IP: %s, Tun Device Name: %s, Tun Gateway: %s, Tun Device IP: %s, Gateway IP: %s, Mac Address: %s, Interface Name: %s", 
