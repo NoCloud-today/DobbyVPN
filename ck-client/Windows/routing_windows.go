@@ -33,6 +33,8 @@ var ipv4ReservedSubnets = []string{
 	"240.0.0.0/4",
 }
 
+const wireguardSystemConfigPath = "C:\\ProgramData\\WireGuard"
+
 func executeCommand(command string) (string, error) {
     cmd := exec.Command("cmd", "/C", command)
     output, err := cmd.CombinedOutput()
@@ -44,18 +46,55 @@ func executeCommand(command string) (string, error) {
 }
 
 func saveWireguardConf(config string, fileName string) error {
+	systemConfigPath := filepath.Join(wireguardSystemConfigPath, fileName+".conf")
+
+	err := os.MkdirAll(wireguardSystemConfigPath, os.ModePerm)
+	if err != nil {
+		log.Printf("failed to create directory %s: %w", wireguardSystemConfigPath, err)
+	}
+
+	err = os.WriteFile(systemConfigPath, []byte(config), 0644)
+	if err != nil {
+		log.Printf("failed to save WireGuard configuration to %s: %w", systemConfigPath, err)
+	}
+
+	log.Printf("Configuration saved successfully to %s\n", systemConfigPath)
 	return nil
 }
 
+
 func StartTunnel(name string) {
+        systemConfigPath := filepath.Join(wireguardSystemConfigPath, name+".conf")
+	command := fmt.Sprintf("wireguard.exe /installtunnelservice %s", systemConfigPath)
+	output, err := executeCommand(command)
+	if err != nil {
+		log.Printf("Failed to start tunnel: %v, output: %s", err, output)
+	} else {
+		log.Printf("Tunnel started successfully: %s", name)
+	}
 }
 
 func StopTunnel(name string) {
+	command := fmt.Sprintf("wireguard.exe /uninstalltunnelservice %s", name)
+	output, err := executeCommand(command)
+	if err != nil {
+		log.Printf("Failed to stop tunnel: %v, output: %s", err, output)
+	} else {
+		log.Printf("Tunnel stopped successfully: %s", name)
+	}
 }
 
 func CheckAndInstallWireGuard() error {
+	_, err := exec.LookPath("wireguard.exe")
+	if err != nil {
+		log.Printf("WireGuard not found, installing...")
+		
+		return fmt.Errorf("WireGuard is not installed")
+	}
+	log.Printf("WireGuard is already installed")
 	return nil
 }
+
 
 func startRouting(proxyIP string, GatewayIP string, TunDeviceName string, MacAddress string, InterfaceName string, TunGateway string, TunDeviceIP string, addr []byte) error {
     log.Printf("Outline/routing: Starting routing configuration for Windows...")
