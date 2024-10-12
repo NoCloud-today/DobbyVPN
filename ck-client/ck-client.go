@@ -964,6 +964,15 @@ PersistentKeepalive = 20`
 		    )
 		}
 
+                for _, client := range sc.Clients {
+                    ip, _, err := net.SplitHostPort(client.ProxyEndpointAddress.String())
+                    if err != nil {
+                        logger.Warn("Failed to parse ProxyEndpointAddress", zap.Error(err))
+                        continue
+                    }
+                    add_route(ip)
+                }
+
 		m, err := sc.Manager(logger)
 		if err != nil {
 		    logger.Fatal("Failed to create service manager",
