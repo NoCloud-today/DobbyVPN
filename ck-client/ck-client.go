@@ -929,87 +929,95 @@ PersistentKeepalive = 20`
         status_swgp_Label := widget.NewLabel("Not connected")
 
         connect_swgp_Button := widget.NewButton("Connect", func() {
+            go func() { 
                 defer func() {
                 }()
 
-                wireguardCombinedConfig := wireguardCombinedConfigEntry.Text
-		wireguardCombinedName := wireguardCombinedNameEntry.Text
-		err := saveWireguardCombinedConfig(wireguardCombinedConfig)
+		testConf := testConfEntry.Checked
+		jsonConfig := jsonConfigEntry.Text
+		zapConf := zapConfEntry.Text
+		logLevel := zapcore.InfoLevel
+
+		fyne.CurrentApp().SendNotification(fyne.NewNotification("Status", "Connected"))
+		status_swgp_Label.SetText("Connected")
+
+		err = save_swgp_Config(jsonConfig)
 		if err != nil {
-			dialog.ShowError(errors.New("Failed to save WireGuard config: "+err.Error()), w)
-			showMessage("Error: unable to save config")
+		    fyne.CurrentApp().SendNotification(fyne.NewNotification("Error", "Failed to save config: "+err.Error()))
+		    return
 		}
-		err = saveWireguardConf(wireguardCombinedConfig, wireguardCombinedName)
+
+		logger, err := logging.NewZapLogger(zapConf, logLevel)
 		if err != nil {
-			dialog.ShowError(errors.New("Failed to save WireGuard config: "+err.Error()), w)
-			Logging.Info.Printf("Error: unable to save tunnel %s", wireguardCombinedNameEntry.Text)
+		    fyne.CurrentApp().SendNotification(fyne.NewNotification("Error", "Failed to build logger"))
+		    return
 		}
-		StartTunnel(wireguardCombinedNameEntry.Text)
+		defer logger.Sync()
 
-                testConf := testConfEntry.Checked
-                jsonConfig := jsonConfigEntry.Text
-                zapConf := zapConfEntry.Text
-                logLevel := zapcore.InfoLevel
+		var sc service.Config
+		d := json.NewDecoder(strings.NewReader(jsonConfig))
+		d.DisallowUnknownFields()
+		if err = d.Decode(&sc); err != nil {
+		    logger.Fatal("Failed to load config",
+		        zap.String("jsonConfig", jsonConfig),
+		        zap.Error(err),
+		    )
+		}
 
-                status_swgp_Label.SetText("Connected")
-
-                err = save_swgp_Config(jsonConfig)
+		m, err := sc.Manager(logger)
 		if err != nil {
-			dialog.ShowError(errors.New("Failed to save config: "+err.Error()), w)
-			return
+		    logger.Fatal("Failed to create service manager",
+		        zap.String("confPath", confPath),
+		        zap.Error(err),
+		    )
 		}
-                
 
-	        logger, err := logging.NewZapLogger(zapConf, logLevel)
-	        if err != nil {
-		        fmt.Fprintln(os.Stderr, "Failed to build logger:", err)
-		        os.Exit(1)
-	        }
-	        defer logger.Sync()
+		if testConf {
+		    logger.Info("Config test OK", zap.String("confPath", confPath))
+		    return
+		}
 
-  	        var sc service.Config
-                d := json.NewDecoder(strings.NewReader(jsonConfig))
-	        d.DisallowUnknownFields()
-	        if err = d.Decode(&sc); err != nil {
-		        logger.Fatal("Failed to load config",
-				zap.String("jsonConfig", jsonConfig),
-				zap.Error(err),
-			)
-	        }
+		ctx, cancel := context.WithCancel(context.Background())
 
-	        m, err := sc.Manager(logger)
-	        if err != nil {
-		        logger.Fatal("Failed to create service manager",
-			        zap.String("confPath", confPath),
-			        zap.Error(err),
-		        )
-	        }
+		go func() {
+		    sigCh := make(chan os.Signal, 1)
+		    signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+		    sig := <-sigCh
+		    logger.Info("Received exit signal", zap.Stringer("signal", sig))
+		    cancel()
+		}()
 
-	        if testConf {
-		        logger.Info("Config test OK", zap.String("confPath", confPath))
-		        return
-	        }
+		if err = m.Start(ctx); err != nil {
+		    logger.Fatal("Failed to start services",
+		        zap.String("confPath", confPath),
+		        zap.Error(err),
+		    )
+		}
 
-                ctx, cancel := context.WithCancel(context.Background())
+		<-ctx.Done() 
+		m.Stop()
+	    }()
+	    
+	    wireguardCombinedConfig := wireguardCombinedConfigEntry.Text
+	    wireguardCombinedName := wireguardCombinedNameEntry.Text
+	    err := saveWireguardCombinedConfig(wireguardCombinedConfig)
+	    if err != nil {
+		fyne.CurrentApp().SendNotification(fyne.NewNotification("Error", "Failed to save WireGuard config: "+err.Error()))
+		showMessage("Error: unable to save config")
+		return
+	    }
+		
+	    err = saveWireguardConf(wireguardCombinedConfig, wireguardCombinedName)
+	    if err != nil {
+		fyne.CurrentApp().SendNotification(fyne.NewNotification("Error", "Failed to save WireGuard config"))
+		Logging.Info.Printf("Error: unable to save tunnel %s", wireguardCombinedNameEntry.Text)
+		return
+            }
+		
+	    StartTunnel(wireguardCombinedNameEntry.Text)
 
-	        go func() {
-		        sigCh := make(chan os.Signal, 1)
-		        signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-		        sig := <-sigCh
-		        logger.Info("Received exit signal", zap.Stringer("signal", sig))
-		        cancel()
-	        }()	        
+	})
 
-	        if err = m.Start(ctx); err != nil {
-		        logger.Fatal("Failed to start services",
-			        zap.String("confPath", confPath),
-			        zap.Error(err),
-		        )
-	        }
-
-	        <-ctx.Done()
-	        m.Stop()
-        })
 
         disconnect_swgp_Button := widget.NewButton("Disconnect", func() {
                 status_swgp_Label.SetText("Not connected")
