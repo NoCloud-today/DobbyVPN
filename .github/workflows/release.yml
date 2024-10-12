@@ -42,6 +42,10 @@ jobs:
           cp ck-client/outline_device.go Cloak/Windows
           cp ck-client/outline_packet_proxy.go Cloak/Windows
           cp ck-client/protector.go Cloak/Windows
+          cd Cloak
+          git clone https://github.com/database64128/swgp-go.git
+          echo "replace github.com/database64128/swgp-go v0.0.0 => ./swgp-go" >> go.mod
+          cd ..
           cd Cloak/Windows
           go mod tidy
           go install fyne.io/fyne/v2/cmd/fyne@latest
@@ -107,6 +111,10 @@ jobs:
           cp ck-client/outline_device.go Cloak/Linux
           cp ck-client/outline_packet_proxy.go Cloak/Linux
           cp ck-client/protector.go Cloak/Linux
+          cd Cloak
+          git clone https://github.com/database64128/swgp-go.git
+          echo "replace github.com/database64128/swgp-go v0.0.0 => ./swgp-go" >> go.mod
+          cd ..
           cd Cloak/Linux
           go mod tidy
           cd ../..
@@ -179,6 +187,10 @@ jobs:
           cp ck-client/outline_packet_proxy.go Cloak
           cp ck-client/protector.go Cloak
           cd Cloak
+          git clone https://github.com/database64128/swgp-go.git
+          echo "replace github.com/database64128/swgp-go v0.0.0 => ./swgp-go" >> go.mod
+          cd ..
+          cd Cloak
           go install fyne.io/fyne/v2/cmd/fyne@latest
           go install github.com/fyne-io/fyne-cross@latest
           go mod tidy
@@ -250,6 +262,10 @@ jobs:
           cp ck-client/outline_packet_proxy.go Cloak
           cp ck-client/protector.go Cloak
           cd Cloak
+          git clone https://github.com/database64128/swgp-go.git
+          echo "replace github.com/database64128/swgp-go v0.0.0 => ./swgp-go" >> go.mod
+          cd ..
+          cd Cloak
           go install fyne.io/fyne/v2/cmd/fyne@latest
           go install github.com/fyne-io/fyne-cross@latest
           go mod tidy
@@ -314,6 +330,10 @@ jobs:
           cp ck-client/outline_device.go Cloak/MacOs
           cp ck-client/outline_packet_proxy.go Cloak/MacOs
           cp ck-client/protector.go Cloak/MacOs
+          cd Cloak
+          git clone https://github.com/database64128/swgp-go.git
+          echo "replace github.com/database64128/swgp-go v0.0.0 => ./swgp-go" >> go.mod
+          cd ..
           cd Cloak/MacOs
           go mod tidy
           cd ../..
