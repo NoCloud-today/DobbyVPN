@@ -4,9 +4,12 @@ package main
 
 import (
         "fmt"
+	"io/ioutil"
 	"os/exec"
+	"path/filepath"
 )
 
+const wireguardSystemConfigPathMacOS = "/usr/local/etc/wireguard/"
 
 func executeCommand(command string) (string, error) {
 	cmd := exec.Command("bash", "-c", command)
@@ -19,16 +22,57 @@ func executeCommand(command string) (string, error) {
 }
 
 func saveWireguardConf(config string, fileName string) error {
+	systemConfigPath := filepath.Join(wireguardSystemConfigPathMacOS, fileName+".conf")
+	err := ioutil.WriteFile(systemConfigPath, []byte(config), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to save wireguard config: %w", err)
+	}
+	Logging.Info.Printf("WireGuard config saved to %s\n", systemConfigPath)
 	return nil
 }
 
 func StartTunnel(name string) {
+        systemConfigPath := filepath.Join(wireguardSystemConfigPathMacOS, name+".conf")
+	cmd := exec.Command("sudo", "/usr/local/bin/bash", "/usr/local/bin/wg-quick", "up", systemConfigPath)
+	err := cmd.Run()
+
+	if err != nil {
+		Logging.Info.Printf("Error launching tunnel %s: %v\n", name, err)
+	} else {
+		Logging.Info.Printf("Tunnel launched: %s\n", name)
+	}
 }
 
 func StopTunnel(name string) {
+        systemConfigPath := filepath.Join(wireguardSystemConfigPathMacOS, name+".conf")
+	cmd := exec.Command("sudo", "/usr/local/bin/bash", "/usr/local/bin/wg-quick", "down", systemConfigPath)
+	err := cmd.Run()
+
+	if err != nil {
+		Logging.Info.Printf("Error stopping tunnel %s: %v\n", name, err)
+	} else {
+		Logging.Info.Printf("Tunnel stopped: %s\n", name)
+	}
 }
 
 func CheckAndInstallWireGuard() error {
+	cmd := exec.Command("wg", "--version")
+	err := cmd.Run()
+
+	if err != nil {
+		Logging.Info.Printf("WireGuard is not installed. Installing...")
+		installCmd := exec.Command("brew", "install", "wireguard-tools")
+		installErr := installCmd.Run()
+
+		if installErr != nil {
+			return fmt.Errorf("error installing WireGuard: %w", installErr)
+		}
+
+		Logging.Info.Printf("WireGuard successfully installed.")
+	} else {
+		Logging.Info.Printf("WireGuard is already installed.")
+	}
+
 	return nil
 }
 
