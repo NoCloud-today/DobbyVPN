@@ -219,84 +219,6 @@ jobs:
           name: linux_client_arm64.zip
           path: linux_client_arm64.zip
 
-  macos_amd64_build:
-    runs-on: macos-13
-    strategy:
-      matrix:
-        go-version: [ '1.22.5' ]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22.x'
-
-      - name: Setup Docker on macOS
-        uses: douglascamata/setup-docker-macos-action@v1-alpha
-
-      - name: Run docker 
-        run: |
-          docker run fyneio/fyne-cross-images:darwin
-   
-      - name: Clone Cloak and copying ck-client
-        run: |
-          git submodule add https://github.com/cbeuw/Cloak
-          git submodule init
-          git submodule update
-          # mv -f log-files/piper.go Cloak/internal/client/piper.go
-          # mv -f log-files/connector.go Cloak/internal/client/connector.go
-          # mv -f log-files/TLS.go Cloak/internal/client/TLS.go
-          # mv -f log-files/copy.go Cloak/internal/common/copy.go
-          mkdir Cloak/internal/out
-          cp log-files/logging.go Cloak/internal/out/logging.go
-          cp ck-client/MacOs/app_macos.go Cloak
-          cp ck-client/MacOs/routing_macos.go Cloak
-          cp ck-client/MacOs/tun_device_macos.go Cloak
-          cp ck-client/app.go Cloak
-          cp ck-client/ck-client.go Cloak
-          cp ck-client/Icon.png Cloak
-          cp ck-client/log_android.go Cloak
-          cp ck-client/outline_device.go Cloak
-          cp ck-client/outline_packet_proxy.go Cloak
-          cp ck-client/protector.go Cloak
-          cd Cloak
-          git clone https://github.com/database64128/swgp-go.git
-          echo "replace github.com/database64128/swgp-go v0.0.0 => ./swgp-go" >> go.mod
-          cd ..
-          cd Cloak
-          go install fyne.io/fyne/v2/cmd/fyne@latest
-          go install github.com/fyne-io/fyne-cross@latest
-          go mod tidy
-          cd ..
-      - name: Cross-compile macOS amd64 ck-client using Docker
-        run: |
-          cd Cloak
-          fyne-cross darwin -arch amd64 -app-id com.example.DobbyVPN -output DobbyVPN_AMD64
-          cd ..
-      - name: MacOs_AMD64 build
-        run: |
-          cp -r Autorization Cloak
-          cd Cloak/Autorization
-          go mod tidy
-          GOARCH=amd64 GOOS=darwin go build -o DobbyVPN main_macos_amd64.go
-          cd ..
-      - name: Check path
-        run: |
-          ls Cloak/fyne-cross/dist/darwin-amd64
-          
-      - name: Make macos amd64 zip
-        run: |
-          mkdir macos_client_amd64
-          mv Cloak/fyne-cross/dist/darwin-amd64/DobbyVPN_AMD64.app macos_client_amd64/DobbyVPN_AMD64.app
-          mv Cloak/Autorization/DobbyVPN macos_client_amd64/DobbyVPN
-          zip -r macos_client_amd64.zip macos_client_amd64
-      - name: Upload MacOs AMD64 client
-        uses: actions/upload-artifact@master
-        with:
-          name: macos_client_amd64.zip
-          path: macos_client_amd64.zip 
 
   macos_build_arm64:
     runs-on: macos-latest
@@ -410,7 +332,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    needs: [windows_build, linux_build, linux_arm64_build, macos_amd64_build, macos_build_arm64, android_build]
+    needs: [windows_build, linux_build, linux_arm64_build, macos_build_arm64, android_build]
     permissions: write-all
 
     steps:
@@ -433,11 +355,6 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: windows_client.zip
-          path: release
-      - name: Download macos_amd64 client
-        uses: actions/download-artifact@master
-        with:
-          name: macos_client_amd64.zip
           path: release
       - name: Download macos client
         uses: actions/download-artifact@master
