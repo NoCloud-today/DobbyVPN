@@ -32,8 +32,7 @@ func saveWireguardConf(config string, fileName string) error {
 }
 
 func StartTunnel(name string) {
-        systemConfigPath := filepath.Join(wireguardSystemConfigPathMacOS, name)
-	cmd := exec.Command("sudo", "wg-quick", "up", systemConfigPath)
+	cmd := exec.Command("sudo", "wg-quick", "up", name)
 	err := cmd.Run()
 
 	if err != nil {
@@ -44,8 +43,7 @@ func StartTunnel(name string) {
 }
 
 func StopTunnel(name string) {
-        systemConfigPath := filepath.Join(wireguardSystemConfigPathMacOS, name)
-	cmd := exec.Command("sudo", "wg-quick", "down", systemConfigPath)
+	cmd := exec.Command("sudo", "wg-quick", "down", name)
 	err := cmd.Run()
 
 	if err != nil {
