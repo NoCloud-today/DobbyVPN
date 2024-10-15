@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-const wireguardSystemConfigPathMacOS = "/usr/local/etc/wireguard/"
+const wireguardSystemConfigPathMacOS = "/opt/homebrew/etc/wireguard/"
 
 func executeCommand(command string) (string, error) {
 	cmd := exec.Command("bash", "-c", command)
@@ -33,7 +33,7 @@ func saveWireguardConf(config string, fileName string) error {
 
 func StartTunnel(name string) {
         systemConfigPath := filepath.Join(wireguardSystemConfigPathMacOS, name+".conf")
-	cmd := exec.Command("sudo", "/usr/local/bin/bash", "/usr/local/bin/wg-quick", "up", systemConfigPath)
+	cmd := exec.Command("sudo", "wg-quick", "up", systemConfigPath)
 	err := cmd.Run()
 
 	if err != nil {
@@ -45,7 +45,7 @@ func StartTunnel(name string) {
 
 func StopTunnel(name string) {
         systemConfigPath := filepath.Join(wireguardSystemConfigPathMacOS, name+".conf")
-	cmd := exec.Command("sudo", "/usr/local/bin/bash", "/usr/local/bin/wg-quick", "down", systemConfigPath)
+	cmd := exec.Command("sudo", "wg-quick", "down", systemConfigPath)
 	err := cmd.Run()
 
 	if err != nil {
