@@ -58,16 +58,16 @@ func CheckAndInstallWireGuard() error {
 	err := cmd.Run()
 
 	if err != nil {
-		log.Printf("WireGuard is not installed. Installing...")
+		Logging.Info.Printf("WireGuard is not installed. Installing...")
 
 		output, installErr := executeCommand("arch -arm64 brew install wireguard-tools")
 		if installErr != nil {
-			return fmt.Errorf("error installing WireGuard: %w, output: %s", installErr, output)
+			Logging.Info.Printf("error installing WireGuard: %w, output: %s", installErr, output)
 		}
 
-		log.Printf("WireGuard successfully installed. Output: %s", output)
+		Logging.Info.Printf("WireGuard successfully installed. Output: %s", output)
 	} else {
-		log.Printf("WireGuard is already installed.")
+		Logging.Info.Printf("WireGuard is already installed.")
 	}
 
 	return nil
