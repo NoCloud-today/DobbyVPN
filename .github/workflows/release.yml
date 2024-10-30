@@ -121,104 +121,18 @@ jobs:
       - name: Build linux ck-client
         run: |
           cd Cloak/Linux
-          go build -o main .
+          go build -o DobbyVPN .
           cd ../..
-      - name: Linux build
-        run: |
-          cp -r Autorization Cloak
-          cd Cloak/Autorization
-          go mod tidy
-          go build -o DobbyVPN main_linux.go
-          cd ..
       - name: Make linux zip
         run: |
           mkdir linux_client
-          cd linux_client
-          mkdir libs
-          cd ..
-          mv Cloak/Linux/main linux_client/libs/main
-          mv Cloak/Autorization/DobbyVPN linux_client/DobbyVPN
+          mv Cloak/Linux/DobbyVPN linux_client/DobbyVPN
           zip -r linux_client.zip linux_client
       - name: Upload Linux client
         uses: actions/upload-artifact@master
         with:
           name: linux_client.zip
           path: linux_client.zip
-
-  linux_arm64_build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: [ '1.22.5' ]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22.x'
-
-      - name: Install dependencies
-        run: |
-          cd src
-          go get ./...
-          cd ..
-          sudo apt-get install golang libgl1-mesa-dev xorg-dev
-      - name: Clone Cloak and copying ck-client
-        run: |
-          git submodule add https://github.com/cbeuw/Cloak
-          git submodule init
-          git submodule update
-          # mv -f log-files/piper.go Cloak/internal/client/piper.go
-          # mv -f log-files/connector.go Cloak/internal/client/connector.go
-          # mv -f log-files/TLS.go Cloak/internal/client/TLS.go
-          # mv -f log-files/copy.go Cloak/internal/common/copy.go
-          mkdir Cloak/internal/out
-          cp log-files/logging.go Cloak/internal/out/logging.go
-          cp ck-client/Linux/app_linux.go Cloak
-          cp ck-client/Linux/routing_linux.go Cloak
-          cp ck-client/Linux/tun_device_linux.go Cloak
-          cp ck-client/app.go Cloak
-          cp ck-client/ck-client.go Cloak
-          cp ck-client/Icon.png Cloak
-          cp ck-client/log_android.go Cloak
-          cp ck-client/outline_device.go Cloak
-          cp ck-client/outline_packet_proxy.go Cloak
-          cp ck-client/protector.go Cloak
-          cd Cloak
-          git clone https://github.com/database64128/swgp-go.git
-          echo "replace github.com/database64128/swgp-go v0.0.0 => ./swgp-go" >> go.mod
-          cd ..
-          cd Cloak
-          go install fyne.io/fyne/v2/cmd/fyne@latest
-          go install github.com/fyne-io/fyne-cross@latest
-          go mod tidy
-          cd ..
-      - name: Cross-compile linux arm64 ck-client using fyne-cross
-        run: |
-          cd Cloak
-          fyne-cross linux -arch arm64 -output DobbyVPN_ARM64
-          cd ..
-      - name: Linux_ARM64 build
-        run: |
-          cp -r Autorization Cloak
-          cd Cloak/Autorization
-          go mod tidy
-          go build -o DobbyVPN main_linux_arm64.go
-          cd ..
-      - name: Make linux arm64 zip
-        run: |
-          mkdir linux_client_arm64
-          mv Cloak/fyne-cross/dist/linux-arm64/DobbyVPN_ARM64.tar.xz linux_client_arm64/DobbyVPN_ARM64.tar.xz
-          mv Cloak/Autorization/DobbyVPN linux_client_arm64/DobbyVPN
-          zip -r linux_client_arm64.zip linux_client_arm64
-      - name: Upload Linux ARM64 client
-        uses: actions/upload-artifact@master
-        with:
-          name: linux_client_arm64.zip
-          path: linux_client_arm64.zip
-
 
   macos_build_arm64:
     runs-on: macos-latest
@@ -263,23 +177,16 @@ jobs:
       - name: Build macos ck-client
         run: |
           cd Cloak/MacOs
-          go build -o main .
+          go build -o DobbyVPN .
           cd ../..
       - name: MacOs build
         run: |
-          cp -r Autorization Cloak
-          cd Cloak/Autorization
-          go mod tidy
-          go build -o DobbyVPN.app main_macos.go
-          cd ..
+          cd Cloak/MacOs
+          cd ../..
       - name: Make macos zip
         run: |
           mkdir macos_client
-          cd macos_client
-          mkdir libs
-          cd ..
-          mv Cloak/MacOs/main macos_client/libs/main
-          mv Cloak/Autorization/DobbyVPN.app macos_client/DobbyVPN.app
+          mv Cloak/MacOs/DobbyVPN macos_client/DobbyVPN
           zip -r macos_client.zip macos_client
       - name: Upload MacOs client
         uses: actions/upload-artifact@master
