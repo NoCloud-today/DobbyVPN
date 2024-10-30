@@ -253,11 +253,6 @@ jobs:
         with:
           name: linux_client.zip
           path: release
-      - name: Download linux_arm64 client
-        uses: actions/download-artifact@master
-        with:
-          name: linux_client_arm64.zip
-          path: release
       - name: Download windows client
         uses: actions/download-artifact@master
         with:
