@@ -3,14 +3,14 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
-jobs:  
+jobs:
   windows_build:
     runs-on: windows-latest
     strategy:
       matrix:
-        go-version: [ '1.22.5' ]
+        go-version: ["1.23.2"]
 
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +18,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22.x'
+          go-version: "1.22.x"
       - name: Install dependencies
         run: |
           cd src
@@ -54,28 +54,17 @@ jobs:
         run: |
           cd Cloak/Windows
           fyne package -os windows
-          cd ../..
-      - name: Windows build
-        run: |
-          cd Cloak
-          cd ..
-      - name: Make windows zip
-        run: |
-          mkdir windows_client
-          mv Cloak/Windows/Windows.exe windows_client/DobbyVPN.exe
-          tar.exe -a -c -f windows_client.zip windows_client
       - name: Upload Windows client
         uses: actions/upload-artifact@master
         with:
-          name: windows_client.zip
-          path: windows_client.zip
+          name: dobbyvpn-windows.exe
+          path: Cloak/Windows/Windows.exe
 
-          
   linux_build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [ '1.22.5' ]
+        go-version: ["1.23.2"]
 
     steps:
       - uses: actions/checkout@v4
@@ -83,7 +72,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22.x'
+          go-version: "1.22.x"
       - name: Install dependencies
         run: |
           cd src
@@ -122,23 +111,17 @@ jobs:
         run: |
           cd Cloak/Linux
           go build -o DobbyVPN .
-          cd ../..
-      - name: Make linux zip
-        run: |
-          mkdir linux_client
-          mv Cloak/Linux/DobbyVPN linux_client/DobbyVPN
-          zip -r linux_client.zip linux_client
       - name: Upload Linux client
         uses: actions/upload-artifact@master
         with:
-          name: linux_client.zip
-          path: linux_client.zip
+          name: dobbyvpn-linux-amd64
+          path: Cloak/Linux/DobbyVPN
 
   macos_build_arm64:
     runs-on: macos-latest
     strategy:
       matrix:
-        go-version: [ '1.22.5' ]
+        go-version: ["1.23.2"]
 
     steps:
       - uses: actions/checkout@v4
@@ -146,7 +129,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22.x'
+          go-version: "1.22.x"
       - name: Clone Cloak and copying ck-client
         run: |
           git submodule add https://github.com/cbeuw/Cloak
@@ -178,27 +161,17 @@ jobs:
         run: |
           cd Cloak/MacOs
           go build -o DobbyVPN .
-          cd ../..
-      - name: MacOs build
-        run: |
-          cd Cloak/MacOs
-          cd ../..
-      - name: Make macos zip
-        run: |
-          mkdir macos_client
-          mv Cloak/MacOs/DobbyVPN macos_client/DobbyVPN
-          zip -r macos_client.zip macos_client
       - name: Upload MacOs client
         uses: actions/upload-artifact@master
         with:
-          name: macos_client.zip
-          path: macos_client.zip
-          
+          name: dobbyvpn-darwin-arm64
+          path: Cloak/MacOs/DobbyVPN
+
   android_build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [ '1.22.5' ]
+        go-version: ["1.23.2"]
 
     steps:
       - uses: actions/checkout@v4
@@ -206,12 +179,12 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22.x'
+          go-version: "1.22.x"
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: "temurin"
       - name: Install dependencies
         run: |
           cd src
@@ -225,17 +198,11 @@ jobs:
           cd ck-android/CkClient
           chmod +x gradlew
           ./gradlew assembleDebug
-          cd ../..
-      - name: Make Android zip
-        run: |
-          mkdir android_client
-          mv ck-android/CkClient/app/build/outputs/apk/debug/app-debug.apk android_client/DobbyVPN.apk
-          zip -r android_client.zip android_client
       - name: Upload Android client
         uses: actions/upload-artifact@master
         with:
-          name: android_client.zip
-          path: android_client.zip          
+          name: dobbyvpn-android.apk
+          path: ck-android/CkClient/app/build/outputs/apk/debug/app-debug.apk
 
   release:
     runs-on: ubuntu-latest
@@ -251,24 +218,24 @@ jobs:
       - name: Download linux client
         uses: actions/download-artifact@master
         with:
-          name: linux_client.zip
+          name: dobbyvpn-linux-amd64
           path: release
       - name: Download windows client
         uses: actions/download-artifact@master
         with:
-          name: windows_client.zip
+          name: dobbyvpn-windows.exe
           path: release
       - name: Download macos client
         uses: actions/download-artifact@master
         with:
-          name: macos_client.zip
+          name: dobbyvpn-darwin-arm64
           path: release
       - name: Download android client
         uses: actions/download-artifact@master
         with:
-          name: android_client.zip
-          path: release    
-      
+          name: dobbyvpn-android.apk
+          path: release
+
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
