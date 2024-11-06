@@ -1,9 +1,10 @@
 name: Release
 
+# Configures this workflow to run every time a change is pushed to the master.
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - master
 
 jobs:
   windows_build:
