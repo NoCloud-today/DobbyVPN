@@ -59,7 +59,7 @@ func StartTunnel(name string) {
 		Logging.Info.Printf("Launch address")
 	}
 
-        cmd = exec.Command("sudo", "ip", "link", "set", name, "up")
+        cmd = exec.Command("sudo", "ip", "link", "set", "mtu", "1360", "up", "dev", name)
         err = cmd.Run()
 
 	if err != nil {
