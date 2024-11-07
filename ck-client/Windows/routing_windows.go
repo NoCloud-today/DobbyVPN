@@ -42,7 +42,7 @@ func executeCommand(command string) (string, error) {
     if err != nil {
         return string(output), fmt.Errorf("command execution failed: %w, output: %s", err, output)
     }
-    log.Printf("Outline/routing: Command executed: %s, output: %s", command, output)
+    Logging.Info.Printf("Outline/routing: Command executed: %s, output: %s", command, output)
     return string(output), nil
 }
 
