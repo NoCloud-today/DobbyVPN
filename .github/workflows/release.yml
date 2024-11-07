@@ -29,7 +29,6 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          git clone https://github.com/Jigsaw-Code/outline-sdk.git
           # mv -Force log-files/piper.go Cloak/internal/client/piper.go
           # mv -Force log-files/connector.go Cloak/internal/client/connector.go
           # mv -Force log-files/TLS.go Cloak/internal/client/TLS.go
@@ -41,8 +40,8 @@ jobs:
           cp ck-client/ck-client.go Cloak/Windows
           cp ck-client/Icon.png Cloak/Windows
           cp ck-client/log_android.go Cloak/Windows
-          cp outline-sdk/x/examples/outline-cli/outline_device.go Cloak/Windows
-          cp outline-sdk/x/examples/outline-cli/outline_packet_proxy.go Cloak/Windows
+          cp ck-client/outline_device.go Cloak/Windows
+          cp ck-client/outline_packet_proxy.go Cloak/Windows
           cp ck-client/protector.go Cloak/Windows
           cd Cloak
           git clone https://github.com/database64128/swgp-go.git
@@ -88,7 +87,6 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          git clone https://github.com/Jigsaw-Code/outline-sdk.git
           git clone https://git.zx2c4.com/wireguard-go
           # mv -f log-files/piper.go Cloak/internal/client/piper.go
           # mv -f log-files/connector.go Cloak/internal/client/connector.go
@@ -101,8 +99,8 @@ jobs:
           cp ck-client/ck-client.go Cloak/Linux
           cp ck-client/Icon.png Cloak/Linux
           cp ck-client/log_android.go Cloak/Linux
-          cp outline-sdk/x/examples/outline-cli/outline_device.go Cloak/Linux
-          cp outline-sdk/x/examples/outline-cli/outline_packet_proxy.go Cloak/Linux
+          cp ck-client/outline_device.go Cloak/Linux
+          cp ck-client/outline_packet_proxy.go Cloak/Linux
           cp ck-client/protector.go Cloak/Linux
           cd Cloak
           git clone https://github.com/database64128/swgp-go.git
@@ -142,7 +140,6 @@ jobs:
           git submodule add https://github.com/cbeuw/Cloak
           git submodule init
           git submodule update
-          git clone https://github.com/Jigsaw-Code/outline-sdk.git
           # mv -f log-files/piper.go Cloak/internal/client/piper.go
           # mv -f log-files/connector.go Cloak/internal/client/connector.go
           # mv -f log-files/TLS.go Cloak/internal/client/TLS.go
@@ -154,8 +151,8 @@ jobs:
           cp ck-client/ck-client.go Cloak/MacOs
           cp ck-client/Icon.png Cloak/MacOs
           cp ck-client/log_android.go Cloak/MacOs
-          cp outline-sdk/x/examples/outline-cli/outline_device.go Cloak/MacOs
-          cp outline-sdk/x/examples/outline-cli/outline_packet_proxy.go Cloak/MacOs
+          cp ck-client/outline_device.go Cloak/MacOs
+          cp ck-client/outline_packet_proxy.go Cloak/MacOs
           cp ck-client/protector.go Cloak/MacOs
           cd Cloak
           git clone https://github.com/database64128/swgp-go.git
