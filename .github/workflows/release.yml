@@ -57,11 +57,12 @@ jobs:
         run: |
           cd Cloak/Windows
           fyne package -os windows
+          cp Cloak/Windows/Windows.exe dobbyvpn-windows.exe
       - name: Upload Windows client
         uses: actions/upload-artifact@master
         with:
           name: dobbyvpn-windows.exe
-          path: Cloak/Windows/Windows.exe
+          path: dobbyvpn-windows.exe
 
   linux_build:
     runs-on: ubuntu-latest
@@ -122,14 +123,19 @@ jobs:
           make
           cd ..
           cd Cloak/Linux
-          go build -o DobbyVPN .
+          go build -o dobbyvpn-linux-amd64 .
+      - name: Make linux zip
+        run: |
+          mkdir dobbyvpn-linux-amd64
+          mkdir dobbyvpn-linux-amd64/libs
+          mv wireguard-go/wireguard-go dobbyvpn-linux-amd64/libs/wireguard-go
+          mv Cloak/Linux/dobbyvpn-linux-amd64 dobbyvpn-linux-amd64/dobbyvpn-linux-amd64
+          zip -r dobbyvpn-linux-amd64.zip dobbyvpn-linux-amd64
       - name: Upload Linux client
         uses: actions/upload-artifact@master
         with:
-          name: dobbyvpn-linux-amd64
-          path: |
-            Cloak/Linux/DobbyVPN
-            Cloak/Linux/libs
+          name: dobbyvpn-linux-amd64.zip
+          path: dobbyvpn-linux-amd64.zip
 
   macos_build_arm64:
     runs-on: macos-latest
@@ -174,12 +180,12 @@ jobs:
       - name: Build macos ck-client
         run: |
           cd Cloak/MacOs
-          go build -o DobbyVPN .
+          go build -o dobbyvpn-darwin-arm64 .
       - name: Upload MacOs client
         uses: actions/upload-artifact@master
         with:
           name: dobbyvpn-darwin-arm64
-          path: Cloak/MacOs/DobbyVPN
+          path: Cloak/MacOs/dobbyvpn-darwin-arm64
 
   android_build:
     runs-on: ubuntu-latest
@@ -212,11 +218,13 @@ jobs:
           cd ck-android/CkClient
           chmod +x gradlew
           ./gradlew assembleDebug
+          cd ../..
+          cp ck-android/CkClient/app/build/outputs/apk/debug/app-debug.apk dobbyvpn-android.apk
       - name: Upload Android client
         uses: actions/upload-artifact@master
         with:
           name: dobbyvpn-android.apk
-          path: ck-android/CkClient/app/build/outputs/apk/debug/app-debug.apk
+          path: dobbyvpn-android.apk
 
   release:
     runs-on: ubuntu-latest
@@ -232,7 +240,7 @@ jobs:
       - name: Download linux client
         uses: actions/download-artifact@master
         with:
-          name: dobbyvpn-linux-amd64
+          name: dobbyvpn-linux-amd64.zip
           path: release
       - name: Download windows client
         uses: actions/download-artifact@master
