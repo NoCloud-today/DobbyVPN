@@ -106,6 +106,11 @@ jobs:
           git clone https://github.com/database64128/swgp-go.git
           echo "replace github.com/database64128/swgp-go v0.0.0 => ./swgp-go" >> go.mod
           cd ..
+          cd wireguard-go
+          make
+          cd ..
+          mkdir -p Cloak/Linux/libs
+          cp wireguard-go/wireguard-go Cloak/Linux/libs
           cd Cloak/Linux
           go mod tidy
           cd ../..
@@ -120,7 +125,9 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: dobbyvpn-linux-amd64
-          path: Cloak/Linux/DobbyVPN
+          path: |
+            Cloak/Linux/DobbyVPN
+            Cloak/Linux/libs
 
   macos_build_arm64:
     runs-on: macos-latest
