@@ -30,18 +30,65 @@ func executeCommand(command string) (string, error) {
 }
 
 func StartTunnel(name string) {
-        cmd := exec.Command("sudo", "wg-quick", "up", name)
-        err := cmd.Run()
+        systemConfigPath := filepath.Join(wireguardSystemConfigPath, fileName+".conf")
+
+        cmd := exec.Command("sudo", "./libs/wireguard-go", name)
+        err = cmd.Run()
+
+	if err != nil {
+		Logging.Info.Printf("Interface is already launched")
+	} else {
+		Logging.Info.Printf("Launch interface")
+	}
+
+        cmd = exec.Command("sudo", "wg", "setconf", name, systemConfigPath)
+        err = cmd.Run()
+
+	if err != nil {
+		Logging.Info.Printf("Config is already launched")
+	} else {
+		Logging.Info.Printf("Launch config")
+	}
+
+        cmd = exec.Command("sudo", "ip", "address", "add", "10.66.66.2/32", "dev", name)
+        err = cmd.Run()
+
+	if err != nil {
+		Logging.Info.Printf("Address is already launched")
+	} else {
+		Logging.Info.Printf("Launch address")
+	}
+
+        cmd = exec.Command("sudo", "ip", "link", "set", name, "up")
+        err = cmd.Run()
 
 	if err != nil {
 		Logging.Info.Printf("Tunnel is already launched")
 	} else {
-		Logging.Info.Printf("Launch tunnel: %s", name)
-	}
+		Logging.Info.Printf("Launch tunnel")
+	}   
+
+        cmd = exec.Command("sudo", "ip", "-4", "route", "add", "128.0.0.0/1", "dev", name)
+        err = cmd.Run()
+
+	if err != nil {
+		Logging.Info.Printf("Address is already launched")
+	} else {
+		Logging.Info.Printf("Launch Address")
+	}   
+
+        cmd = exec.Command("sudo", "ip", "-4", "route", "add", "0.0.0.0/1", "dev", name)
+        err = cmd.Run()
+
+	if err != nil {
+		Logging.Info.Printf("Address is already launched")
+	} else {
+		Logging.Info.Printf("Launch Address")
+	}   
 }
 
 func StopTunnel(name string) {
-        cmd := exec.Command("sudo", "wg-quick", "down", name)
+        cmd := exec.Command("sudo", "ip", "link", "del", name)
         err := cmd.Run()
 
 	if err != nil {
