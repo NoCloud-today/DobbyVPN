@@ -57,6 +57,7 @@ jobs:
         run: |
           cd Cloak/Windows
           fyne package -os windows
+          cd ../..
           cp Cloak/Windows/Windows.exe dobbyvpn-windows.exe
       - name: Upload Windows client
         uses: actions/upload-artifact@master
