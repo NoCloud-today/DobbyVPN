@@ -33,7 +33,7 @@
 
         <!-- MainActivity -->
         <activity
-            android:name=".MainActivity"
+            android:name=".com.example.ck_client.cloak.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.CkClient">
