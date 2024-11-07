@@ -30,10 +30,10 @@ func executeCommand(command string) (string, error) {
 }
 
 func StartTunnel(name string) {
-        systemConfigPath := filepath.Join(wireguardSystemConfigPath, fileName+".conf")
+        systemConfigPath := filepath.Join(wireguardSystemConfigPath, name+".conf")
 
         cmd := exec.Command("sudo", "./libs/wireguard-go", name)
-        err = cmd.Run()
+        err := cmd.Run()
 
 	if err != nil {
 		Logging.Info.Printf("Interface is already launched")

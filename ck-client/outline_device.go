@@ -1,5 +1,7 @@
 package main
+
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -24,7 +26,7 @@ type OutlineDevice struct {
 	svrIP net.IP
 }
 
-var configToDialer = configurl.NewDefaultConfigToDialer()
+var configModule = configurl.NewDefaultProviders()
 
 func NewOutlineDevice(transportConfig string) (od *OutlineDevice, err error) {
 	ip, err := resolveShadowsocksServerIPFromConfig(transportConfig)
@@ -35,7 +37,7 @@ func NewOutlineDevice(transportConfig string) (od *OutlineDevice, err error) {
 		svrIP: ip,
 	}
 
-	if od.sd, err = configToDialer.NewStreamDialer(transportConfig); err != nil {
+	if od.sd, err = configModule.NewStreamDialer(context.TODO(), transportConfig); err != nil {
 		return nil, fmt.Errorf("failed to create TCP dialer: %w", err)
 	}
 	if od.pp, err = newOutlinePacketProxy(transportConfig); err != nil {
