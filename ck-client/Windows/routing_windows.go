@@ -4,7 +4,6 @@ package main
 
 import (
     "fmt"
-    "log"
     "os/exec"
     "os"
     "path/filepath"
@@ -52,15 +51,15 @@ func saveWireguardConf(config string, fileName string) error {
 
 	err := os.MkdirAll(wireguardSystemConfigPath, os.ModePerm)
 	if err != nil {
-		log.Printf("failed to create directory %s: %w", wireguardSystemConfigPath, err)
+		Logging.Info.Printf("failed to create directory %s: %w", wireguardSystemConfigPath, err)
 	}
 
 	err = os.WriteFile(systemConfigPath, []byte(config), 0644)
 	if err != nil {
-		log.Printf("failed to save WireGuard configuration to %s: %w", systemConfigPath, err)
+		Logging.Info.Printf("failed to save WireGuard configuration to %s: %w", systemConfigPath, err)
 	}
 
-	log.Printf("Configuration saved successfully to %s\n", systemConfigPath)
+	Logging.Info.Printf("Configuration saved successfully to %s\n", systemConfigPath)
 	return nil
 }
 
@@ -70,9 +69,9 @@ func StartTunnel(name string) {
 	command := fmt.Sprintf("wireguard.exe /installtunnelservice %s", systemConfigPath)
 	output, err := executeCommand(command)
 	if err != nil {
-		log.Printf("Failed to start tunnel: %v, output: %s", err, output)
+		Logging.Info.Printf("Failed to start tunnel: %v, output: %s", err, output)
 	} else {
-		log.Printf("Tunnel started successfully: %s", name)
+		Logging.Info.Printf("Tunnel started successfully: %s", name)
 	}
 }
 
@@ -80,37 +79,37 @@ func StopTunnel(name string) {
 	command := fmt.Sprintf("wireguard.exe /uninstalltunnelservice %s", name)
 	output, err := executeCommand(command)
 	if err != nil {
-		log.Printf("Failed to stop tunnel: %v, output: %s", err, output)
+		Logging.Info.Printf("Failed to stop tunnel: %v, output: %s", err, output)
 	} else {
-		log.Printf("Tunnel stopped successfully: %s", name)
+		Logging.Info.Printf("Tunnel stopped successfully: %s", name)
 	}
 }
 
 func CheckAndInstallWireGuard() error {
 	_, err := exec.LookPath("wireguard.exe")
 	if err != nil {
-		log.Printf("WireGuard not found, installing...")
+		Logging.Info.Printf("WireGuard not found, installing...")
 		
 		return fmt.Errorf("WireGuard is not installed")
 	}
-	log.Printf("WireGuard is already installed")
+	Logging.Info.Printf("WireGuard is already installed")
 	return nil
 }
 
 
 func startRouting(proxyIP string, GatewayIP string, TunDeviceName string, MacAddress string, InterfaceName string, TunGateway string, TunDeviceIP string, addr []byte) error {
-    log.Printf("Outline/routing: Starting routing configuration for Windows...")
-    log.Printf("Outline/routing: Proxy IP: %s, Tun Device Name: %s, Tun Gateway: %s, Tun Device IP: %s, Gateway IP: %s, Mac Address: %s, Interface Name: %s", 
+    Logging.Info.Printf("Outline/routing: Starting routing configuration for Windows...")
+    Logging.Info.Printf("Outline/routing: Proxy IP: %s, Tun Device Name: %s, Tun Gateway: %s, Tun Device IP: %s, Gateway IP: %s, Mac Address: %s, Interface Name: %s", 
                 proxyIP, TunDeviceName, TunGateway, TunDeviceIP, GatewayIP, MacAddress, InterfaceName)
-    log.Printf("Outline/routing: Setting up IP rule...")
+    Logging.Info.Printf("Outline/routing: Setting up IP rule...")
     addOrUpdateProxyRoute(proxyIP, GatewayIP, InterfaceName)
-    log.Printf("Outline/routing: Added IP proxy rules via table\n")
+    Logging.Info.Printf("Outline/routing: Added IP proxy rules via table\n")
     addOrUpdateReservedSubnetBypass(GatewayIP, InterfaceName)
-    log.Printf("Outline/routing: Added IP reserved rules via table\n")
+    Logging.Info.Printf("Outline/routing: Added IP reserved rules via table\n")
     addIpv4TapRedirect(TunGateway, TunDeviceName)
-    log.Printf("Outline/routing: Added IP rules via table\n")
+    Logging.Info.Printf("Outline/routing: Added IP rules via table\n")
     
-    log.Printf("Outline/routing: Routing configuration completed successfully.")
+    Logging.Info.Printf("Outline/routing: Routing configuration completed successfully.")
     
     err := AddNeighbor(TunDeviceName, TunGateway, formatMACAddress(addr))
     if err != nil {
@@ -120,11 +119,11 @@ func startRouting(proxyIP string, GatewayIP string, TunDeviceName string, MacAdd
 }
 
 func stopRouting(proxyIp string, TunDeviceName string) {
-    log.Printf("Outline/routing: Cleaning up routing table and rules...")
+    Logging.Info.Printf("Outline/routing: Cleaning up routing table and rules...")
     deleteProxyRoute(proxyIp)
     removeReservedSubnetBypass()
     stopRoutingIpv4(TunDeviceName)
-    log.Printf("Outline/routing: Cleaned up routing table and rules.")
+    Logging.Info.Printf("Outline/routing: Cleaned up routing table and rules.")
 }
 
 func addOrUpdateProxyRoute(proxyIp string, gatewayIp string, gatewayInterfaceIndex string) {
@@ -135,7 +134,7 @@ func addOrUpdateProxyRoute(proxyIp string, gatewayIp string, gatewayInterfaceInd
 	proxyIp, gatewayIp, gatewayInterfaceIndex)
 	_, err = executeCommand(netshCommand)
 	if err != nil {
-	    log.Printf("Outline/routing: Failed to add or update proxy route for IP %s: %v\n", proxyIp, err)
+	    Logging.Info.Printf("Outline/routing: Failed to add or update proxy route for IP %s: %v\n", proxyIp, err)
 	}
     }
 }
@@ -144,7 +143,7 @@ func deleteProxyRoute(proxyIp string) {
     command := fmt.Sprintf("route delete %s", proxyIp)
     _, err := executeCommand(command)
     if err != nil {
-	log.Printf("Outline/routing: Failed to delete proxy route for IP %s: %v\n", proxyIp, err)
+	Logging.Info.Printf("Outline/routing: Failed to delete proxy route for IP %s: %v\n", proxyIp, err)
     }
 }
 
@@ -157,7 +156,7 @@ func addOrUpdateReservedSubnetBypass(gatewayIp string, gatewayInterfaceIndex str
 	    subnet, gatewayIp, gatewayInterfaceIndex)
 	    _, err = executeCommand(netshCommand)
 	    if err != nil {
-		log.Printf("Outline/routing: Failed to add or update route for subnet %s: %v\n", subnet, err)
+		Logging.Info.Printf("Outline/routing: Failed to add or update route for subnet %s: %v\n", subnet, err)
 	    }
 	}
     }
@@ -168,7 +167,7 @@ func removeReservedSubnetBypass() {
         command := fmt.Sprintf("route delete %s", subnet)
 	_, err := executeCommand(command)
 	if err != nil {
-	    log.Printf("Outline/routing: Failed to delete route for subnet %s: %v\n", subnet, err)
+	    Logging.Info.Printf("Outline/routing: Failed to delete route for subnet %s: %v\n", subnet, err)
 	}
     }
 }
@@ -184,7 +183,7 @@ func addIpv4TapRedirect(tapGatewayIP string, tapDeviceName string) {
 	    subnet, tapGatewayIP, tapDeviceName)
 	    _, err = executeCommand(setCommand)
 	    if err != nil {
-		log.Printf("Outline/routing: Failed to add or set route for subnet %s: %v\n", subnet, err)
+		Logging.Info.Printf("Outline/routing: Failed to add or set route for subnet %s: %v\n", subnet, err)
 	    }
 	}
     }
@@ -198,7 +197,7 @@ func stopRoutingIpv4(loopbackInterfaceIndex string) {
 	    setCommand := fmt.Sprintf("netsh interface ipv4 set route %s interface=\"%s\" metric=0 store=active", subnet, loopbackInterfaceIndex)
 	    _, err = executeCommand(setCommand)
 	    if err != nil {
-		log.Printf("Outline/routing: Failed to add or set route for subnet %s: %v\n", subnet, err)
+		Logging.Info.Printf("Outline/routing: Failed to add or set route for subnet %s: %v\n", subnet, err)
 	    }
 	}
     }
