@@ -1,4 +1,4 @@
-package com.example.ck_client.com.example.ck_client.cloak
+package com.example.ck_client.cloak
 
 data class CloakVpnConfig(
     val config: String,

@@ -1,4 +1,4 @@
-package com.example.ck_client.com.example.ck_client.cloak
+package com.example.ck_client.cloak
 
 import android.content.Intent
 import android.os.Bundle
@@ -58,7 +58,6 @@ class MainActivity : ComponentActivity() {
         localHost: String,
         localPort: String
     ) {
-        println("pepetag do on connect")
         LogHelper.log(this@MainActivity, "Connected")
         if (config.isNotEmpty() && localHost.isNotEmpty() && localPort.isNotEmpty()) {
             if (!isConnected) {

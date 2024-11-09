@@ -1,4 +1,4 @@
-package com.example.ck_client.com.example.ck_client.cloak
+package com.example.ck_client
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,42 +7,55 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun CloakScreen(
+fun CloakOutlineScreen(
     modifier: Modifier = Modifier,
     initialConfig: String = "",
-    initialLocalHost: String = "127.0.0.1",
-    initialLocalPort: String = "1984",
-    onConnect: (String, String, String) -> Unit = { _, _, _ -> Unit },
-    onDisconnect: () -> Unit = {},
-    onVpnServiceControlClick: () -> Unit = {}
+    initialLocalHost: String = "",
+    initialLocalPort: String = "",
+    initialApiKey: String = "",
+    isVpnRunning: Boolean = false,
+    doOnConnectionButtonClick: (String, String, String, String, Boolean) -> Unit = { _, _, _, _, _ ->
+        Unit
+    },
+    doOnShowLogs: () -> Unit = {},
 ) {
+    val scrollState = rememberScrollState()
+    val focusRequester = remember { FocusRequester() }
+    val isConnected: MutableState<Boolean> = remember { mutableStateOf(isVpnRunning) }
     var config by remember { mutableStateOf(initialConfig) }
     var localHost by remember { mutableStateOf(initialLocalHost) }
     var localPort by remember { mutableStateOf(initialLocalPort) }
+    var apiKey by remember { mutableStateOf(initialApiKey) }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center
+            .padding(16.dp)
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.Top
     ) {
         TextField(
             value = config,
             onValueChange = { config = it },
             label = { Text("Enter the config") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -63,31 +76,41 @@ fun CloakScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        TextField(
+            value = apiKey,
+            onValueChange = {
+                apiKey = it
+            },
+            label = { Text("Enter the API key") },
+            placeholder = { Text("API key") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { onConnect.invoke(config, localHost, localPort) },
+            onClick = {
+                doOnConnectionButtonClick(
+                    apiKey,
+                    config,
+                    localHost,
+                    localPort,
+                    isConnected.value
+                )
+            },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Connect")
+            Text(text = if (isConnected.value) "Disconnect VPN" else "Connect VPN")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
         Button(
-            onClick = { onDisconnect() },
+            onClick = doOnShowLogs,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Disconnect")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = onVpnServiceControlClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("VPN Service Control")
+            Text("Show Logs")
         }
     }
 }

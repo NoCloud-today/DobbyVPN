@@ -1,6 +1,5 @@
 package com.example.ck_client
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
@@ -10,7 +9,6 @@ import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.Log
-import androidx.compose.material3.SnackbarDuration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -26,9 +24,7 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.io.IOException
 import java.io.InputStreamReader
-import java.io.OutputStreamWriter
 import java.io.PrintStream
 import java.net.HttpURLConnection
 import java.net.InetAddress
@@ -38,7 +34,6 @@ import java.net.SocketTimeoutException
 import java.net.URL
 import java.net.UnknownHostException
 import java.nio.ByteBuffer
-import javax.net.ssl.HttpsURLConnection
 
 class MyVpnService : VpnService() {
 

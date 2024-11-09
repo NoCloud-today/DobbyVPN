@@ -10,26 +10,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import cloak_outline.Cloak_outline
 import com.example.ck_client.ui.theme.CkClientTheme
@@ -69,7 +54,14 @@ class CloakOutlineActivity : ComponentActivity() {
 
         setContent {
             CkClientTheme {
-                CloakOutlineScreen()
+                CloakOutlineScreen(
+                    initialConfig = config,
+                    initialLocalHost = localHost,
+                    initialLocalPort = localPort,
+                    initialApiKey = apiKey,
+                    isVpnRunning = isVpnRunning,
+                    doOnConnectionButtonClick = ::doOnConnectionClick
+                )
             }
         }
     }
@@ -80,6 +72,21 @@ class CloakOutlineActivity : ComponentActivity() {
         localHost = sharedPreferences.getString("localHost", "127.0.0.1") ?: "127.0.0.1"
         localPort = sharedPreferences.getString("localPort", "1984") ?: "1984"
         isVpnRunning = sharedPreferences.getBoolean("isVpnRunning", false)
+    }
+
+    private fun saveData(
+        apiKey: String,
+        config: String,
+        localHost: String,
+        localPort: String,
+        isConnected: Boolean
+    ) {
+        this.apiKey = apiKey
+        this.config = config
+        this.localHost = localHost
+        this.localPort = localPort
+        this.isConnected = isConnected
+        saveData()
     }
 
     private fun saveData() {
@@ -93,95 +100,18 @@ class CloakOutlineActivity : ComponentActivity() {
         }
     }
 
-    @Composable
-    fun CloakOutlineScreen(modifier: Modifier = Modifier) {
-        val scrollState = rememberScrollState()
-
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .verticalScroll(scrollState),
-            verticalArrangement = Arrangement.Top
-        ) {
-            TextField(
-                value = config,
-                onValueChange = {
-                    config = it
-                    saveData()
-                },
-                label = { Text("Enter the config") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            TextField(
-                value = localHost,
-                onValueChange = {
-                    localHost = it
-                    saveData()
-                },
-                label = { Text("Local host") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            TextField(
-                value = localPort,
-                onValueChange = {
-                    localPort = it
-                    saveData()
-                },
-                label = { Text("Local port") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            TextField(
-                value = apiKey,
-                onValueChange = {
-                    apiKey = it
-                    saveData()
-                },
-                label = { Text("Enter the API key") },
-                placeholder = { Text("API key") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    if (!isVpnRunning) {
-                        checkVpnPermissionAndStart()
-                    } else {
-                        stopVpnService()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (isVpnRunning) "Disconnect VPN" else "Connect VPN")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        val intent = Intent(this@CloakOutlineActivity, LogActivity::class.java)
-
-                        launch(Dispatchers.Main) {
-                            startActivity(intent)
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Show Logs")
-            }
+    private fun doOnConnectionClick(
+        apiKey: String,
+        config: String,
+        localHost: String,
+        localPort: String,
+        isConnected: Boolean
+    ) {
+        saveData(apiKey, config, localHost, localPort, isConnected)
+        if (!isVpnRunning) {
+            checkVpnPermissionAndStart()
+        } else {
+            stopVpnService()
         }
     }
 
