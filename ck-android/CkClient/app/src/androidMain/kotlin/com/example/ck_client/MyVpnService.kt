@@ -78,27 +78,31 @@ class MyVpnService : VpnService() {
 
     companion object {
         const val VPN_KEY_EXTRA = "API_KEY"
+
+        fun createIntent(context: Context): Intent {
+            return Intent(context, MyVpnService::class.java)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val vpnKey = intent?.getStringExtra(VPN_KEY_EXTRA)
-        if (vpnKey != null) {
-            if (vpnKey == "Stop") {
+        when {
+            vpnKey == null -> {
+                check = false
+                LogHelper.log(this@MyVpnService, "MyVpnService: VPN key is missing")
+                stopSelf()
+                return START_NOT_STICKY
+            }
+            vpnKey == "Stop" -> {
                 check = false
                 vpnInterface?.close()
                 stopSelf()
-            }
-            else {
+               }
+            else -> {
                 check = true
                 device = Cloak_outline.newOutlineDevice(vpnKey)
             }
-        } else {
-            check = false
-            LogHelper.log(this@MyVpnService, "MyVpnService: VPN key is missing")
-            stopSelf()
-            return START_NOT_STICKY
         }
-
         return START_STICKY
     }
 

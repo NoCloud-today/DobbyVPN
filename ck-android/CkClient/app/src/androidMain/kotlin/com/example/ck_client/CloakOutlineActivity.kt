@@ -2,7 +2,6 @@ package com.example.ck_client
 
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.net.VpnService
 import android.os.Bundle
 import android.widget.Toast
@@ -17,6 +16,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
 import cloak_outline.Cloak_outline
+import com.dobby.common.showToast
+import com.example.ck_client.domain.CloakOutlineConfigRepository
+import com.example.ck_client.domain.CloakOutlineVpnConfig
 import com.example.ck_client.ui.theme.CkClientTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,7 +26,12 @@ import kotlinx.coroutines.launch
 
 class CloakOutlineActivity : ComponentActivity() {
 
-    private lateinit var sharedPreferences: SharedPreferences
+    companion object {
+
+        fun createIntent(context: Context): Intent {
+            return Intent(context, CloakOutlineActivity::class.java)
+        }
+    }
 
     private var isConnected by mutableStateOf(false)
     private var connectionJob: Job? = null
@@ -36,21 +43,16 @@ class CloakOutlineActivity : ComponentActivity() {
     private var localHost by mutableStateOf("127.0.0.1")
     private var localPort by mutableStateOf("1984")
 
+    private lateinit var configRepository: CloakOutlineConfigRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        sharedPreferences = getSharedPreferences("cloak_outline_prefs", Context.MODE_PRIVATE)
+        configRepository = CloakOutlineConfigRepository(
+            prefs = getSharedPreferences("cloak_outline_prefs", Context.MODE_PRIVATE)
+        )
         loadSavedData()
-
-        requestVpnPermissionLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == RESULT_OK) {
-                startVpnService()
-            } else {
-                Toast.makeText(this, "VPN Permission Denied", Toast.LENGTH_SHORT).show()
-            }
-        }
+        initVpnPermissionLauncher()
 
         setContent {
             CkClientTheme {
@@ -60,18 +62,34 @@ class CloakOutlineActivity : ComponentActivity() {
                     initialLocalPort = localPort,
                     initialApiKey = apiKey,
                     isVpnRunning = isVpnRunning,
-                    doOnConnectionButtonClick = ::doOnConnectionClick
+                    doOnConnectionButtonClick = ::doOnConnectionClick,
+                    doOnShowLogs = {
+                        LogActivity.createIntent(context = this).run(::startActivity)
+                    }
                 )
             }
         }
     }
 
+    private fun initVpnPermissionLauncher() {
+        requestVpnPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == RESULT_OK) {
+                startVpnService()
+            } else {
+                showToast("VPN Permission Denied", Toast.LENGTH_SHORT)
+            }
+        }
+    }
+
     private fun loadSavedData() {
-        apiKey = sharedPreferences.getString("apiKey", "") ?: ""
-        config = sharedPreferences.getString("config", "") ?: ""
-        localHost = sharedPreferences.getString("localHost", "127.0.0.1") ?: "127.0.0.1"
-        localPort = sharedPreferences.getString("localPort", "1984") ?: "1984"
-        isVpnRunning = sharedPreferences.getBoolean("isVpnRunning", false)
+        val vpnConfig: CloakOutlineVpnConfig = configRepository.get()
+        apiKey = vpnConfig.apiKey
+        config = vpnConfig.config
+        localHost = vpnConfig.localHost
+        localPort = vpnConfig.localPort
+        isVpnRunning = vpnConfig.isVpnRunning
     }
 
     private fun saveData(
@@ -90,14 +108,14 @@ class CloakOutlineActivity : ComponentActivity() {
     }
 
     private fun saveData() {
-        with(sharedPreferences.edit()) {
-            putString("apiKey", apiKey)
-            putString("config", config)
-            putString("localHost", localHost)
-            putString("localPort", localPort)
-            putBoolean("isVpnRunning", isVpnRunning)
-            apply()
-        }
+        val vpnConfig = CloakOutlineVpnConfig(
+            apiKey = apiKey,
+            config = config,
+            localHost = localHost,
+            localPort = localPort,
+            isVpnRunning = isVpnRunning
+        )
+        configRepository.save(vpnConfig)
     }
 
     private fun doOnConnectionClick(
@@ -126,7 +144,6 @@ class CloakOutlineActivity : ComponentActivity() {
 
     private fun startVpnService() {
         if (apiKey.isNotEmpty()) {
-
             val vpnServiceIntent = Intent(this, MyVpnService::class.java).apply {
                 putExtra("API_KEY", apiKey)
             }
@@ -141,7 +158,7 @@ class CloakOutlineActivity : ComponentActivity() {
             }
             counter += 1
         } else {
-            Toast.makeText(this, "Enter the API key", Toast.LENGTH_SHORT).show()
+            showToast("Enter the API key", Toast.LENGTH_SHORT)
         }
     }
 

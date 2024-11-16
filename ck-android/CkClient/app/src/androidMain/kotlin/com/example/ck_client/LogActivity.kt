@@ -1,5 +1,7 @@
 package com.example.ck_client
 
+import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -13,6 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 class LogActivity : ComponentActivity() {
+
+    companion object {
+
+        fun createIntent(context: Context): Intent {
+            return Intent(context, LogActivity::class.java)
+        }
+    }
 
     private val logMessages = mutableStateListOf<String>()
     private lateinit var sharedPreferences: SharedPreferences

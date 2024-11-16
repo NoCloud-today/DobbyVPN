@@ -1,6 +1,5 @@
 package com.example.ck_client.cloak
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -12,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.ck_client.ui.theme.CkClientTheme
 import cloak_outline.Cloak_outline
+import com.dobby.common.showToast
 import com.example.ck_client.LogHelper
 import com.example.ck_client.VpnControlActivity
 import kotlinx.coroutines.*
@@ -106,13 +106,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun onVpnServiceControlClick() {
-        val intent = Intent(this@MainActivity, VpnControlActivity::class.java)
-        startActivity(intent)
-    }
-
-
-    private fun showToast(message: String, duration: Int) {
-        Toast.makeText(this, message, duration).show()
+        VpnControlActivity
+            .createIntent(context = this@MainActivity)
+            .run(::startActivity)
     }
 
     @Preview(showBackground = true)

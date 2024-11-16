@@ -15,10 +15,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.dobby.common.showToast
+import com.example.ck_client.MyVpnService.Companion.VPN_KEY_EXTRA
 import com.example.ck_client.ui.theme.CkClientTheme
 import org.json.JSONObject
 
 class VpnControlActivity : ComponentActivity() {
+
+    companion object {
+
+        fun createIntent(context: Context): Intent {
+            return Intent(context, VpnControlActivity::class.java)
+        }
+    }
 
     private lateinit var requestVpnPermissionLauncher: ActivityResultLauncher<Intent>
     private var isVpnRunning by mutableStateOf(false)
@@ -35,7 +44,7 @@ class VpnControlActivity : ComponentActivity() {
             if (result.resultCode == RESULT_OK) {
                 startVpnService()
             } else {
-                Toast.makeText(this, "VPN Permission Denied", Toast.LENGTH_SHORT).show()
+                showToast("VPN Permission Denied", Toast.LENGTH_SHORT)
             }
         }
 
@@ -92,8 +101,8 @@ class VpnControlActivity : ComponentActivity() {
 
             Button(
                 onClick = {
-                    val intent = Intent(this@VpnControlActivity, CloakOutlineActivity::class.java)
-                    startActivity(intent)
+                    CloakOutlineActivity.createIntent(context = this@VpnControlActivity)
+                        .run(::startActivity)
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -133,19 +142,18 @@ class VpnControlActivity : ComponentActivity() {
 
     private fun startVpnService() {
         if (apiKey.isNotEmpty()) {
-            val vpnServiceIntent = Intent(this, MyVpnService::class.java).apply {
-                putExtra("API_KEY", apiKey)
-            }
-            startService(vpnServiceIntent)
+            MyVpnService.createIntent(context = this)
+                .apply { putExtra(VPN_KEY_EXTRA, apiKey) }
+                .let(::startService)
             isVpnRunning = true
         } else {
-            Toast.makeText(this, "Enter API key", Toast.LENGTH_SHORT).show()
+            showToast("Enter API key", Toast.LENGTH_SHORT)
         }
     }
 
     private fun stopVpnService() {
-        val vpnServiceIntent = Intent(this, MyVpnService::class.java).apply {
-            putExtra("API_KEY", "Stop")
+        val vpnServiceIntent = MyVpnService.createIntent(context = this).apply {
+            putExtra(VPN_KEY_EXTRA, "Stop")
         }
         startService(vpnServiceIntent)
         stopService(vpnServiceIntent)
