@@ -1,26 +1,30 @@
+//go:build windows
 // +build windows
 
 package main
 
 import (
-	"os/exec"
-        "bytes"
+	"bytes"
 	"errors"
 	"fmt"
-        "log"
+	"io"
+	"log"
 	"net"
+	"os/exec"
 	"sync"
 	"syscall"
 	"unsafe"
-        "io"
-	"golang.org/x/sys/windows/registry"
+
 	"github.com/Jigsaw-Code/outline-sdk/network"
 	"github.com/songgao/water"
+	"golang.org/x/sys/windows/registry"
 )
 
 func checkRoot() bool {
 	cmd := exec.Command("net", "session")
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		HideWindow: true,
+	}
 	if err := cmd.Run(); err != nil {
 		return false // Не администратор
 	}
@@ -346,7 +350,7 @@ type tunDevice struct {
 var _ network.IPDevice = (*tunDevice)(nil)
 
 func newTunDevice(name, ip string) (d network.IPDevice, err error) {
-        if !checkRoot() {
+	if !checkRoot() {
 		return nil, errors.New("this operation requires superuser privileges. Please run the program with administrator")
 	}
 
@@ -358,21 +362,20 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 	}
 
 	config := Config{
-		DeviceType: water.TAP, 
+		DeviceType: water.TAP,
 		PlatformSpecificParams: water.PlatformSpecificParams{
-			ComponentID:    "tap0901",       
-			InterfaceName:  "outline-tap0",  
-			Network:        "10.0.85.2/24",   
+			ComponentID:   "tap0901",
+			InterfaceName: "outline-tap0",
+			Network:       "10.0.85.2/24",
 		},
 	}
-
 
 	tun, err := openDev(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create TUN/TAP device: %w", err)
 	}
 
-        log.Printf("Outline/newTunDevice: Successfully created TUN/TAP device\n")
+	log.Printf("Outline/newTunDevice: Successfully created TUN/TAP device\n")
 
 	defer func() {
 		if err != nil {
@@ -389,7 +392,7 @@ func newTunDevice(name, ip string) (d network.IPDevice, err error) {
 	//if err := tunDev.bringUp(); err != nil {
 	//	return nil, fmt.Errorf("failed to bring up TUN/TAP device: %w", err)
 	//}
-        log.Printf("Outline/newTunDevice: TUN device %s is configured with IP %s\n", tunDev.Interface.name, "10.0.85.2")
+	log.Printf("Outline/newTunDevice: TUN device %s is configured with IP %s\n", tunDev.Interface.name, "10.0.85.2")
 	return tunDev, nil
 }
 
@@ -398,27 +401,33 @@ func (d *tunDevice) MTU() int {
 }
 
 func (d *tunDevice) configureSubnet(ip string) error {
-        log.Printf("Outline/newTunDevice: Configuring subnet for TUN device %s with IP %s\n", d.name, ip)
+	log.Printf("Outline/newTunDevice: Configuring subnet for TUN device %s with IP %s\n", d.name, ip)
 	//subnet := ip + "/24"
 	var cmd *exec.Cmd
 	cmd = exec.Command("netsh", "interface", "ip", "set", "address", d.Interface.name, "static", ip, "255.255.255.0", "none")
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		HideWindow: true,
+	}
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to configure subnet: %w, output: %s", err, output)
 	}
-        
-        log.Printf("Outline/newTunDevice: Subnet configuration completed for TUN device %s\n", d.name)
+
+	log.Printf("Outline/newTunDevice: Subnet configuration completed for TUN device %s\n", d.name)
 	return nil
 }
 
 func (d *tunDevice) bringUp() error {
-        log.Printf("Outline/newTunDevice: Bringing up TUN device %s\n", d.name)
+	log.Printf("Outline/newTunDevice: Bringing up TUN device %s\n", d.name)
 	var cmd *exec.Cmd
 	cmd = exec.Command("netsh", "interface", "set", "interface", d.Interface.name, "admin=ENABLED")
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		HideWindow: true,
+	}
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to bring up device: %w, output: %s", err, output)
 	}
-        log.Printf("Outline/newTunDevice: TUN device %s is now active\n", d.name)
+	log.Printf("Outline/newTunDevice: TUN device %s is now active\n", d.name)
 	return nil
 }
