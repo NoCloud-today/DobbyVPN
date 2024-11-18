@@ -9,20 +9,22 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope
 import com.example.ck_client.ui.theme.CkClientTheme
-import cloak_outline.Cloak_outline
 import com.dobby.common.showToast
 import com.example.ck_client.LogHelper
 import com.example.ck_client.VpnControlActivity
-import kotlinx.coroutines.*
+import com.example.ck_client.domain.CloakVpnConnectionInteractor
+import com.example.ck_client.domain.ConnectResult
+import com.example.ck_client.domain.DisconnectResult
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
-    private var isConnected by mutableStateOf(false)
-    private var connectionJob: Job? = null
-    private var counter = 0
-
     private lateinit var vpnConfigRepository: CloakVpnConfigRepository
+    private val connectionInteractor = CloakVpnConnectionInteractor()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,46 +61,50 @@ class MainActivity : ComponentActivity() {
         localPort: String
     ) {
         LogHelper.log(this@MainActivity, "Connected")
-        if (config.isNotEmpty() && localHost.isNotEmpty() && localPort.isNotEmpty()) {
-            if (!isConnected) {
-                connectionJob = CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        withContext(Dispatchers.Main) {
-                            isConnected = true
-                        }
-                        vpnConfigRepository.save(CloakVpnConfig(config, localHost, localPort))
-                        counter += 1
-                        if (counter > 1) {
-                            Cloak_outline.startAgain()
-                        } else {
-                            Cloak_outline.startCloakClient(localHost, localPort, config, false)
-                        }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
-                            showToast("Error of launch: ${e.message}", Toast.LENGTH_LONG)
-                        }
+        vpnConfigRepository.save(CloakVpnConfig(config, localHost, localPort))
+        lifecycleScope.launch {
+            val result = connectionInteractor.connect(
+                localHost = localHost,
+                localPort = localPort,
+                config = config
+            )
+            withContext(Dispatchers.Main) {
+                when (result) {
+                    ConnectResult.Success -> {
+                        showToast("Connected successfully", Toast.LENGTH_SHORT)
+                    }
+
+                    ConnectResult.AlreadyConnected -> {
+                        showToast("Already connected", Toast.LENGTH_SHORT)
+                    }
+
+                    is ConnectResult.Error -> {
+                        showToast(
+                            "Error of launch: ${result.error.message}",
+                            Toast.LENGTH_LONG
+                        )
+                    }
+                    ConnectResult.ValidationError -> {
+                        showToast("All fields need to be full", Toast.LENGTH_SHORT)
                     }
                 }
-            } else {
-                showToast("Already connected", Toast.LENGTH_SHORT)
             }
-        } else {
-            showToast("All fields need to be full", Toast.LENGTH_SHORT)
         }
-
     }
 
     private fun doOnDisconnect() {
-        if (isConnected) {
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    Cloak_outline.stopCloak()
-                    withContext(Dispatchers.Main) {
-                        isConnected = false
+        lifecycleScope.launch {
+            val result = connectionInteractor.disconnect()
+            withContext(Dispatchers.Main) {
+                when (result) {
+                    DisconnectResult.Success -> {
+                        showToast("Disconnected!", Toast.LENGTH_SHORT)
                     }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        showToast("Ошибка отключения: ${e.message}", Toast.LENGTH_LONG)
+                    DisconnectResult.AlreadyDisconnected -> {
+                        showToast("Already disconnected", Toast.LENGTH_SHORT)
+                    }
+                    is DisconnectResult.Error -> {
+                        showToast("Ошибка отключения: ${result.error.message}", Toast.LENGTH_LONG)
                     }
                 }
             }

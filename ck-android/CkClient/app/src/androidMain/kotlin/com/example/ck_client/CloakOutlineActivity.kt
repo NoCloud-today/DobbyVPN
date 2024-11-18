@@ -8,20 +8,18 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
-import cloak_outline.Cloak_outline
 import com.dobby.common.showToast
 import com.example.ck_client.domain.CloakOutlineConfigRepository
 import com.example.ck_client.domain.CloakOutlineVpnConfig
+import com.example.ck_client.domain.CloakVpnConnectionInteractor
 import com.example.ck_client.ui.theme.CkClientTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class CloakOutlineActivity : ComponentActivity() {
@@ -34,9 +32,8 @@ class CloakOutlineActivity : ComponentActivity() {
     }
 
     private var isConnected by mutableStateOf(false)
-    private var connectionJob: Job? = null
-    private var counter = 0
     private lateinit var requestVpnPermissionLauncher: ActivityResultLauncher<Intent>
+    private val connectionInteractor = CloakVpnConnectionInteractor()
     private var isVpnRunning by mutableStateOf(false)
     private var apiKey by mutableStateOf("")
     private var config by mutableStateOf("")
@@ -44,6 +41,7 @@ class CloakOutlineActivity : ComponentActivity() {
     private var localPort by mutableStateOf("1984")
 
     private lateinit var configRepository: CloakOutlineConfigRepository
+    private val vpnServiceInteractor = MyVpnServiceInteractor()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,7 +71,7 @@ class CloakOutlineActivity : ComponentActivity() {
 
     private fun initVpnPermissionLauncher() {
         requestVpnPermissionLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
+            StartActivityForResult()
         ) { result ->
             if (result.resultCode == RESULT_OK) {
                 startVpnService()
@@ -104,18 +102,13 @@ class CloakOutlineActivity : ComponentActivity() {
         this.localHost = localHost
         this.localPort = localPort
         this.isConnected = isConnected
-        saveData()
-    }
-
-    private fun saveData() {
-        val vpnConfig = CloakOutlineVpnConfig(
+        CloakOutlineVpnConfig(
             apiKey = apiKey,
             config = config,
             localHost = localHost,
             localPort = localPort,
             isVpnRunning = isVpnRunning
-        )
-        configRepository.save(vpnConfig)
+        ).let(configRepository::save)
     }
 
     private fun doOnConnectionClick(
@@ -126,10 +119,10 @@ class CloakOutlineActivity : ComponentActivity() {
         isConnected: Boolean
     ) {
         saveData(apiKey, config, localHost, localPort, isConnected)
-        if (!isVpnRunning) {
-            checkVpnPermissionAndStart()
-        } else {
+        if (isVpnRunning) {
             stopVpnService()
+        } else {
+            checkVpnPermissionAndStart()
         }
     }
 
@@ -144,32 +137,25 @@ class CloakOutlineActivity : ComponentActivity() {
 
     private fun startVpnService() {
         if (apiKey.isNotEmpty()) {
-            val vpnServiceIntent = Intent(this, MyVpnService::class.java).apply {
-                putExtra("API_KEY", apiKey)
-            }
-            startService(vpnServiceIntent)
+            vpnServiceInteractor.start(context = this, apiKey)
             isVpnRunning = true
-            saveData()
-
-            if (counter == 0) {
-                connectionJob = lifecycleScope.launch(Dispatchers.IO) {
-                    Cloak_outline.startCloakClient(localHost, localPort, config, false)
-                }
+            configRepository.updateVpnRunning(newValue = true)
+            lifecycleScope.launch {
+                connectionInteractor.connect(
+                    localHost = localHost,
+                    localPort = localPort,
+                    config = config
+                ) // TODO handle result
             }
-            counter += 1
         } else {
             showToast("Enter the API key", Toast.LENGTH_SHORT)
         }
     }
 
     private fun stopVpnService() {
-        val vpnServiceIntent = Intent(this, MyVpnService::class.java).apply {
-            putExtra("API_KEY", "Stop")
-        }
-        startService(vpnServiceIntent)
-        stopService(vpnServiceIntent)
+        vpnServiceInteractor.stop(context = this)
         isVpnRunning = false
-        saveData()
+        configRepository.updateVpnRunning(newValue = false)
     }
 
     @Preview(showBackground = true)

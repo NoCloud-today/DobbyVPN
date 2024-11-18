@@ -8,7 +8,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dobby.common.showToast
-import com.example.ck_client.MyVpnService.Companion.VPN_KEY_EXTRA
 import com.example.ck_client.ui.theme.CkClientTheme
 import org.json.JSONObject
 
@@ -32,21 +31,13 @@ class VpnControlActivity : ComponentActivity() {
     private lateinit var requestVpnPermissionLauncher: ActivityResultLauncher<Intent>
     private var isVpnRunning by mutableStateOf(false)
     private var apiKey by mutableStateOf("")
+    private val vpnServiceInteractor = MyVpnServiceInteractor()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        apiKey = loadApiKey() ?: ""
-
-        requestVpnPermissionLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == RESULT_OK) {
-                startVpnService()
-            } else {
-                showToast("VPN Permission Denied", Toast.LENGTH_SHORT)
-            }
-        }
+        apiKey = loadApiKey()
+        initLauncher()
 
         setContent {
             CkClientTheme {
@@ -111,6 +102,18 @@ class VpnControlActivity : ComponentActivity() {
         }
     }
 
+    private fun initLauncher() {
+        requestVpnPermissionLauncher = registerForActivityResult(
+            StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == RESULT_OK) {
+                startVpnService()
+            } else {
+                showToast("VPN Permission Denied", Toast.LENGTH_SHORT)
+            }
+        }
+    }
+
     private fun saveApiKey(apiKey: String) {
         val sharedPref = getSharedPreferences("VpnControlPrefs", Context.MODE_PRIVATE)
         with(sharedPref.edit()) {
@@ -122,13 +125,13 @@ class VpnControlActivity : ComponentActivity() {
         }
     }
 
-    private fun loadApiKey(): String? {
+    private fun loadApiKey(): String {
         val sharedPref = getSharedPreferences("VpnControlPrefs", Context.MODE_PRIVATE)
         val json = sharedPref.getString("vpnApiKey", null)
         return json?.let {
             val jsonObject = JSONObject(it)
             jsonObject.optString("apiKey", "")
-        }
+        } ?: ""
     }
 
     private fun checkVpnPermissionAndStart() {
@@ -142,9 +145,7 @@ class VpnControlActivity : ComponentActivity() {
 
     private fun startVpnService() {
         if (apiKey.isNotEmpty()) {
-            MyVpnService.createIntent(context = this)
-                .apply { putExtra(VPN_KEY_EXTRA, apiKey) }
-                .let(::startService)
+            vpnServiceInteractor.start(context = this, apiKey)
             isVpnRunning = true
         } else {
             showToast("Enter API key", Toast.LENGTH_SHORT)
@@ -152,11 +153,7 @@ class VpnControlActivity : ComponentActivity() {
     }
 
     private fun stopVpnService() {
-        val vpnServiceIntent = MyVpnService.createIntent(context = this).apply {
-            putExtra(VPN_KEY_EXTRA, "Stop")
-        }
-        startService(vpnServiceIntent)
-        stopService(vpnServiceIntent)
+        vpnServiceInteractor.stop(context = this)
         isVpnRunning = false
     }
 

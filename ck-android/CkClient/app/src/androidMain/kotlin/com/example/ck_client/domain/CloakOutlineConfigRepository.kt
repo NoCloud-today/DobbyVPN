@@ -26,4 +26,8 @@ class CloakOutlineConfigRepository(
             apply()
         }
     }
+
+    fun updateVpnRunning(newValue: Boolean) {
+        prefs.edit().putBoolean("isVpnRunning", newValue).apply()
+    }
 }
