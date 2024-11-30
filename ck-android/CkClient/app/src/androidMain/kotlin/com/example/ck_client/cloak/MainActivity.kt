@@ -110,6 +110,8 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    // host
+    // port 1984
 
     private fun onVpnServiceControlClick() {
         VpnControlActivity
