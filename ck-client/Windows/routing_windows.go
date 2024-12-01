@@ -223,7 +223,7 @@ func AddNeighbor(interfaceName, gatewayIP, macAddress string) error {
 	}
 	output, err := cmd.CombinedOutput()
 	if err == nil {
-		fmt.Printf("Command arp executed successfully: %s\n", string(output))
+		fmt.Printf("Command arp executed  successfully: %s\n", string(output))
 	}
 	return nil
 }
