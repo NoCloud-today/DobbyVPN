@@ -146,9 +146,11 @@ func addOrUpdateProxyRoute(proxyIp string, gatewayIp string, gatewayInterfaceInd
 
 func deleteProxyRoute(proxyIp string) {
 	command := fmt.Sprintf("route delete %s", proxyIp)
-	_, err := executeCommand(command)
-	if err != nil {
-		Logging.Info.Printf("Outline/routing: Failed to delete proxy route for IP %s: %v\n", proxyIp, err)
+	if proxyIp != "127.0.0.1" {
+		_, err := executeCommand(command)
+		if err != nil {
+			Logging.Info.Printf("Outline/routing: Failed to delete proxy route for IP %s: %v\n", proxyIp, err)
+		}
 	}
 }
 
