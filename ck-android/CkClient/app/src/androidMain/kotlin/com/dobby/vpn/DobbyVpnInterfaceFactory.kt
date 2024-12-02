@@ -7,15 +7,13 @@ import android.net.VpnService.Builder
 import android.os.Build
 import android.util.Log
 import com.dobby.consts.reservedBypassSubnets
-import com.example.ck_client.LogHelper
+import com.dobby.util.Logger
 import com.example.ck_client.MyVpnService
 
 class DobbyVpnInterfaceFactory {
 
     fun create(context: Context, vpnService: MyVpnService): Builder {
-//        LogHelper.log(this@MyVpnService, "MyVpnService: Start function setupVpn():")
-//        LogHelper.log(this@MyVpnService, "MyVpnService: Start function setupVpn():")
-        LogHelper.log(context, "MyVpnService: Creating VPN Interface:")
+        Logger.log("Creating VPN Interface")
         val builder = vpnService.Builder()
             .setSession("Outline")
             .setMtu(1500)
@@ -23,15 +21,7 @@ class DobbyVpnInterfaceFactory {
             .addDnsServer("1.1.1.1")
             .addDisallowedApplication(context.packageName)
 
-//        LogHelper.log(this@MyVpnService, "MyVpnService: Command: val builder = Builder()")
-//        val mtu = 1500
-//        LogHelper.log(this@MyVpnService, "MyVpnService: mtu: val mtu = 1500")
-//        builder.
-//        LogHelper.log(this@MyVpnService, "MyVpnService: Command: builder.setSession(Outline)")
-//        builder.setMtu(mtu)
-//        LogHelper.log(this@MyVpnService, "MyVpnService: Command: builder.setMtu(mtu)")
-//        builder.addAddress("10.111.222.1", 24)
-//        LogHelper.log(this@MyVpnService, "MyVpnService: Command: builder.addAddress(10.111.222.1, 24)")
+        Logger.log("VPN interface created: address is 10.111.222.1")
 
         val dnsServers = getDnsServers(context)
         val dns_server = dnsServers.get(0)

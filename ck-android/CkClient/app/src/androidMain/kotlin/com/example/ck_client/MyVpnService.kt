@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import cloak_outline.OutlineDevice
 import cloak_outline.Cloak_outline
+import com.dobby.util.Logger
 import com.dobby.vpn.DobbyVpnInterfaceFactory
 import com.dobby.vpn.IpFetcher
 import kotlinx.coroutines.CompletableDeferred
@@ -53,7 +54,7 @@ class MyVpnService : VpnService() {
         when (val vpnKey = intent?.getStringExtra(VPN_KEY_EXTRA)) {
             null -> {
                 check = false
-                LogHelper.log(this@MyVpnService, "MyVpnService: VPN key is missing")
+                Logger.log("MyVpnService: VPN key is missing")
                 stopSelf()
                 return START_NOT_STICKY
             }
@@ -75,17 +76,17 @@ class MyVpnService : VpnService() {
 
         redirectLogsToFile()
 
-        LogHelper.log(this@MyVpnService, "MyVpnService: Start curl before connection")
+        Logger.log("MyVpnService: Start curl before connection")
         CoroutineScope(Dispatchers.IO).launch {
-            val ipAddress = ipFetcher.fetchIp(context = this@MyVpnService)
+            val ipAddress = ipFetcher.fetchIp()
             withContext(Dispatchers.Main) {
                 if (ipAddress != null) {
-                    LogHelper.log(this@MyVpnService, "MyVpnService: response from curl: $ipAddress")
+                    Logger.log( "MyVpnService: response from curl: $ipAddress")
                     setupVpn()
                     //checkServerAvailability(iqAddress)
 
                 } else {
-                    LogHelper.log(this@MyVpnService, "MyVpnService: Failed to fetch IP, cancelling VPN setup.")
+                    Logger.log("MyVpnService: Failed to fetch IP, cancelling VPN setup.")
                     stopSelf()
                 }
             }
@@ -108,44 +109,44 @@ class MyVpnService : VpnService() {
             inputStream = FileInputStream(vpnInterface?.fileDescriptor)
             outputStream = FileOutputStream(vpnInterface?.fileDescriptor)
 
-            LogHelper.log(this@MyVpnService, "MyVpnService: VPN Interface Created Successfully")
+            Logger.log("MyVpnService: VPN Interface Created Successfully")
 
             CoroutineScope(Dispatchers.IO).launch {
                 setupTunnel()
-                LogHelper.log(this@MyVpnService, "MyVpnService: Start function startReadingPackets()")
+                Logger.log("MyVpnService: Start function startReadingPackets()")
                 startReadingPackets()
-                LogHelper.log(this@MyVpnService, "MyVpnService: Start function startWritingPackets()")
+                Logger.log("MyVpnService: Start function startWritingPackets()")
                 startWritingPackets()
 
                 logRoutingTable()
 
-                LogHelper.log(this@MyVpnService, "MyVpnService: Start function resolveAndLogDomain(\"google.com\")")
+                Logger.log("MyVpnService: Start function resolveAndLogDomain(\"google.com\")")
                 val ipAddress = resolveAndLogDomain("google.com")
-                LogHelper.log(this@MyVpnService, "MyVpnService: Start function ping(\"1.1.1.1\")")
+                Logger.log("MyVpnService: Start function ping(\"1.1.1.1\")")
                 ping("1.1.1.1").await()
                 if (ipAddress != null) {
                     checkServerAvailability(ipAddress)
 
                 } else {
-                    LogHelper.log(this@MyVpnService, "MyVpnService: Unable to resolve IP for google.com")
+                    Logger.log("MyVpnService: Unable to resolve IP for google.com")
                 }
 
-                LogHelper.log(this@MyVpnService, "MyVpnService: Start curl after connection")
-                val response = ipFetcher.fetchIp(context = this@MyVpnService)
-                LogHelper.log(this@MyVpnService, "MyVpnService: response from curl: $response")
+                Logger.log("MyVpnService: Start curl after connection")
+                val response = ipFetcher.fetchIp()
+                Logger.log("MyVpnService: response from curl: $response")
             }
         } else {
-            LogHelper.log(this, "MyVpnService: Failed to Create VPN Interface")
+            Logger.log("MyVpnService: Failed to Create VPN Interface")
         }
     }
 
     private suspend fun setupTunnel() {
         withContext(Dispatchers.IO) {
             try {
-                LogHelper.log(this@MyVpnService, "MyVpnService: Start function setupTunnel()")
-                LogHelper.log(this@MyVpnService, "MyVpnService: End of function setupTunnel")
+                Logger.log("MyVpnService: Start function setupTunnel()")
+                Logger.log("MyVpnService: End of function setupTunnel")
             } catch (e: Exception) {
-                LogHelper.log(this@MyVpnService, "MyVpnService: Failed to setup tunnel: ${e.message}")
+                Logger.log("MyVpnService: Failed to setup tunnel: ${e.message}")
             }
         }
     }
@@ -166,10 +167,10 @@ class MyVpnService : VpnService() {
 
                 process.waitFor()
 
-                LogHelper.log(this@MyVpnService, "MyVpnService: Routing Table:\n$output")
+                Logger.log("MyVpnService: Routing Table:\n$output")
 
             } catch (e: Exception) {
-                LogHelper.log(this@MyVpnService, "MyVpnService: Failed to retrieve routing table: ${e.message}")
+                Logger.log("MyVpnService: Failed to retrieve routing table: ${e.message}")
             }
         }
     }
@@ -180,17 +181,17 @@ class MyVpnService : VpnService() {
                 withTimeout(5000L) {
                     val address = InetAddress.getByName(domain)
                     val ipAddress = address.hostAddress
-                    LogHelper.log(this@MyVpnService, "MyVpnService: Domain resolved successfully. Domain: $domain, IP: $ipAddress")
+                    Logger.log("MyVpnService: Domain resolved successfully. Domain: $domain, IP: $ipAddress")
                     ipAddress
                 }
             } catch (e: TimeoutCancellationException) {
-                LogHelper.log(this@MyVpnService, "MyVpnService: Domain resolution timed out. Domain: $domain")
+                Logger.log("MyVpnService: Domain resolution timed out. Domain: $domain")
                 null
             } catch (e: UnknownHostException) {
-                LogHelper.log(this@MyVpnService, "MyVpnService: Failed to resolve domain. Domain: $domain: ${e.message}")
+                Logger.log("MyVpnService: Failed to resolve domain. Domain: $domain: ${e.message}")
                 null
             } catch (e: Exception) {
-                LogHelper.log(this@MyVpnService, "MyVpnService: Exception during domain resolution. Domain: $domain, Error: ${e.message}")
+                Logger.log("MyVpnService: Exception during domain resolution. Domain: $domain, Error: ${e.message}")
                 null
             }
         }
@@ -223,10 +224,10 @@ class MyVpnService : VpnService() {
                 }
 
                 process.waitFor()
-                LogHelper.log(this@MyVpnService, "MyVpnService: Ping output:\n$output")
+                Logger.log("MyVpnService: Ping output:\n$output")
                 deferred.complete(Unit)
             } catch (e: Exception) {
-                LogHelper.log(this@MyVpnService, "MyVpnService: Failed to execute ping command: ${e.message}")
+                Logger.log("MyVpnService: Failed to execute ping command: ${e.message}")
                 deferred.completeExceptionally(e)
             }
         }
@@ -246,10 +247,9 @@ class MyVpnService : VpnService() {
                             try {
                                 device?.write(packetData)
                                 //val hexString = packetData.joinToString(separator = " ") { byte -> "%02x".format(byte) }
-                                //LogHelper.log(this@MyVpnService, "MyVpnService: Packet Data Written (Hex): $hexString")
+                                //Logger.log("MyVpnService: Packet Data Written (Hex): $hexString")
                             } catch (e: Exception) {
-                                LogHelper.log(
-                                    this@MyVpnService,
+                                Logger.log(
                                     "MyVpnService: Failed to write packet to Outline: ${e.message}"
                                 )
                             }
@@ -283,19 +283,19 @@ class MyVpnService : VpnService() {
 //                        response.append(line).append("\n")
 //                    }
 
-                    LogHelper.log(this@MyVpnService, "MyVpnService: Successfully reached $host on port 443 via TCP")
-                    //LogHelper.log(this@MyVpnService, "MyVpnService: Response from server:\n$response")
+                    Logger.log("MyVpnService: Successfully reached $host on port 443 via TCP")
+                    //Logger.log("MyVpnService: Response from server:\n$response")
 
 //                    writer.close()
 //                    reader.close()
                     socket.close()
                 } else {
-                    LogHelper.log(this@MyVpnService, "MyVpnService: Failed to reach $host on port 443 via TCP")
+                    Logger.log("MyVpnService: Failed to reach $host on port 443 via TCP")
                 }
             } catch (e: SocketTimeoutException) {
-                LogHelper.log(this@MyVpnService, "MyVpnService: Timeout error when connecting to $host on port 443 via TCP: ${e.message}")
+                Logger.log("MyVpnService: Timeout error when connecting to $host on port 443 via TCP: ${e.message}")
             } catch (e: Exception) {
-                LogHelper.log(this@MyVpnService, "MyVpnService: Error when connecting to $host on port 443 via TCP: ${e.message}")
+                Logger.log("MyVpnService: Error when connecting to $host on port 443 via TCP: ${e.message}")
             }
         }
     }
@@ -312,18 +312,18 @@ class MyVpnService : VpnService() {
                         //    outputStream.write(buffer.array(), 0, length)
                         //}
                         //buffer.clear()
-                        //LogHelper.log(this@MyVpnService, "MyVpnService: read packet from tunnel")
+                        //Logger.log("MyVpnService: read packet from tunnel")
                         if (check == true) {
                             val packetData: ByteArray? = device?.read()
 
                             packetData?.let {
                                 outputStream.write(it)
                                 //val hexString = it.joinToString(separator = " ") { byte -> "%02x".format(byte) }
-                                //LogHelper.log(this@MyVpnService, "MyVpnService: Packet Data Read (Hex): $hexString")
-                            } ?: LogHelper.log(this@MyVpnService, "No data read from Outline")
+                                //Logger.log("MyVpnService: Packet Data Read (Hex): $hexString")
+                            } ?: Logger.log("No data read from Outline")
                         }
                     } catch (e: Exception) {
-                        LogHelper.log(this@MyVpnService, "MyVpnService: Failed to read packet from tunnel: ${e.message}")
+                        Logger.log("MyVpnService: Failed to read packet from tunnel: ${e.message}")
                     }
                     buffer.clear()
                 }

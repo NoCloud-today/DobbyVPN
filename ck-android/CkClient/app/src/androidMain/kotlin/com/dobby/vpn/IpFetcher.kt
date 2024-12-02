@@ -1,7 +1,6 @@
 package com.dobby.vpn
 
-import android.content.Context
-import com.example.ck_client.LogHelper
+import com.dobby.util.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -10,7 +9,7 @@ import java.net.URL
 
 class IpFetcher {
 
-    suspend fun fetchIp(context: Context): String? {
+    suspend fun fetchIp(): String? {
         return withContext(Dispatchers.IO) {
             try {
                 val result = withTimeoutOrNull(7000L) {
@@ -32,11 +31,11 @@ class IpFetcher {
                 }
 
                 if (result == null) {
-                    LogHelper.log(context, "MyVpnService: Timeout or empty response while fetching IP")
+                    Logger.log("MyVpnService: Timeout or empty response while fetching IP")
                 }
                 result
             } catch (e: Exception) {
-                LogHelper.log(context, "Error fetching IP: ${e.message}")
+                Logger.log("Error fetching IP: ${e.message}")
                 null
             }
         }

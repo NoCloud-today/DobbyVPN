@@ -1,15 +1,20 @@
 package com.example.ck_client
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
+import com.dobby.common.showToast
+import com.dobby.domain.FileLogsRepository
 import com.dobby.ui.LogScreen
 
 class LogActivity : ComponentActivity() {
@@ -21,14 +26,16 @@ class LogActivity : ComponentActivity() {
         }
     }
 
-    private val logMessages = mutableStateListOf<String>()
-    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var logsRepository: FileLogsRepository
+
+    private var logs = mutableStateListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        logsRepository = FileLogsRepository(fileDirProvider = { this.filesDir })
 
-        sharedPreferences = getSharedPreferences("log_prefs", MODE_PRIVATE)
-        loadLogsFromStorage()
+        logs.clear()
+        logs.addAll(logsRepository.readLogs().filter { it.isNotEmpty() } )
 
         setContent {
             MaterialTheme {
@@ -37,8 +44,9 @@ class LogActivity : ComponentActivity() {
                     content = { innerPadding ->
                         LogScreen(
                             modifier = Modifier.padding(innerPadding),
-                            logMessages = logMessages,
-                            onCopyToClipBoard = {}
+                            logMessages = logs,
+                            onCopyToClipBoard = ::copyLogsToClipboard,
+                            onClearLogs = ::clearLogs
                         )
                     }
                 )
@@ -46,18 +54,16 @@ class LogActivity : ComponentActivity() {
         }
     }
 
-    private fun loadLogsFromStorage() {
-        val logs = sharedPreferences.getString("logs", "") ?: ""
-        logMessages.clear()
-        logMessages.addAll(logs.split("\n"))
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        clearLogs()
+    private fun copyLogsToClipboard(logs: List<String>) {
+        val joinedLogs = logs.joinToString("\n")
+        val clipboardManager = this.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clipData = ClipData.newPlainText("Log Messages", joinedLogs)
+        clipboardManager.setPrimaryClip(clipData)
+        showToast("Logs copied!")
     }
 
     private fun clearLogs() {
-        sharedPreferences.edit().clear().apply()
+        logsRepository.clearLogs()
+        logs.clear()
     }
 }

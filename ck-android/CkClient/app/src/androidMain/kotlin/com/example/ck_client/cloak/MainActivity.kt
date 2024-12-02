@@ -12,7 +12,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
 import com.example.ck_client.ui.theme.CkClientTheme
 import com.dobby.common.showToast
-import com.example.ck_client.LogHelper
+import com.dobby.util.Logger
 import com.example.ck_client.VpnControlActivity
 import com.example.ck_client.domain.CloakVpnConnectionInteractor
 import com.example.ck_client.domain.ConnectResult
@@ -60,7 +60,8 @@ class MainActivity : ComponentActivity() {
         localHost: String,
         localPort: String
     ) {
-        LogHelper.log(this@MainActivity, "Connected")
+        Logger.init(this)
+        Logger.log("Connected")
         vpnConfigRepository.save(CloakVpnConfig(config, localHost, localPort))
         lifecycleScope.launch {
             val result = connectionInteractor.connect(

@@ -27,11 +27,6 @@
             </intent-filter>
         </service>
 
-        <!-- Log Service -->
-        <service
-            android:name=".LogService"
-            android:exported="false" />
-
         <!-- MainActivity -->
         <activity
             android:name=".cloak.MainActivity"

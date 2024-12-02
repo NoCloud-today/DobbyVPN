@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.dobby.common.showToast
 import com.dobby.domain.CloakConfigRepository
+import com.dobby.util.Logger
 import com.dobby.domain.OutlineKeyRepository
 import com.example.ck_client.LogActivity
 import com.example.ck_client.MyVpnServiceInteractor
@@ -47,15 +48,14 @@ class DobbySocksActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        Logger.init(this)
+
         val sharedPreferences = getSharedPreferences("DobbyPrefs", MODE_PRIVATE)
         outlineKeyRepository = OutlineKeyRepository(sharedPreferences)
         cloakConfigRepository = CloakConfigRepository(sharedPreferences)
 
         val outlineKey = outlineKeyRepository.get()
         val cloakJson = cloakConfigRepository.get()
-
-        println("cloakJson loaded: $cloakJson")
-        println("outlineKey loaded: $outlineKey")
 
         initVpnPermissionLauncher()
 
