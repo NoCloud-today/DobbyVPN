@@ -13,4 +13,12 @@ class OutlineKeyRepository(
     fun save(apiKey: String) {
         prefs.edit().putString("outlineApiKey", apiKey).apply()
     }
+
+    fun setDisconnectionFlag(shouldDisconnect: Boolean) {
+        prefs.edit().putBoolean("disconnectionFlag", shouldDisconnect).apply()
+    }
+
+    fun checkDisconnectionFlag(): Boolean {
+        return prefs.getBoolean("disconnectionFlag", false) ?: false
+    }
 }

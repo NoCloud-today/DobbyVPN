@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import cloak_outline.OutlineDevice
 import cloak_outline.Cloak_outline
+import com.dobby.domain.OutlineKeyRepository
 import com.dobby.util.Logger
 import com.dobby.vpn.DobbyVpnInterfaceFactory
 import com.dobby.vpn.IpFetcher
@@ -40,6 +41,8 @@ class MyVpnService : VpnService() {
         }
     }
 
+    private lateinit var outlineKeyRepository: OutlineKeyRepository
+
     private var vpnInterface: ParcelFileDescriptor? = null
     private var device: OutlineDevice? = null
     private val ipFetcher: IpFetcher = IpFetcher()
@@ -50,29 +53,11 @@ class MyVpnService : VpnService() {
     private lateinit var outputStream: FileOutputStream
     private var check = true
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (val vpnKey = intent?.getStringExtra(VPN_KEY_EXTRA)) {
-            null -> {
-                check = false
-                Logger.log("MyVpnService: VPN key is missing")
-                stopSelf()
-                return START_NOT_STICKY
-            }
-            "Stop" -> {
-                check = false
-                vpnInterface?.close()
-                stopSelf()
-            }
-            else -> {
-                check = true
-                device = Cloak_outline.newOutlineDevice(vpnKey)
-            }
-        }
-        return START_STICKY
-    }
-
     override fun onCreate() {
         super.onCreate()
+
+        val sharedPreferences = getSharedPreferences("DobbyPrefs", MODE_PRIVATE)
+        outlineKeyRepository = OutlineKeyRepository(sharedPreferences)
 
         redirectLogsToFile()
 
@@ -91,6 +76,22 @@ class MyVpnService : VpnService() {
                 }
             }
         }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val disconnectionFlag = outlineKeyRepository.checkDisconnectionFlag()
+        if (disconnectionFlag) {
+            Logger.log("MyVpnService: starting to disconnect")
+            check = false
+            vpnInterface?.close()
+            stopSelf()
+        } else {
+            val apiKey = outlineKeyRepository.get()
+            Logger.log("Starting VPN Service with non-empty apiKey")
+            check = true
+            device = Cloak_outline.newOutlineDevice(apiKey)
+        }
+        return START_STICKY
     }
 
     override fun onDestroy() {
@@ -197,6 +198,7 @@ class MyVpnService : VpnService() {
         }
     }
 
+    // TODO idk why this exists, remove later
     private fun redirectLogsToFile() {
         val logFile = File(filesDir, "cloak_logs.txt")
         try {

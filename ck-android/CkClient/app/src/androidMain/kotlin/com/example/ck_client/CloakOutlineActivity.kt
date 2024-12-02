@@ -41,7 +41,7 @@ class CloakOutlineActivity : ComponentActivity() {
     private var localPort by mutableStateOf("1984")
 
     private lateinit var configRepository: CloakOutlineConfigRepository
-    private val vpnServiceInteractor = MyVpnServiceInteractor()
+//    private lateinit var vpnServiceInteractor: MyVpnServiceInteractor
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -137,7 +137,8 @@ class CloakOutlineActivity : ComponentActivity() {
 
     private fun startVpnService() {
         if (apiKey.isNotEmpty()) {
-            vpnServiceInteractor.start(context = this, apiKey)
+            // TODO remove unused screens && activities later
+//            vpnServiceInteractor.start(context = this, apiKey)
             isVpnRunning = true
             configRepository.updateVpnRunning(newValue = true)
             lifecycleScope.launch {
@@ -153,7 +154,8 @@ class CloakOutlineActivity : ComponentActivity() {
     }
 
     private fun stopVpnService() {
-        vpnServiceInteractor.stop(context = this)
+        // TODO remove unused screens && activities later
+//        vpnServiceInteractor.stop(context = this)
         isVpnRunning = false
         configRepository.updateVpnRunning(newValue = false)
     }

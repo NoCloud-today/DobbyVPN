@@ -35,7 +35,7 @@ class DobbySocksActivity : ComponentActivity() {
     private lateinit var cloakConfigRepository: CloakConfigRepository
     private lateinit var requestVpnPermissionLauncher: ActivityResultLauncher<Intent>
 
-    private val vpnServiceInteractor = MyVpnServiceInteractor()
+    private lateinit var vpnServiceInteractor: MyVpnServiceInteractor
     private val cloakConnectionInteractor by lazy {
         CloakVpnConnectionInteractor()
     }
@@ -54,6 +54,7 @@ class DobbySocksActivity : ComponentActivity() {
         outlineKeyRepository = OutlineKeyRepository(sharedPreferences)
         cloakConfigRepository = CloakConfigRepository(sharedPreferences)
 
+        vpnServiceInteractor = MyVpnServiceInteractor(outlineKeyRepository)
         val outlineKey = outlineKeyRepository.get()
         val cloakJson = cloakConfigRepository.get()
 

@@ -31,7 +31,7 @@ class VpnControlActivity : ComponentActivity() {
     private lateinit var requestVpnPermissionLauncher: ActivityResultLauncher<Intent>
     private var isVpnRunning by mutableStateOf(false)
     private var apiKey by mutableStateOf("")
-    private val vpnServiceInteractor = MyVpnServiceInteractor()
+//    private val vpnServiceInteractor = MyVpnServiceInteractor()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -145,7 +145,8 @@ class VpnControlActivity : ComponentActivity() {
 
     private fun startVpnService() {
         if (apiKey.isNotEmpty()) {
-            vpnServiceInteractor.start(context = this, apiKey)
+            // TODO remove unused screens && activities later
+//            vpnServiceInteractor.start(context = this, apiKey)
             isVpnRunning = true
         } else {
             showToast("Enter API key", Toast.LENGTH_SHORT)
@@ -153,7 +154,8 @@ class VpnControlActivity : ComponentActivity() {
     }
 
     private fun stopVpnService() {
-        vpnServiceInteractor.stop(context = this)
+        // TODO remove unused screens && activities later
+//        vpnServiceInteractor.stop(context = this)
         isVpnRunning = false
     }
 

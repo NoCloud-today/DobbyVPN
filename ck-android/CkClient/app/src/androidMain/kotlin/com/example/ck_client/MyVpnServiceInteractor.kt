@@ -1,20 +1,23 @@
 package com.example.ck_client
 
 import android.content.Context
-import com.example.ck_client.MyVpnService.Companion.VPN_KEY_EXTRA
+import com.dobby.domain.OutlineKeyRepository
 
-class MyVpnServiceInteractor {
+class MyVpnServiceInteractor(
+    private val outlineKeyRepository: OutlineKeyRepository
+) {
 
     fun start(context: Context, apiKey: String) {
-        MyVpnService.createIntent(context)
-            .apply { putExtra(VPN_KEY_EXTRA, apiKey) }
+        outlineKeyRepository.save(apiKey)
+        outlineKeyRepository.setDisconnectionFlag(shouldDisconnect = false)
+        MyVpnService
+            .createIntent(context)
             .let(context::startService)
     }
 
     fun stop(context: Context) {
-        val vpnServiceIntent = MyVpnService.createIntent(context).apply {
-            putExtra(VPN_KEY_EXTRA, "Stop")
-        }
+        outlineKeyRepository.setDisconnectionFlag(shouldDisconnect = true)
+        val vpnServiceIntent = MyVpnService.createIntent(context)
         context.startService(vpnServiceIntent)
         context.stopService(vpnServiceIntent)
     }
