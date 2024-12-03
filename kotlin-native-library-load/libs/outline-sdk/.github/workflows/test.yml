@@ -1,0 +1,65 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:  # added using https://github.com/step-security/secure-workflows
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+    env:
+      OUTPUT_DIR: ${{ github.workspace }}/out
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: '${{ github.workspace }}/x/go.mod'
+
+      - name: Build SDK
+        run: go build -v ./...
+
+      - name: Build X
+        run: go build -C x -tags psiphon -o "${{ env.OUTPUT_DIR }}/" -v ./...
+      
+      - name: Build Go Mobile
+        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+        run: go build -C x -o "${{ env.OUTPUT_DIR }}/" golang.org/x/mobile/cmd/gomobile golang.org/x/mobile/cmd/gobind
+
+      - name: Build Mobileproxy (Android)
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: ${{ github.workspace }}/x
+        run: PATH="${{ env.OUTPUT_DIR }}:$PATH" gomobile bind -ldflags='-s -w' -v -target=android -androidapi=21 -o "${{ env.OUTPUT_DIR }}/mobileproxy.aar" github.com/Jigsaw-Code/outline-sdk/x/mobileproxy
+
+      - name: Build Mobileproxy (iOS)
+        if: matrix.os == 'macos-latest'
+        working-directory: ${{ github.workspace }}/x
+        run: PATH="${{ env.OUTPUT_DIR }}:$PATH" gomobile bind -ldflags='-s -w' -v -target=ios -iosversion=11.0 -o "${{ env.OUTPUT_DIR }}/mobileproxy.xcframework" github.com/Jigsaw-Code/outline-sdk/x/mobileproxy
+
+      - name: Check SDK licenses
+        # We allow only "notice" type of licenses.
+        run: go run github.com/google/go-licenses check --ignore=golang.org/x --allowed_licenses=Apache-2.0,Apache-3,BSD-3-Clause,BSD-4-Clause,CC0-1.0,MIT ./...
+
+      - name: Check x licenses
+        env: {GO_FLAGS: -C x}
+        run: go run github.com/google/go-licenses check --ignore=golang.org/x --allowed_licenses=Apache-2.0,Apache-3,BSD-3-Clause,BSD-4-Clause,CC0-1.0,MIT ./...
+
+      - name: Test SDK
+        # Enable nettests, which executes external network requests.
+        run: go test -tags nettest -race -bench '.' ./... -benchtime=100ms
+
+      - name: Test x
+        # Enable nettests, which executes external network requests.
+        run: go test -C x -tags nettest,psiphon -race -bench '.' ./... -benchtime=100ms
