@@ -105,8 +105,7 @@ class MyVpnService : VpnService() {
             outputStream?.close()
             vpnInterface?.close()
             disableCloakIfNeeded()
-        }
-            .onFailure { it.printStackTrace() }
+        }.onFailure { it.printStackTrace() }
     }
 
     private fun enableCloakIfNeeded() {
