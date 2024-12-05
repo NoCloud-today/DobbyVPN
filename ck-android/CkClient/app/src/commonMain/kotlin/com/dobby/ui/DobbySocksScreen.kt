@@ -1,5 +1,6 @@
 package com.dobby.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -53,10 +54,10 @@ fun DobbySocksScreen(
     var apiKey by remember { mutableStateOf(initialKey) }
     val focusRequester1 = remember { FocusRequester() }
 
-    // Conditionally show the TextField based on Switch state
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(Color.White)
             .verticalScroll(scrollState)
             .padding(16.dp),
         verticalArrangement = Arrangement.Center
@@ -64,19 +65,17 @@ fun DobbySocksScreen(
 
         Row(
             modifier = Modifier
-                .fillMaxWidth()  // Ensure the row takes up the full width
-                .padding(8.dp), // Padding around the entire Row
-            verticalAlignment = Alignment.CenterVertically // Center items vertically in the Row
+                .fillMaxWidth()
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Text "Status" at the start
             Text(
                 text = "Status",
                 fontSize = 24.sp,
                 color = Color.Black,
-                modifier = Modifier.padding(end = 8.dp)  // Space between Text and TagChip
+                modifier = Modifier.padding(end = 8.dp)
             )
 
-            // Spacer with weight to push the TagChip to the end of the row
             Spacer(modifier = Modifier.weight(1f))
 
             TagChip(
@@ -107,7 +106,10 @@ fun DobbySocksScreen(
                     uncheckedTrackColor = Color(0xFFE2E8F0)
                 )
             )
-            Text(text = "Enable cloak?", modifier = Modifier.padding(horizontal = 8.dp))
+            Text(
+                text = "Enable cloak?",
+                color = Color.Black,
+                modifier = Modifier.padding(horizontal = 8.dp))
         }
         TextField(
             value = cloakJson,
@@ -120,10 +122,7 @@ fun DobbySocksScreen(
                 ),
             enabled = isCloakEnabled.value,
             keyboardActions = KeyboardActions(
-                onDone = {
-                    // Move focus to the second TextField when Enter/Done is pressed
-                    focusRequester1.requestFocus()
-                }
+                onDone = { focusRequester1.requestFocus() }
             ),
             modifier = Modifier
                 .clip(RoundedCornerShape(6.dp))

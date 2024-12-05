@@ -19,7 +19,7 @@ sealed interface DisconnectResult {
     class Error(val error: Throwable) : DisconnectResult
 }
 
-class CloakConnectionInteractor {
+object CloakConnectionInteractor {
 
     private val isConnected = AtomicBoolean(false)
 
@@ -31,6 +31,7 @@ class CloakConnectionInteractor {
         localHost: String = "127.0.0.1",
         localPort: String = "1984",
     ): ConnectResult {
+        android.util.Log.i("DOBBY_VPN_TAG", "connect(): ConnectResult")
         if (config.isEmpty() || localHost.isEmpty() || localPort.isEmpty()) {
             return ConnectResult.ValidationError
         }
@@ -55,6 +56,7 @@ class CloakConnectionInteractor {
     }
 
     suspend fun disconnect(): DisconnectResult {
+        android.util.Log.i("DOBBY_VPN_TAG", "disconnect(): DisconnectResult")
         return withContext(Dispatchers.IO) {
             if (isConnected.compareAndSet(true, false)) {
                 val result = runCatching { Cloak_outline.stopCloak() }

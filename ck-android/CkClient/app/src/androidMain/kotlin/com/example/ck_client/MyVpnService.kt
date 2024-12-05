@@ -47,7 +47,7 @@ class MyVpnService : VpnService() {
     private var device: OutlineDevice? = null
     private val ipFetcher: IpFetcher = IpFetcher()
     private val vpnInterfaceFactory: DobbyVpnInterfaceFactory = DobbyVpnInterfaceFactory()
-    private val cloakConnectInteractor = CloakConnectionInteractor()
+    private val cloakConnectInteractor = CloakConnectionInteractor
 
     private val bufferSize = 65536
     private var inputStream: FileInputStream? = null
@@ -61,19 +61,10 @@ class MyVpnService : VpnService() {
             prefs = getSharedPreferences("DobbyPrefs", MODE_PRIVATE)
         )
 
-        val shouldEnableCloak = dobbyConfigsRepository.getIsCloakEnabled()
-        val cloakConfig = dobbyConfigsRepository.getCloakConfig()
-
         Logger.init(this)
         Logger.log("MyVpnService: Start curl before connection")
         CoroutineScope(Dispatchers.IO).launch {
             val ipAddress = ipFetcher.fetchIp()
-            if (shouldEnableCloak) {
-                val result = cloakConnectInteractor.connect(config = cloakConfig)
-                Logger.log("!!!Cloak connection result is $result")
-            } else {
-                Logger.log("!!!Cloak is not going to connect")
-            }
             withContext(Dispatchers.Main) {
                 if (ipAddress != null) {
                     Logger.log( "MyVpnService: response from curl: $ipAddress")
@@ -95,6 +86,7 @@ class MyVpnService : VpnService() {
             val apiKey = dobbyConfigsRepository.getOutlineKey()
             Logger.log("!!! Starting connecting Outline")
             device = Cloak_outline.newOutlineDevice(apiKey)
+            enableCloakIfNeeded()
             ConnectionStateRepository.update(isConnected = true) // todo move somewhere
         } else {
             Logger.log("!!! Starting disconnecting Outline")
@@ -112,10 +104,34 @@ class MyVpnService : VpnService() {
             inputStream?.close()
             outputStream?.close()
             vpnInterface?.close()
+            disableCloakIfNeeded()
         }
             .onFailure { it.printStackTrace() }
     }
 
+    private fun enableCloakIfNeeded() {
+        val shouldEnableCloak = dobbyConfigsRepository.getIsCloakEnabled()
+        val cloakConfig = dobbyConfigsRepository.getCloakConfig()
+        if (shouldEnableCloak) {
+            CoroutineScope(Dispatchers.IO).launch {
+                Logger.log("!!!Cloak start connecting...")
+                val result = cloakConnectInteractor.connect(config = cloakConfig)
+                Logger.log("!!!Cloak connection result is $result")
+            }
+        } else {
+            Logger.log("!!! You chose not to use Cloak")
+        }
+    }
+
+    private fun disableCloakIfNeeded() {
+        if (dobbyConfigsRepository.getIsCloakEnabled()) {
+            Logger.log("!!! Disabling Cloak!")
+            CoroutineScope(Dispatchers.IO).launch {
+                cloakConnectInteractor.disconnect()
+                dobbyConfigsRepository.setIsCloakEnabled(false)
+            }
+        }
+    }
 
     private fun setupVpn() {
         vpnInterface = vpnInterfaceFactory
@@ -251,9 +267,9 @@ class MyVpnService : VpnService() {
                             val length = inputStream?.read(buffer.array()) ?: 0
                             if (length > 0) {
                                 val packetData: ByteArray = buffer.array().copyOfRange(0, length)
-                                    device?.write(packetData)
-                                    //val hexString = packetData.joinToString(separator = " ") { byte -> "%02x".format(byte) }
-                                    //Logger.log("MyVpnService: Packet Data Written (Hex): $hexString")
+                                device?.write(packetData)
+                                // val hexString = packetData.joinToString(separator = " ") { byte -> "%02x".format(byte) }
+                                // Logger.log("MyVpnService: Packet Data Written (Hex): $hexString")
                             }
                         } catch (e: Exception) {
                             Logger.log(

@@ -33,7 +33,7 @@ class CloakOutlineActivity : ComponentActivity() {
 
     private var isConnected by mutableStateOf(false)
     private lateinit var requestVpnPermissionLauncher: ActivityResultLauncher<Intent>
-    private val connectionInteractor = CloakConnectionInteractor()
+    private val connectionInteractor = CloakConnectionInteractor
     private var isVpnRunning by mutableStateOf(false)
     private var apiKey by mutableStateOf("")
     private var config by mutableStateOf("")

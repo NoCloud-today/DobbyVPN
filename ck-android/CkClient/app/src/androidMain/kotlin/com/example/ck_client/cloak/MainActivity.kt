@@ -24,7 +24,7 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
 
     private lateinit var vpnConfigRepository: CloakVpnConfigRepository
-    private val connectionInteractor = CloakConnectionInteractor()
+    private val connectionInteractor = CloakConnectionInteractor
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
