@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,15 +40,15 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 fun DobbySocksScreen(
     modifier: Modifier = Modifier,
-    isConnected: Boolean = false,
+    isConnected: State<Boolean>,
     initialConfig: String = "",
     initialKey: String = "",
-    onConnectionButtonClick: (String?, String) -> Unit = { _, _ -> },
+    onConnectionButtonClick: (String?, String, Boolean) -> Unit = { _, _, _ -> },
     onShowLogsClick: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
-    val isEnabled = remember { mutableStateOf(true) }
+    val isCloakEnabled = remember { mutableStateOf(true) }
     var cloakJson by remember { mutableStateOf(initialConfig) }
     var apiKey by remember { mutableStateOf(initialKey) }
     val focusRequester1 = remember { FocusRequester() }
@@ -79,8 +80,8 @@ fun DobbySocksScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             TagChip(
-                tagText = if (isConnected) "connected" else "disconnected",
-                color = if (isConnected) 0xFFDCFCE7 else 0xFFFEE2E2
+                tagText = if (isConnected.value) "connected" else "disconnected",
+                color = if (isConnected.value) 0xFFDCFCE7 else 0xFFFEE2E2
             )
         }
 
@@ -97,8 +98,8 @@ fun DobbySocksScreen(
             Switch(
                 modifier = Modifier
                     .size(44.dp, 24.dp),
-                checked = isEnabled.value,
-                onCheckedChange = { isEnabled.value = it },
+                checked = isCloakEnabled.value,
+                onCheckedChange = { isCloakEnabled.value = it },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color.White,
                     uncheckedThumbColor = Color.White,
@@ -117,7 +118,7 @@ fun DobbySocksScreen(
                 unfocusedPlaceholderColor = Color(0xFF94A3B8),
 
                 ),
-            enabled = isEnabled.value,
+            enabled = isCloakEnabled.value,
             keyboardActions = KeyboardActions(
                 onDone = {
                     // Move focus to the second TextField when Enter/Done is pressed
@@ -143,7 +144,7 @@ fun DobbySocksScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { onConnectionButtonClick(cloakJson, apiKey) },
+            onClick = { onConnectionButtonClick(cloakJson, apiKey, isCloakEnabled.value) },
             shape = RoundedCornerShape(6.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Black,
@@ -151,7 +152,7 @@ fun DobbySocksScreen(
             ),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(if (isConnected) "Disconnect" else "Connect")
+            Text(if (isConnected.value) "Disconnect" else "Connect")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -175,7 +176,8 @@ fun DobbySocksScreen(
 @Composable
 fun PreviewMyScreen() {
     DobbySocksScreen(
-        onConnectionButtonClick = { _, _ -> },
+        onConnectionButtonClick = { _, _, _ -> },
+        isConnected = object : State<Boolean> { override val value = false },
         onShowLogsClick = {}
     )
 }

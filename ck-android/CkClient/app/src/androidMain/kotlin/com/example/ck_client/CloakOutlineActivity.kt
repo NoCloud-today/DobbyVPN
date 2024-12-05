@@ -18,7 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import com.dobby.common.showToast
 import com.example.ck_client.domain.CloakOutlineConfigRepository
 import com.example.ck_client.domain.CloakOutlineVpnConfig
-import com.example.ck_client.domain.CloakVpnConnectionInteractor
+import com.example.ck_client.domain.CloakConnectionInteractor
 import com.example.ck_client.ui.theme.CkClientTheme
 import kotlinx.coroutines.launch
 
@@ -33,7 +33,7 @@ class CloakOutlineActivity : ComponentActivity() {
 
     private var isConnected by mutableStateOf(false)
     private lateinit var requestVpnPermissionLauncher: ActivityResultLauncher<Intent>
-    private val connectionInteractor = CloakVpnConnectionInteractor()
+    private val connectionInteractor = CloakConnectionInteractor()
     private var isVpnRunning by mutableStateOf(false)
     private var apiKey by mutableStateOf("")
     private var config by mutableStateOf("")

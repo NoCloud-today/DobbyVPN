@@ -11,52 +11,41 @@ import androidx.activity.result.contract.ActivityResultContracts.StartActivityFo
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.dobby.common.showToast
-import com.dobby.domain.CloakConfigRepository
+import com.dobby.domain.ConnectionStateRepository
+import com.dobby.domain.DobbyConfigsRepository
+import com.dobby.domain.DobbyConfigsRepositoryImpl
 import com.dobby.util.Logger
-import com.dobby.domain.OutlineKeyRepository
 import com.example.ck_client.LogActivity
-import com.example.ck_client.MyVpnServiceInteractor
-import com.example.ck_client.domain.CloakVpnConnectionInteractor
-import com.example.ck_client.domain.ConnectResult
-import com.example.ck_client.domain.ConnectResult.AlreadyConnected
-import com.example.ck_client.domain.DisconnectResult
+import com.example.ck_client.ConnectVpnServiceInteractor
 import com.example.ck_client.ui.theme.CkClientTheme
 import kotlinx.coroutines.launch
 
 class DobbySocksActivity : ComponentActivity() {
 
-    private lateinit var outlineKeyRepository: OutlineKeyRepository
-    private lateinit var cloakConfigRepository: CloakConfigRepository
+    private lateinit var dobbyConfigsRepository: DobbyConfigsRepository
+
     private lateinit var requestVpnPermissionLauncher: ActivityResultLauncher<Intent>
 
-    private lateinit var vpnServiceInteractor: MyVpnServiceInteractor
-    private val cloakConnectionInteractor by lazy {
-        CloakVpnConnectionInteractor()
-    }
-
-    private var cloakJson: String? = null
-    private var apiKey: String = ""
-
-    private var isConnected by mutableStateOf(false)
+    private lateinit var vpnServiceInteractor: ConnectVpnServiceInteractor
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         Logger.init(this)
+        ConnectionStateRepository.init(false)
 
-        val sharedPreferences = getSharedPreferences("DobbyPrefs", MODE_PRIVATE)
-        outlineKeyRepository = OutlineKeyRepository(sharedPreferences)
-        cloakConfigRepository = CloakConfigRepository(sharedPreferences)
+        dobbyConfigsRepository = DobbyConfigsRepositoryImpl(
+            prefs = getSharedPreferences("DobbyPrefs", MODE_PRIVATE)
+        )
 
-        vpnServiceInteractor = MyVpnServiceInteractor(outlineKeyRepository)
-        val outlineKey = outlineKeyRepository.get()
-        val cloakJson = cloakConfigRepository.get()
+        vpnServiceInteractor = ConnectVpnServiceInteractor()
+
+        val cloakJson = dobbyConfigsRepository.getCloakConfig()
+        val outlineKey = dobbyConfigsRepository.getOutlineKey()
 
         initVpnPermissionLauncher()
 
@@ -67,7 +56,7 @@ class DobbySocksActivity : ComponentActivity() {
                     content = { innerPadding ->
                         DobbySocksScreen(
                             modifier = Modifier.padding(innerPadding),
-                            isConnected = isConnected,
+                            isConnected = ConnectionStateRepository.observe().collectAsState(false),
                             initialConfig = cloakJson,
                             initialKey = outlineKey,
                             onConnectionButtonClick = ::handleConnectionButtonClick,
@@ -83,28 +72,33 @@ class DobbySocksActivity : ComponentActivity() {
         }
     }
 
-    private fun handleConnectionButtonClick(cloakJson: String?, outlineKey: String) {
-        saveData(cloakJson, outlineKey)
-        if (isConnected) {
-            stopVpnService()
-        } else {
-            checkVpnPermissionAndStart(cloakJson, outlineKey)
+    private fun handleConnectionButtonClick(
+        cloakJson: String?,
+        outlineKey: String,
+        isCloakEnabled: Boolean
+    ) {
+        saveData(isCloakEnabled, cloakJson, outlineKey)
+        lifecycleScope.launch {
+            when (ConnectionStateRepository.get()) {
+                true -> stopVpnService()
+                false -> checkVpnPermissionAndStart()
+            }
         }
     }
 
-    private fun saveData(cloakJson: String?, outlineKey: String) {
-        this.apiKey = outlineKey
-        this.cloakJson = cloakJson
-        outlineKeyRepository.save(apiKey)
-        cloakJson?.let(cloakConfigRepository::save)
+    private fun saveData(isCloakEnabled: Boolean, cloakJson: String?, outlineKey: String) {
+        dobbyConfigsRepository.setOutlineKey(outlineKey)
+
+        cloakJson?.let(dobbyConfigsRepository::setCloakConfig)
+        dobbyConfigsRepository.setIsCloakEnabled(isCloakEnabled)
     }
 
-    private fun checkVpnPermissionAndStart(cloakJson: String?, apiKey: String) {
+    private fun checkVpnPermissionAndStart() {
         val vpnIntent = VpnService.prepare(this)
         if (vpnIntent != null) {
             requestVpnPermissionLauncher.launch(vpnIntent)
         } else {
-            startVpnService(cloakJson, apiKey)
+            startVpnService()
         }
     }
 
@@ -113,47 +107,20 @@ class DobbySocksActivity : ComponentActivity() {
             StartActivityForResult()
         ) { result ->
             if (result.resultCode == RESULT_OK) {
-                startVpnService(cloakJson, apiKey)
+                startVpnService()
             } else {
                 showToast("VPN Permission Denied", Toast.LENGTH_SHORT)
             }
         }
     }
 
-    private fun startVpnService(cloakJson: String?, apiKey: String) {
-        if (apiKey.isNotEmpty()) {
-            vpnServiceInteractor.start(context = this, apiKey)
-            isConnected = true
-        } else {
-            showToast("Enter the API key")
-        }
-        if (cloakJson.isNullOrBlank().not()) {
-            lifecycleScope.launch {
-                cloakConnectionInteractor.connect(config = cloakJson ?: "").let { result ->
-                    when (result) {
-                        AlreadyConnected -> showToast("Already Connected!")
-                        is ConnectResult.Error -> showToast("Connection Error!")
-                        ConnectResult.Success -> showToast("Connected successfully!")
-                        ConnectResult.ValidationError -> showToast("Validation error!")
-                    }
-                }
-            }
-        }
+    private fun startVpnService() {
+        dobbyConfigsRepository.setIsOutlineEnabled(true)
+        vpnServiceInteractor.start(context = this)
     }
 
     private fun stopVpnService() {
-        if (apiKey.isNotEmpty()) {
-            vpnServiceInteractor.stop(context = this)
-            isConnected = false
-        }
-        lifecycleScope.launch {
-            cloakConnectionInteractor.disconnect().let { result ->
-                when (result) {
-                    DisconnectResult.Success -> Unit // do nothing
-                    DisconnectResult.AlreadyDisconnected -> Unit // do nothing
-                    is DisconnectResult.Error -> showToast("Disconnection Error !)")
-                }
-            }
-        }
+        dobbyConfigsRepository.setIsOutlineEnabled(false)
+        vpnServiceInteractor.stop(context = this)
     }
 }

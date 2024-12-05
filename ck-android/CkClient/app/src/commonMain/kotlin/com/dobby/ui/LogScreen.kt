@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -60,7 +61,12 @@ fun LogScreen(
             contentPadding = PaddingValues(8.dp)
         ) {
             items(logMessages) { message ->
-                Text(text = message, modifier = Modifier.padding(4.dp))
+                val isBald = message.contains("!!!")
+                Text(
+                    fontWeight = FontWeight(if (isBald) 700 else 400),
+                    text = message,
+                    modifier = Modifier.padding(4.dp)
+                )
             }
         }
     }

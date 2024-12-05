@@ -14,7 +14,7 @@ import com.example.ck_client.ui.theme.CkClientTheme
 import com.dobby.common.showToast
 import com.dobby.util.Logger
 import com.example.ck_client.VpnControlActivity
-import com.example.ck_client.domain.CloakVpnConnectionInteractor
+import com.example.ck_client.domain.CloakConnectionInteractor
 import com.example.ck_client.domain.ConnectResult
 import com.example.ck_client.domain.DisconnectResult
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +24,7 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
 
     private lateinit var vpnConfigRepository: CloakVpnConfigRepository
-    private val connectionInteractor = CloakVpnConnectionInteractor()
+    private val connectionInteractor = CloakConnectionInteractor()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

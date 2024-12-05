@@ -8,7 +8,9 @@ object Logger {
     private lateinit var logsRepository: FileLogsRepository
 
     fun init(context: Context) {
-        logsRepository = FileLogsRepository(fileDirProvider = { context.filesDir })
+        if (::logsRepository.isInitialized.not()) {
+            logsRepository = FileLogsRepository(fileDirProvider = { context.filesDir })
+        }
     }
 
     fun log(message: String) {

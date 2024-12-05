@@ -19,7 +19,7 @@ sealed interface DisconnectResult {
     class Error(val error: Throwable) : DisconnectResult
 }
 
-class CloakVpnConnectionInteractor {
+class CloakConnectionInteractor {
 
     private val isConnected = AtomicBoolean(false)
 
