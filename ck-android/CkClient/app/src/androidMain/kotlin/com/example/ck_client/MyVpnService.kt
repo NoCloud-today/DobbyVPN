@@ -247,21 +247,21 @@ class MyVpnService : VpnService() {
 
                 while (true) {
                     if (check) {
-                        val length = inputStream?.read(buffer.array()) ?: 0
-                        if (length > 0) {
-                            val packetData: ByteArray = buffer.array().copyOfRange(0, length)
-                            try {
-                                device?.write(packetData)
-                                //val hexString = packetData.joinToString(separator = " ") { byte -> "%02x".format(byte) }
-                                //Logger.log("MyVpnService: Packet Data Written (Hex): $hexString")
-                            } catch (e: Exception) {
-                                Logger.log(
-                                    "MyVpnService: Failed to write packet to Outline: ${e.message}"
-                                )
+                        try {
+                            val length = inputStream?.read(buffer.array()) ?: 0
+                            if (length > 0) {
+                                val packetData: ByteArray = buffer.array().copyOfRange(0, length)
+                                    device?.write(packetData)
+                                    //val hexString = packetData.joinToString(separator = " ") { byte -> "%02x".format(byte) }
+                                    //Logger.log("MyVpnService: Packet Data Written (Hex): $hexString")
                             }
+                        } catch (e: Exception) {
+                            Logger.log(
+                                "MyVpnService: Failed to write packet to Outline: ${e.message}"
+                            )
                         }
-                        buffer.clear()
                     }
+                    buffer.clear()
                 }
             }
         }
@@ -308,7 +308,7 @@ class MyVpnService : VpnService() {
 
     private fun startWritingPackets() {
         CoroutineScope(Dispatchers.IO).launch {
-            vpnInterface?.let { vpn ->
+            vpnInterface?.let {
                 val buffer = ByteBuffer.allocate(bufferSize)
 
                 while (true) {
