@@ -25,6 +25,8 @@ import (
 )
 
 const amneziawgSystemConfigPath = "/etc/amnezia/amneziawg/"
+var amneziawgDevice *device.Device = nil
+var amneziawgUAPISocket net.Listener = nil
 
 func saveWireguardConf(config string, fileName string) error {
 	systemConfigPath := filepath.Join(amneziawgSystemConfigPath, fileName+".conf")
@@ -50,7 +52,7 @@ func configFromPath(configPath string, interfaceName string) (*Config, error) {
 	return FromWgQuickWithUnknownEncoding(string(configData), interfaceName)
 }
 
-func (config *Config) configureInterface(device *device.Device) error {
+func (config *Config) configureInterface() error {
 	uapiString, err := config.ToUAPI()
 	if err != nil {
 		return err
@@ -58,7 +60,7 @@ func (config *Config) configureInterface(device *device.Device) error {
 
 	reader := strings.NewReader(uapiString)
 
-	return device.IpcSetOperation(reader)
+	return amneziawgDevice.IpcSetOperation(reader)
 }
 
 func (config *Config) setUpInterface() error {
@@ -128,7 +130,7 @@ func (config *Config) addRoute(address string) error {
 	return nil
 }
 
-func runInterface(configPath string, interfaceName string) (*device.Device, error) {
+func runInterface(configPath string, interfaceName string) error {
 	// open TUN device (or use supplied fd)
 	tdev, err := tun.CreateTUN(interfaceName, 1360)
 
@@ -140,14 +142,14 @@ func runInterface(configPath string, interfaceName string) (*device.Device, erro
 			interfaceName = realInterfaceName
 		}
 	} else {
-		return nil, err
+		return err
 	}
 
 	// open UAPI file
 	fileUAPI, err := ipc.UAPIOpen(interfaceName)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Start device:
@@ -160,7 +162,7 @@ func runInterface(configPath string, interfaceName string) (*device.Device, erro
 	uapi, err := ipc.UAPIListen(interfaceName, fileUAPI)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	go func() {
@@ -175,13 +177,16 @@ func runInterface(configPath string, interfaceName string) (*device.Device, erro
 		}
 	}()
 
-	return device, nil
+	amneziawgDevice = device
+	amneziawgUAPISocket = uapi
+
+	return nil
 }
 
 func StartTunnel(name string) {
 	systemConfigPath := filepath.Join(amneziawgSystemConfigPath, name+".conf")
 
-	device, err := runInterface(systemConfigPath, name)
+	err := runInterface(systemConfigPath, name)
 	if err != nil {
 		Logging.Info.Printf("Failed interface launch: %s", err)
 		return
@@ -199,7 +204,7 @@ func StartTunnel(name string) {
 		Logging.Info.Printf("Successful config parse")
 	}
 
-	if err := config.configureInterface(device); err != nil {
+	if err := config.configureInterface(); err != nil {
 		Logging.Info.Printf("Failed to configure the tunnel")
 		return
 	} else {
@@ -245,6 +250,15 @@ func StopTunnel(name string) {
 	} else {
 		Logging.Info.Printf("Stop tunnel: %s", name)
 	}
+
+	if err := amneziawgUAPISocket.Close(); err != nil {
+		Logging.Info.Printf("UAPI socket close failure")
+	} else {
+		Logging.Info.Printf("UAPI socket closed")
+	}
+	
+	amneziawgDevice.Close()
+	Logging.Info.Printf("Interface closed")
 }
 
 func CheckAndInstallWireGuard() error {
