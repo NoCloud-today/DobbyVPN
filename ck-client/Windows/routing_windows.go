@@ -4,12 +4,20 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
+
+	"github.com/amnezia-vpn/amneziawg-windows/conf"
+	"github.com/amnezia-vpn/amneziawg-windows/services"
+	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/svc"
+	"golang.org/x/sys/windows/svc/mgr"
 )
 
 var ipv4Subnets = []string{
@@ -36,7 +44,7 @@ var ipv4ReservedSubnets = []string{
 	"240.0.0.0/4",
 }
 
-const wireguardSystemConfigPath = "C:\\ProgramData\\WireGuard"
+const wireguardSystemConfigPath = "C:\\ProgramData\\Amnezia\\AmneziaWG"
 
 func executeCommand(command string) (string, error) {
 	cmd := exec.Command("cmd", "/C", command)
@@ -70,35 +78,110 @@ func saveWireguardConf(config string, fileName string) error {
 	return nil
 }
 
+func installTunnel(configPath string) error {
+	m, err := mgr.Connect()
+	if err != nil {
+		return err
+	}
+
+	name, err := conf.NameFromPath(configPath)
+	if err != nil {
+		return err
+	}
+
+	serviceName, err := services.ServiceNameOfTunnel(name)
+	if err != nil {
+		return err
+	}
+	service, err := m.OpenService(serviceName)
+	if err == nil {
+		status, err := service.Query()
+		if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+			service.Close()
+			return err
+		}
+		if status.State != svc.Stopped && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+			service.Close()
+			return errors.New("Tunnel already installed and running")
+		}
+		err = service.Delete()
+		service.Close()
+		if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+			return err
+		}
+		for {
+			service, err = m.OpenService(serviceName)
+			if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+				break
+			}
+			service.Close()
+			time.Sleep(time.Second / 3)
+		}
+	}
+
+	config := mgr.Config{
+		ServiceType:  windows.SERVICE_WIN32_OWN_PROCESS,
+		StartType:    mgr.StartAutomatic,
+		ErrorControl: mgr.ErrorNormal,
+		Dependencies: []string{"Nsi", "TcpIp"},
+		DisplayName:  "AmneziaWG Tunnel: " + name,
+		SidType:      windows.SERVICE_SID_TYPE_UNRESTRICTED,
+	}
+	service, err = m.CreateService(serviceName, "libs\\tunnel-service.exe", config, configPath)
+	if err != nil {
+		return err
+	}
+
+	err = service.Start()
+	if err != nil {
+		service.Delete()
+	}
+
+	return err
+}
+
+func uninstallTunnel(name string) error {
+	m, err := mgr.Connect()
+	if err != nil {
+		return err
+	}
+	serviceName, err := services.ServiceNameOfTunnel(name)
+	if err != nil {
+		return err
+	}
+	service, err := m.OpenService(serviceName)
+	if err != nil {
+		return err
+	}
+	service.Control(svc.Stop)
+	err = service.Delete()
+	err2 := service.Close()
+	if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+		return err
+	}
+	return err2
+}
+
 func StartTunnel(name string) {
 	systemConfigPath := filepath.Join(wireguardSystemConfigPath, name+".conf")
-	command := fmt.Sprintf("wireguard.exe /installtunnelservice %s", systemConfigPath)
-	output, err := executeCommand(command)
+	err := installTunnel(systemConfigPath)
 	if err != nil {
-		Logging.Info.Printf("Failed to start tunnel: %v, output: %s", err, output)
+		Logging.Info.Printf("Failed to start tunnel: %v", err)
 	} else {
 		Logging.Info.Printf("Tunnel started successfully: %s", name)
 	}
 }
 
 func StopTunnel(name string) {
-	command := fmt.Sprintf("wireguard.exe /uninstalltunnelservice %s", name)
-	output, err := executeCommand(command)
+	err := uninstallTunnel(name)
 	if err != nil {
-		Logging.Info.Printf("Failed to stop tunnel: %v, output: %s", err, output)
+		Logging.Info.Printf("Failed to stop tunnel: %v", err)
 	} else {
 		Logging.Info.Printf("Tunnel stopped successfully: %s", name)
 	}
 }
 
 func CheckAndInstallWireGuard() error {
-	_, err := exec.LookPath("wireguard.exe")
-	if err != nil {
-		Logging.Info.Printf("WireGuard not found, installing...")
-
-		return fmt.Errorf("WireGuard is not installed")
-	}
-	Logging.Info.Printf("WireGuard is already installed")
 	return nil
 }
 
