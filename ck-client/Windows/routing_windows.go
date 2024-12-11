@@ -36,7 +36,7 @@ var ipv4ReservedSubnets = []string{
 	"240.0.0.0/4",
 }
 
-const wireguardSystemConfigPath = "C:\\ProgramData\\Amnezia\\AmneziaWG"
+const amneziawgSystemConfigPath = "C:\\ProgramData\\Amnezia\\AmneziaWG"
 
 func executeCommand(command string) (string, error) {
 	cmd := exec.Command("cmd", "/C", command)
@@ -54,16 +54,16 @@ func executeCommand(command string) (string, error) {
 }
 
 func saveWireguardConf(config string, fileName string) error {
-	systemConfigPath := filepath.Join(wireguardSystemConfigPath, fileName+".conf")
+	systemConfigPath := filepath.Join(amneziawgSystemConfigPath, fileName+".conf")
 
-	err := os.MkdirAll(wireguardSystemConfigPath, os.ModePerm)
+	err := os.MkdirAll(amneziawgSystemConfigPath, os.ModePerm)
 	if err != nil {
-		Logging.Info.Printf("failed to create directory %s: %w", wireguardSystemConfigPath, err)
+		Logging.Info.Printf("failed to create directory %s: %w", amneziawgSystemConfigPath, err)
 	}
 
 	err = os.WriteFile(systemConfigPath, []byte(config), 0644)
 	if err != nil {
-		Logging.Info.Printf("failed to save WireGuard configuration to %s: %w", systemConfigPath, err)
+		Logging.Info.Printf("failed to save AmneziaWG configuration to %s: %w", systemConfigPath, err)
 	}
 
 	Logging.Info.Printf("Configuration saved successfully to %s\n", systemConfigPath)
@@ -71,7 +71,7 @@ func saveWireguardConf(config string, fileName string) error {
 }
 
 func StartTunnel(name string) {
-	systemConfigPath := filepath.Join(wireguardSystemConfigPath, name+".conf")
+	systemConfigPath := filepath.Join(amneziawgSystemConfigPath, name+".conf")
 	err := installTunnel(systemConfigPath)
 	if err != nil {
 		Logging.Info.Printf("Failed to start tunnel: %v", err)
@@ -90,6 +90,8 @@ func StopTunnel(name string) {
 }
 
 func CheckAndInstallWireGuard() error {
+	Logging.Info.Printf("Checking AmneziaWG")
+
 	_, err := exec.LookPath(TUNNEL_SERVICE_LIB_PATH)
 	if err != nil {
 		Logging.Info.Printf("AmneziaWG tunnel service not found at the path: %s", TUNNEL_SERVICE_LIB_PATH)
