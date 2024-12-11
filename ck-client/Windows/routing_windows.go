@@ -20,6 +20,8 @@ import (
 	"golang.org/x/sys/windows/svc/mgr"
 )
 
+const TUNNEL_SERVICE_LIB_PATH = "libs\\tunnel-service.exe"
+
 var ipv4Subnets = []string{
 	"0.0.0.0/1",
 	"128.0.0.0/1",
@@ -95,8 +97,11 @@ func installTunnel(configPath string) error {
 	}
 	service, err := m.OpenService(serviceName)
 	if err == nil {
+		Logging.Info.Printf("Tunnel service %s found", serviceName)
+
 		status, err := service.Query()
 		if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+			Logging.Info.Printf("Failed to query tunnel service status")
 			service.Close()
 			return err
 		}
@@ -109,9 +114,14 @@ func installTunnel(configPath string) error {
 		if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
 			return err
 		}
+
+		Logging.Info.Printf("Closing tunnel service %s")
+
 		for {
+			Logging.Info.Printf("Checking if service %s removed")
 			service, err = m.OpenService(serviceName)
 			if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+				Logging.Info.Printf("Service %s removed successfully")
 				break
 			}
 			service.Close()
@@ -127,14 +137,27 @@ func installTunnel(configPath string) error {
 		DisplayName:  "AmneziaWG Tunnel: " + name,
 		SidType:      windows.SERVICE_SID_TYPE_UNRESTRICTED,
 	}
-	service, err = m.CreateService(serviceName, "libs\\tunnel-service.exe", config, configPath)
+
+	serviceAbsolutePath, err := filepath.Abs(TUNNEL_SERVICE_LIB_PATH)
 	if err != nil {
+		Logging.Info.Printf("Cannot get tunnel service path")
 		return err
+	}
+
+	service, err = m.CreateService(serviceName, serviceAbsolutePath, config, configPath)
+	if err != nil {
+		Logging.Info.Printf("Failed to create tunnel service")
+		return err
+	} else {
+		Logging.Info.Printf("Tunnel service created")
 	}
 
 	err = service.Start()
 	if err != nil {
+		Logging.Info.Printf("Tunnel service start failed")
 		service.Delete()
+	} else {
+		Logging.Info.Printf("Tunnel service started")
 	}
 
 	return err
@@ -153,6 +176,9 @@ func uninstallTunnel(name string) error {
 	if err != nil {
 		return err
 	}
+
+	Logging.Info.Printf("Found tunnel service %s", serviceName)
+
 	service.Control(svc.Stop)
 	err = service.Delete()
 	err2 := service.Close()
@@ -182,7 +208,16 @@ func StopTunnel(name string) {
 }
 
 func CheckAndInstallWireGuard() error {
-	return nil
+	_, err := exec.LookPath(TUNNEL_SERVICE_LIB_PATH)
+	if err != nil {
+		Logging.Info.Printf("AmneziaWG tunnel service not found at the path: %s", TUNNEL_SERVICE_LIB_PATH)
+
+		return fmt.Errorf("AmneziaWG tunnel service not found")
+	} else {
+		Logging.Info.Printf("AmneziaWG is prepared for use")
+
+		return nil
+	}
 }
 
 func startRouting(proxyIP string, GatewayIP string, TunDeviceName string, MacAddress string, InterfaceName string, TunGateway string, TunDeviceIP string, addr []byte) error {
