@@ -5,28 +5,16 @@ package main
 
 import (
 	"errors"
-	"os"
 	"fmt"
 	"io/ioutil"
 	"net"
-	"strings"
 	"os/exec"
 	"path/filepath"
 
 	"github.com/vishvananda/netlink"
-
-	"github.com/amnezia-vpn/amneziawg-go/conn"
-	"github.com/amnezia-vpn/amneziawg-go/device"
-	"github.com/amnezia-vpn/amneziawg-go/ipc"
-	"github.com/amnezia-vpn/amneziawg-go/tun"
-	"golang.org/x/sys/unix"
-
-	sysctl "github.com/lorenzosaino/go-sysctl"
 )
 
 const amneziawgSystemConfigPath = "/etc/amnezia/amneziawg/"
-var amneziawgDevice *device.Device = nil
-var amneziawgUAPISocket net.Listener = nil
 
 func saveWireguardConf(config string, fileName string) error {
 	systemConfigPath := filepath.Join(amneziawgSystemConfigPath, fileName+".conf")
@@ -43,222 +31,24 @@ func executeCommand(command string) (string, error) {
 	return string(output), nil
 }
 
-func configFromPath(configPath string, interfaceName string) (*Config, error) {
-	configData, err := os.ReadFile(configPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return FromWgQuickWithUnknownEncoding(string(configData), interfaceName)
-}
-
-func (config *Config) configureInterface() error {
-	uapiString, err := config.ToUAPI()
-	if err != nil {
-		return err
-	}
-
-	reader := strings.NewReader(uapiString)
-
-	return amneziawgDevice.IpcSetOperation(reader)
-}
-
-func (config *Config) setUpInterface() error {
-	link, err := netlink.LinkByName(config.Name)
-	if err != nil {
-		return err
-	}
-
-	return netlink.LinkSetUp(link)
-}
-
-func (config *Config) addAddress(address string) error {
-	// sudo ip -4 address add <address> dev <interfaceName>
-	link, err := netlink.LinkByName(config.Name)
-	if err != nil {
-		return err
-	}
-
-	addr, err := netlink.ParseAddr(address)
-	if err != nil {
-		return err
-	}
-
-	return netlink.AddrAdd(link, addr)
-}
-
-func (config *Config) addRoute(address string) error {
-	// sudo ip rule add not fwmark <table> table <table>
-	ruleNot := netlink.NewRule()
-	ruleNot.Invert = true
-	ruleNot.Mark = uint32(config.Interface.FwMark)
-	ruleNot.Table = int(config.Interface.FwMark)
-	if err := netlink.RuleAdd(ruleNot); err != nil {
-		return err
-	}
-
-	// sudo ip rule add table main suppress_prefixlength 0
-	ruleAdd := netlink.NewRule()
-	ruleAdd.Table = unix.RT_TABLE_MAIN
-	ruleAdd.SuppressPrefixlen = 0
-	if err := netlink.RuleAdd(ruleAdd); err != nil {
-		return err
-	}
-
-	// sudo ip route add <address> dev <interfaceName> table <table>
-	link, err := netlink.LinkByName(config.Name)
-	if err != nil {
-		return err
-	}
-
-	_, dst, err := net.ParseCIDR(address)
-	if err != nil {
-		return err
-	}
-
-	route := netlink.Route{LinkIndex: link.Attrs().Index, Dst: dst, Table: 51820}
-
-	if err := netlink.RouteAdd(&route); err != nil {
-		return err
-	}
-
-	// sudo sysctl -q net.ipv4.conf.all.src_valid_mark=1
-	if err := sysctl.Set("net.ipv4.conf.all.src_valid_mark", "1"); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func runInterface(configPath string, interfaceName string) error {
-	// open TUN device (or use supplied fd)
-	tdev, err := tun.CreateTUN(interfaceName, 1360)
-
-	Logging.Info.Printf("Starting amneziawg interface")
-
-	if err == nil {
-		realInterfaceName, err2 := tdev.Name()
-		if err2 == nil {
-			interfaceName = realInterfaceName
-		}
-	} else {
-		return err
-	}
-
-	// open UAPI file
-	fileUAPI, err := ipc.UAPIOpen(interfaceName)
-
-	if err != nil {
-		return err
-	}
-
-	// Start device:
-	// Logger definition:
-	logLevel := device.LogLevelVerbose
-	logger := device.NewLogger(logLevel, fmt.Sprintf("(%s) ", interfaceName))
-	device := device.NewDevice(tdev, conn.NewDefaultBind(), logger)
-
-	errs := make(chan error)
-	uapi, err := ipc.UAPIListen(interfaceName, fileUAPI)
-
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		// Extra ipc configuration:
-		for {
-			conn, err := uapi.Accept()
-			if err != nil {
-				errs <- err
-				return
-			}
-			go device.IpcHandle(conn)
-		}
-	}()
-
-	amneziawgDevice = device
-	amneziawgUAPISocket = uapi
-
-	return nil
-}
-
 func StartTunnel(name string) {
 	systemConfigPath := filepath.Join(amneziawgSystemConfigPath, name+".conf")
 
-	err := runInterface(systemConfigPath, name)
+	err := installTunnel(systemConfigPath, name)
 	if err != nil {
 		Logging.Info.Printf("Failed interface launch: %s", err)
-		return
 	} else {
 		Logging.Info.Printf("Interface is already launched")
-	}
-
-	// Configure AmneziaWG
-	config, err := configFromPath(systemConfigPath, name)
-
-	if err != nil {
-		Logging.Info.Printf("Failed to configure the tunnel")
-		return
-	} else {
-		Logging.Info.Printf("Successful config parse")
-	}
-
-	if err := config.configureInterface(); err != nil {
-		Logging.Info.Printf("Failed to configure the tunnel")
-		return
-	} else {
-		Logging.Info.Printf("Config set success")
-	}
-
-	if config.setUpInterface(); err != nil {
-		Logging.Info.Printf("Failed to set up the interface")
-		return
-	} else {
-		Logging.Info.Printf("Interface set up success")
-	}
-
-	for _, address := range config.Interface.Addresses {
-		if err := config.addAddress(address.String()); err != nil {
-			Logging.Info.Printf("Failed to add the address %s", address.String())
-			return
-		} else {
-			Logging.Info.Printf("Address %s addition success\n", address.String())
-		}
-	}
-
-	for _, peer := range config.Peers {
-		for _, allowed_ip := range peer.AllowedIPs {
-			if err := config.addRoute(allowed_ip.String()); err != nil {
-				Logging.Info.Printf("Route from %s address to %s is failed", allowed_ip.String(), config.Name)
-				return
-			} else {
-				Logging.Info.Printf("Route from %s address to %s is successful", allowed_ip.String(), config.Name)
-			}
-		}
 	}
 }
 
 func StopTunnel(name string) {
-	link, err := netlink.LinkByName(name)
+	err := uninstallTunnel(name)
 	if err != nil {
-		err = netlink.LinkDel(link)
-	}
-
-	if err != nil {
-		Logging.Info.Printf("Tunnel is already stopped")
+		Logging.Info.Printf("Failed interface stop: %s", err)
 	} else {
-		Logging.Info.Printf("Stop tunnel: %s", name)
+		Logging.Info.Printf("Interface stop success")
 	}
-
-	if err := amneziawgUAPISocket.Close(); err != nil {
-		Logging.Info.Printf("UAPI socket close failure")
-	} else {
-		Logging.Info.Printf("UAPI socket closed")
-	}
-	
-	amneziawgDevice.Close()
-	Logging.Info.Printf("Interface closed")
 }
 
 func CheckAndInstallWireGuard() error {
