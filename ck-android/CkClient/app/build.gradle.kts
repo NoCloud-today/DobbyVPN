@@ -41,17 +41,26 @@ kotlin {
             implementation(libs.androidx.compiler)
             implementation(libs.kotlin.script.runtime)
             implementation(libs.kotlinx.serialization.json)
+
+            implementation(libs.koin.android)
+            implementation(libs.koin.androidx.compose)
+
             implementation(files("../libs/cloak_outline.aar"))
         }
 
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
-            implementation(compose.material)
             implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            implementation(libs.lifecycle.viewmodel.compose)
+            implementation(libs.navigation.compose)
+
+            api(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.lifecycle.viewmodel)
         }
     }
 }
@@ -59,7 +68,7 @@ kotlin {
 
 android {
     namespace = "com.example.ck_client"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.ck_client"

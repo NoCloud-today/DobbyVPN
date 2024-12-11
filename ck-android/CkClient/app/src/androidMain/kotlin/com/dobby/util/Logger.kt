@@ -1,15 +1,15 @@
 package com.dobby.util
 
 import android.content.Context
-import com.dobby.domain.FileLogsRepository
+import com.dobby.logs.LogsRepository
 
 object Logger {
 
-    private lateinit var logsRepository: FileLogsRepository
+    private lateinit var logsRepository: LogsRepository
 
     fun init(context: Context) {
         if (::logsRepository.isInitialized.not()) {
-            logsRepository = FileLogsRepository(fileDirProvider = { context.filesDir })
+            logsRepository = LogsRepository(fileDirProvider = { context.filesDir })
         }
     }
 
