@@ -4,23 +4,13 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
-
-	"github.com/amnezia-vpn/amneziawg-windows/conf"
-	"github.com/amnezia-vpn/amneziawg-windows/services"
-	"golang.org/x/sys/windows"
-	"golang.org/x/sys/windows/svc"
-	"golang.org/x/sys/windows/svc/mgr"
 )
-
-const TUNNEL_SERVICE_LIB_PATH = "libs\\tunnel-service.exe"
 
 var ipv4Subnets = []string{
 	"0.0.0.0/1",
@@ -78,114 +68,6 @@ func saveWireguardConf(config string, fileName string) error {
 
 	Logging.Info.Printf("Configuration saved successfully to %s\n", systemConfigPath)
 	return nil
-}
-
-func installTunnel(configPath string) error {
-	m, err := mgr.Connect()
-	if err != nil {
-		return err
-	}
-
-	name, err := conf.NameFromPath(configPath)
-	if err != nil {
-		return err
-	}
-
-	serviceName, err := services.ServiceNameOfTunnel(name)
-	if err != nil {
-		return err
-	}
-	service, err := m.OpenService(serviceName)
-	if err == nil {
-		Logging.Info.Printf("Tunnel service %s found", serviceName)
-
-		status, err := service.Query()
-		if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
-			Logging.Info.Printf("Failed to query tunnel service status")
-			service.Close()
-			return err
-		}
-		if status.State != svc.Stopped && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
-			service.Close()
-			return errors.New("Tunnel already installed and running")
-		}
-		err = service.Delete()
-		service.Close()
-		if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
-			return err
-		}
-
-		Logging.Info.Printf("Closing tunnel service %s")
-
-		for {
-			Logging.Info.Printf("Checking if service %s removed")
-			service, err = m.OpenService(serviceName)
-			if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
-				Logging.Info.Printf("Service %s removed successfully")
-				break
-			}
-			service.Close()
-			time.Sleep(time.Second / 3)
-		}
-	}
-
-	config := mgr.Config{
-		ServiceType:  windows.SERVICE_WIN32_OWN_PROCESS,
-		StartType:    mgr.StartAutomatic,
-		ErrorControl: mgr.ErrorNormal,
-		Dependencies: []string{"Nsi", "TcpIp"},
-		DisplayName:  "AmneziaWG Tunnel: " + name,
-		SidType:      windows.SERVICE_SID_TYPE_UNRESTRICTED,
-	}
-
-	serviceAbsolutePath, err := filepath.Abs(TUNNEL_SERVICE_LIB_PATH)
-	if err != nil {
-		Logging.Info.Printf("Cannot get tunnel service path")
-		return err
-	}
-
-	service, err = m.CreateService(serviceName, serviceAbsolutePath, config, configPath)
-	if err != nil {
-		Logging.Info.Printf("Failed to create tunnel service")
-		return err
-	} else {
-		Logging.Info.Printf("Tunnel service created")
-	}
-
-	err = service.Start()
-	if err != nil {
-		Logging.Info.Printf("Tunnel service start failed")
-		service.Delete()
-	} else {
-		Logging.Info.Printf("Tunnel service started")
-	}
-
-	return err
-}
-
-func uninstallTunnel(name string) error {
-	m, err := mgr.Connect()
-	if err != nil {
-		return err
-	}
-	serviceName, err := services.ServiceNameOfTunnel(name)
-	if err != nil {
-		return err
-	}
-	service, err := m.OpenService(serviceName)
-	if err != nil {
-		return err
-	}
-
-	Logging.Info.Printf("Found tunnel service %s", serviceName)
-
-	service.Control(svc.Stop)
-	err = service.Delete()
-	err2 := service.Close()
-	if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
-		return err
-	}
-	return err2
 }
 
 func StartTunnel(name string) {
