@@ -1,21 +1,33 @@
+//go:build linux
 // +build linux
 
 package main
 
 import (
 	"errors"
-	"net"
-        "fmt"
-	"os/exec"
+	"os"
+	"fmt"
 	"io/ioutil"
+	"net"
+	"strings"
+	"os/exec"
 	"path/filepath"
+
 	"github.com/vishvananda/netlink"
+
+	"github.com/amnezia-vpn/amneziawg-go/conn"
+	"github.com/amnezia-vpn/amneziawg-go/device"
+	"github.com/amnezia-vpn/amneziawg-go/ipc"
+	"github.com/amnezia-vpn/amneziawg-go/tun"
+	"golang.org/x/sys/unix"
+
+	sysctl "github.com/lorenzosaino/go-sysctl"
 )
 
-const wireguardSystemConfigPath = "/etc/wireguard/"
+const amneziawgSystemConfigPath = "/etc/amnezia/amneziawg/"
 
 func saveWireguardConf(config string, fileName string) error {
-	systemConfigPath := filepath.Join(wireguardSystemConfigPath, fileName+".conf")
+	systemConfigPath := filepath.Join(amneziawgSystemConfigPath, fileName+".conf")
 	return ioutil.WriteFile(systemConfigPath, []byte(config), 0644)
 }
 
@@ -29,67 +41,204 @@ func executeCommand(command string) (string, error) {
 	return string(output), nil
 }
 
+func configFromPath(configPath string, interfaceName string) (*Config, error) {
+	configData, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return FromWgQuickWithUnknownEncoding(string(configData), interfaceName)
+}
+
+func (config *Config) configureInterface(device *device.Device) error {
+	uapiString, err := config.ToUAPI()
+	if err != nil {
+		return err
+	}
+
+	reader := strings.NewReader(uapiString)
+
+	return device.IpcSetOperation(reader)
+}
+
+func (config *Config) setUpInterface() error {
+	link, err := netlink.LinkByName(config.Name)
+	if err != nil {
+		return err
+	}
+
+	return netlink.LinkSetUp(link)
+}
+
+func (config *Config) addAddress(address string) error {
+	// sudo ip -4 address add <address> dev <interfaceName>
+	link, err := netlink.LinkByName(config.Name)
+	if err != nil {
+		return err
+	}
+
+	addr, err := netlink.ParseAddr(address)
+	if err != nil {
+		return err
+	}
+
+	return netlink.AddrAdd(link, addr)
+}
+
+func (config *Config) addRoute(address string) error {
+	// sudo ip rule add not fwmark <table> table <table>
+	ruleNot := netlink.NewRule()
+	ruleNot.Invert = true
+	ruleNot.Mark = uint32(config.Interface.FwMark)
+	ruleNot.Table = int(config.Interface.FwMark)
+	if err := netlink.RuleAdd(ruleNot); err != nil {
+		return err
+	}
+
+	// sudo ip rule add table main suppress_prefixlength 0
+	ruleAdd := netlink.NewRule()
+	ruleAdd.Table = unix.RT_TABLE_MAIN
+	ruleAdd.SuppressPrefixlen = 0
+	if err := netlink.RuleAdd(ruleAdd); err != nil {
+		return err
+	}
+
+	// sudo ip route add <address> dev <interfaceName> table <table>
+	link, err := netlink.LinkByName(config.Name)
+	if err != nil {
+		return err
+	}
+
+	_, dst, err := net.ParseCIDR(address)
+	if err != nil {
+		return err
+	}
+
+	route := netlink.Route{LinkIndex: link.Attrs().Index, Dst: dst, Table: 51820}
+
+	if err := netlink.RouteAdd(&route); err != nil {
+		return err
+	}
+
+	// sudo sysctl -q net.ipv4.conf.all.src_valid_mark=1
+	if err := sysctl.Set("net.ipv4.conf.all.src_valid_mark", "1"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func runInterface(configPath string, interfaceName string) (*device.Device, error) {
+	// open TUN device (or use supplied fd)
+	tdev, err := tun.CreateTUN(interfaceName, 1360)
+
+	Logging.Info.Printf("Starting amneziawg interface")
+
+	if err == nil {
+		realInterfaceName, err2 := tdev.Name()
+		if err2 == nil {
+			interfaceName = realInterfaceName
+		}
+	} else {
+		return nil, err
+	}
+
+	// open UAPI file
+	fileUAPI, err := ipc.UAPIOpen(interfaceName)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Start device:
+	// Logger definition:
+	logLevel := device.LogLevelVerbose
+	logger := device.NewLogger(logLevel, fmt.Sprintf("(%s) ", interfaceName))
+	device := device.NewDevice(tdev, conn.NewDefaultBind(), logger)
+
+	errs := make(chan error)
+	uapi, err := ipc.UAPIListen(interfaceName, fileUAPI)
+
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		// Extra ipc configuration:
+		for {
+			conn, err := uapi.Accept()
+			if err != nil {
+				errs <- err
+				return
+			}
+			go device.IpcHandle(conn)
+		}
+	}()
+
+	return device, nil
+}
+
 func StartTunnel(name string) {
-        systemConfigPath := filepath.Join(wireguardSystemConfigPath, name+".conf")
+	systemConfigPath := filepath.Join(amneziawgSystemConfigPath, name+".conf")
 
-        cmd := exec.Command("sudo", "./libs/wireguard-go", name)
-        err := cmd.Run()
-
+	device, err := runInterface(systemConfigPath, name)
 	if err != nil {
+		Logging.Info.Printf("Failed interface launch: %s", err)
+		return
+	} else {
 		Logging.Info.Printf("Interface is already launched")
-	} else {
-		Logging.Info.Printf("Launch interface")
 	}
 
-        cmd = exec.Command("sudo", "wg", "setconf", name, systemConfigPath)
-        err = cmd.Run()
+	// Configure AmneziaWG
+	config, err := configFromPath(systemConfigPath, name)
 
 	if err != nil {
-		Logging.Info.Printf("Config is already launched")
+		Logging.Info.Printf("Failed to configure the tunnel")
+		return
 	} else {
-		Logging.Info.Printf("Launch config")
+		Logging.Info.Printf("Successful config parse")
 	}
 
-        cmd = exec.Command("sudo", "ip", "address", "add", "10.66.66.2/32", "dev", name)
-        err = cmd.Run()
-
-	if err != nil {
-		Logging.Info.Printf("Address is already launched")
+	if err := config.configureInterface(device); err != nil {
+		Logging.Info.Printf("Failed to configure the tunnel")
+		return
 	} else {
-		Logging.Info.Printf("Launch address")
+		Logging.Info.Printf("Config set success")
 	}
 
-        cmd = exec.Command("sudo", "ip", "link", "set", "mtu", "1360", "up", "dev", name)
-        err = cmd.Run()
-
-	if err != nil {
-		Logging.Info.Printf("Tunnel is already launched")
+	if config.setUpInterface(); err != nil {
+		Logging.Info.Printf("Failed to set up the interface")
+		return
 	} else {
-		Logging.Info.Printf("Launch tunnel")
-	}   
+		Logging.Info.Printf("Interface set up success")
+	}
 
-        cmd = exec.Command("sudo", "ip", "-4", "route", "add", "128.0.0.0/1", "dev", name)
-        err = cmd.Run()
+	for _, address := range config.Interface.Addresses {
+		if err := config.addAddress(address.String()); err != nil {
+			Logging.Info.Printf("Failed to add the address %s", address.String())
+			return
+		} else {
+			Logging.Info.Printf("Address %s addition success\n", address.String())
+		}
+	}
 
-	if err != nil {
-		Logging.Info.Printf("Address is already launched")
-	} else {
-		Logging.Info.Printf("Launch Address")
-	}   
-
-        cmd = exec.Command("sudo", "ip", "-4", "route", "add", "0.0.0.0/1", "dev", name)
-        err = cmd.Run()
-
-	if err != nil {
-		Logging.Info.Printf("Address is already launched")
-	} else {
-		Logging.Info.Printf("Launch Address")
-	}   
+	for _, peer := range config.Peers {
+		for _, allowed_ip := range peer.AllowedIPs {
+			if err := config.addRoute(allowed_ip.String()); err != nil {
+				Logging.Info.Printf("Route from %s address to %s is failed", allowed_ip.String(), config.Name)
+				return
+			} else {
+				Logging.Info.Printf("Route from %s address to %s is successful", allowed_ip.String(), config.Name)
+			}
+		}
+	}
 }
 
 func StopTunnel(name string) {
-        cmd := exec.Command("sudo", "ip", "link", "del", name)
-        err := cmd.Run()
+	link, err := netlink.LinkByName(name)
+	if err != nil {
+		err = netlink.LinkDel(link)
+	}
 
 	if err != nil {
 		Logging.Info.Printf("Tunnel is already stopped")
@@ -99,27 +248,8 @@ func StopTunnel(name string) {
 }
 
 func CheckAndInstallWireGuard() error {
-	cmd := exec.Command("sudo", "wg", "--version")
-	err := cmd.Run()
-
-	if err != nil {
-		Logging.Info.Printf("WireGuard is not install")
-
-		installCmd := exec.Command("sudo", "apt", "install", "-y", "wireguard-tools")
-		installErr := installCmd.Run()
-
-		if installErr != nil {
-			Logging.Info.Printf("Error install WireGuard: %w", installErr)
-		}
-
-		Logging.Info.Printf("WireGuard is sucessfully installed.")
-	} else {
-		Logging.Info.Printf("WireGuard is already installed.")
-	}
-
 	return nil
 }
-
 
 func startRouting(proxyIP string, gatewayIP string, interfaceName string, tunIp string, tunName string) error {
 	removeOldDefaultRoute := fmt.Sprintf("sudo ip route del default via %s dev %s", gatewayIP, interfaceName)
@@ -158,7 +288,6 @@ func stopRouting(proxyIP string, gatewayIP string, interfaceName string, tunIp s
 
 	return nil
 }
-
 
 var ipRule *netlink.Rule = nil
 
