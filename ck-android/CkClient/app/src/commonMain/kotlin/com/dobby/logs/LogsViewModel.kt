@@ -20,6 +20,7 @@ class LogsViewModel(
 
     fun clearLogs() {
         logsRepository.clearLogs()
+        _uiState.tryEmit(LogsUiState())
     }
 
     fun copyLogsToClipBoard() {
